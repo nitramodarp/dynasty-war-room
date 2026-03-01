@@ -723,6 +723,18 @@
 
   .tag-taxi { background: rgba(180,76,255,0.2); color: var(--purple); }
   .tag-rookie { background: rgba(255,215,0,0.2); color: var(--gold); }
+  .tag-inj { background: rgba(255,68,68,0.2); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
+  .tag-role { background: rgba(255,140,66,0.2); color: var(--orange); border: 1px solid rgba(255,140,66,0.3); }
+  .tag-new-team { background: rgba(180,76,255,0.2); color: var(--purple); border: 1px solid rgba(180,76,255,0.3); }
+  .flag-tooltip { position:relative; display:inline-block; }
+  .flag-tooltip .tooltip-text {
+    visibility:hidden; opacity:0; transition:opacity 0.15s;
+    background:var(--surface3); color:var(--text); border:1px solid var(--border);
+    border-radius:6px; padding:6px 10px; font-size:11px; white-space:nowrap;
+    position:absolute; z-index:200; bottom:125%; left:50%; transform:translateX(-50%);
+    pointer-events:none; box-shadow:0 4px 16px rgba(0,0,0,0.5);
+  }
+  .flag-tooltip:hover .tooltip-text { visibility:visible; opacity:1; }
 </style>
 </head>
 <body>
@@ -1138,6 +1150,20 @@ const CONFIG = {
   },
 
   // Pick values (KTC approximate)
+  // Player flags — update these manually as news breaks
+  // type: 'inj' (injury), 'role' (role/opportunity concern), 'new-team' (new system)
+  // severity: 'high' (red), 'medium' (orange), 'low' (yellow)
+  PLAYER_FLAGS: {
+    'Patrick Mahomes':    [{ type:'inj',      severity:'high',   label:'ACL Recovery',        detail:'Torn ACL Week 16. Timeline uncertain for 2026 season start.' }],
+    'George Kittle':      [{ type:'inj',      severity:'high',   label:'Achilles Recovery',   detail:'Achilles injury. High-risk for 2026 — TE production deeply uncertain.' }],
+    'Alvin Kamara':       [{ type:'role',     severity:'medium', label:'Age/Role Risk',        detail:'Age 31 in 2026. Saints likely to reduce workload or move on.' }],
+    'Marvin Mims':        [{ type:'role',     severity:'medium', label:'Depth Chart Risk',     detail:'Competing for targets with Sutton/Dulcich in Denver. No guaranteed role.' }],
+    'Juwan Johnson':      [{ type:'role',     severity:'high',   label:'Low Opportunity',      detail:'TE2/TE3 role. Minimal target share behind Kittle-level competition.' }],
+    'Kendre Miller':      [{ type:'inj',      severity:'medium', label:'Injury History',       detail:'Recurring hamstring issues. Durability concern limits upside.' }],
+    'DeVonta Smith':      [{ type:'role',     severity:'low',    label:'System Watch',         detail:'Monitor target share under new OC — historically WR2 in Philly system.' }],
+    'DK Metcalf':         [{ type:'new-team', severity:'low',    label:'New QB Watch',         detail:'Adapting to new QB situation — monitor chemistry and target volume.' }],
+  },
+
   PICK_VALUES: {
     '2026 Early 1st': 5994, '2026 Mid 1st': 4687, '2026 Late 1st': 4283,
     '2026 Early 2nd': 3486, '2026 Mid 2nd': 3056, '2026 Late 2nd': 2798,
@@ -1230,6 +1256,26 @@ function getSellUrgency(pos, age) {
     }
   }
   return { months: 0, label: 'SELL NOW', color: 'var(--red)' };
+}
+
+function getPlayerFlags(name) {
+  return CONFIG.PLAYER_FLAGS[name] || [];
+}
+
+function renderFlags(name, compact) {
+  const flags = getPlayerFlags(name);
+  if (!flags.length) return '';
+  return flags.map(f => {
+    const cls = f.type === 'inj' ? 'tag-inj' : f.type === 'role' ? 'tag-role' : 'tag-new-team';
+    const icon = f.type === 'inj' ? '🩹' : f.type === 'role' ? '⚠️' : '🔄';
+    if (compact) {
+      return `<span class="flag-tooltip"><span class="tag ${cls}" style="font-size:8px;padding:1px 5px">${icon} ${f.label}</span><span class="tooltip-text">${f.detail}</span></span>`;
+    }
+    return `<div style="margin-top:4px;padding:4px 8px;background:rgba(0,0,0,0.2);border-radius:4px;border-left:2px solid ${f.severity==='high'?'var(--red)':f.severity==='medium'?'var(--orange)':'var(--yellow)'}">
+      <span class="tag ${cls}" style="font-size:8px">${icon} ${f.label}</span>
+      <span style="font-size:10px;color:var(--text-dim);margin-left:6px">${f.detail}</span>
+    </div>`;
+  }).join('');
 }
 
 function archetypeBadge(pos, age) {
@@ -1531,7 +1577,7 @@ function buildAllRosters() {
     }
     if (unmatched.length) console.warn('⚠️ Unmatched players on YOUR roster:', unmatched);
     players.sort((a,b) => b.value - a.value);
-    // Deduplicate by name — Sleeper sometimes assigns two different IDs to the same player
+    // Deduplicate by name — Sleeper sometimes gives same player two IDs
     const seenNames = new Set();
     const dedupedPlayers = players.filter(p => {
       if (seenNames.has(p.name)) return false;
@@ -1745,6 +1791,13 @@ function renderDashboard() {
   for (const p of STATE.myRoster) {
     const a = getArchetype(p.pos, p.age);
     const urgency = getSellUrgency(p.pos, p.age);
+    const flags = getPlayerFlags(p.name);
+    for (const f of flags) {
+      if (f.severity === 'high') {
+        const icon = f.type === 'inj' ? '🩹' : f.type === 'role' ? '⚠️' : '🔄';
+        actions.push({ priority: 0, type: 'flag', msg: `${icon} <strong>${p.name}</strong> — ${f.label}: ${f.detail}`, color: f.severity==='high'?'var(--red)':'var(--orange)' });
+      }
+    }
     if (a?.cls === 'sell') {
       actions.push({ priority: 0, type: 'sell', msg: `🔴 <strong>Sell ${p.name}</strong> (${p.pos}, age ${p.age}) — value window is closing`, color: 'var(--red)' });
     } else if (urgency && urgency.months <= 12 && urgency.months > 0) {
@@ -1780,7 +1833,7 @@ function renderRosterTable(tbodyId, players, full) {
     const vorpStyle = `color:${vorpColor(p.vorp)}`;
     return `<tr>
       <td>${posPill(p.pos)}</td>
-      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : ''}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}</td>
+      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : ''}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}${renderFlags(p.name, true)}</td>
       <td class="mono dim" style="font-size:11px">${p.team||'—'}</td>
       <td class="mono" style="font-size:12px">${p.age||'—'}</td>
       <td class="mono" style="color:var(--accent);font-size:12px">${fmt(p.value)}</td>
@@ -1844,7 +1897,7 @@ function toggleTeamRoster(teamName) {
             const a = getArchetype(p.pos, p.age);
             return `<tr>
               <td>${posPill(p.pos)}</td>
-              <td style="font-weight:500">${p.name}${p.rookie ? '<span class="tag tag-rookie">R</span>' : ''}</td>
+              <td style="font-weight:500">${p.name}${p.rookie ? '<span class="tag tag-rookie">R</span>' : ''}${renderFlags(p.name, true)}</td>
               <td class="mono" style="font-size:11px">${p.age||'—'}</td>
               <td class="mono" style="color:var(--accent);font-size:11px">${fmt(p.value)}</td>
               <td class="mono" style="font-size:11px;color:${vorpColor(p.vorp)}">${p.vorp>0?'+':''}${fmt(p.vorp)}</td>
@@ -2079,7 +2132,7 @@ function onTradeSearch(side) {
   if (!matches.length) { list.style.display = 'none'; return; }
   list.innerHTML = matches.map(p =>
     `<div class="autocomplete-item" onclick="addPlayerToTrade('${side}','${p.name.replace(/'/g,"\\'")}',${p.value},'${p.pos}',${p.age})">
-      <span>${posPill(p.pos)} ${p.name}</span>
+      <span>${posPill(p.pos)} ${p.name} ${renderFlags(p.name, true)}</span>
       <span class="mono" style="color:var(--accent);font-size:11px">${fmt(p.value)}</span>
     </div>`
   ).join('');
@@ -2119,7 +2172,7 @@ function renderTradeAssets() {
     document.getElementById(`tradeAssets_${side}`).innerHTML = assets.map((a, i) =>
       `<div class="trade-asset-item">
         ${a.pos !== 'PICK' ? posPill(a.pos) : '<span class="badge badge-aging">PICK</span>'}
-        <span style="flex:1;font-size:12px">${a.label}</span>
+        <span style="flex:1;font-size:12px">${a.label}${renderFlags(a.name, true)}</span>
         <span class="mono" style="color:var(--accent);font-size:11px">${fmt(a.value)}</span>
         <button class="remove-btn" onclick="removeAsset('${side}',${i})">✕</button>
       </div>`
