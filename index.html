@@ -735,6 +735,86 @@
     pointer-events:none; box-shadow:0 4px 16px rgba(0,0,0,0.5);
   }
   .flag-tooltip:hover .tooltip-text { visibility:visible; opacity:1; }
+
+  /* WAR ROOM ALERTS BANNER */
+  .alerts-banner {
+    margin-bottom: 20px;
+  }
+  .alerts-banner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .alerts-banner-title {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .alerts-banner-title.all-clear { color: var(--green); }
+  .alert-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+    transition: transform 0.15s;
+  }
+  .alert-card:hover { transform: translateX(3px); }
+  .alert-card.priority-0 { border-left: 4px solid var(--red); background: rgba(255,68,68,0.04); }
+  .alert-card.priority-1 { border-left: 4px solid var(--orange); background: rgba(255,140,66,0.04); }
+  .alert-card.priority-2 { border-left: 4px solid var(--yellow); background: rgba(255,215,0,0.03); }
+  .alert-icon {
+    font-size: 20px;
+    min-width: 28px;
+    text-align: center;
+  }
+  .alert-body { flex: 1; }
+  .alert-player {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  .alert-detail {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .alert-countdown {
+    text-align: right;
+    min-width: 80px;
+  }
+  .alert-countdown-num {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 28px;
+    line-height: 1;
+  }
+  .alert-countdown-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .alert-countdown-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .alert-countdown-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
 </style>
 </head>
 <body>
@@ -775,6 +855,8 @@
 
   <!-- DASHBOARD TAB -->
   <div class="tab-content active" id="tab-dashboard">
+    <!-- WAR ROOM ALERTS BANNER -->
+    <div class="alerts-banner" id="alertsBanner"></div>
     <div class="grid-4" id="dashStatCards">
       <div class="stat-card">
         <div class="stat-value" id="ds-rank" style="color:var(--accent)">—</div>
@@ -1150,15 +1232,12 @@ const CONFIG = {
   },
 
   // Pick values (KTC approximate)
-  // Player flags — update these manually as news breaks
-  // type: 'inj' (injury), 'role' (role/opportunity concern), 'new-team' (new system)
-  // severity: 'high' (red), 'medium' (orange), 'low' (yellow)
   PLAYER_FLAGS: {
     'Patrick Mahomes':    [{ type:'inj',      severity:'high',   label:'ACL Recovery',        detail:'Torn ACL Week 16. Timeline uncertain for 2026 season start.' }],
     'George Kittle':      [{ type:'inj',      severity:'high',   label:'Achilles Recovery',   detail:'Achilles injury. High-risk for 2026 — TE production deeply uncertain.' }],
     'Alvin Kamara':       [{ type:'role',     severity:'medium', label:'Age/Role Risk',        detail:'Age 31 in 2026. Saints likely to reduce workload or move on.' }],
     'Marvin Mims':        [{ type:'role',     severity:'medium', label:'Depth Chart Risk',     detail:'Competing for targets with Sutton/Dulcich in Denver. No guaranteed role.' }],
-    'Juwan Johnson':      [{ type:'role',     severity:'high',   label:'Low Opportunity',      detail:'TE2/TE3 role. Minimal target share behind Kittle-level competition.' }],
+    'Juwan Johnson':      [{ type:'role',     severity:'high',   label:'Low Opportunity',      detail:'TE2/TE3 role. Minimal target share behind elite competition.' }],
     'Kendre Miller':      [{ type:'inj',      severity:'medium', label:'Injury History',       detail:'Recurring hamstring issues. Durability concern limits upside.' }],
     'DeVonta Smith':      [{ type:'role',     severity:'low',    label:'System Watch',         detail:'Monitor target share under new OC — historically WR2 in Philly system.' }],
     'DK Metcalf':         [{ type:'new-team', severity:'low',    label:'New QB Watch',         detail:'Adapting to new QB situation — monitor chemistry and target volume.' }],
@@ -1259,7 +1338,7 @@ function getSellUrgency(pos, age) {
 }
 
 function getPlayerFlags(name) {
-  return CONFIG.PLAYER_FLAGS[name] || [];
+  return CONFIG.PLAYER_FLAGS?.[name] || [];
 }
 
 function renderFlags(name, compact) {
@@ -1269,7 +1348,7 @@ function renderFlags(name, compact) {
     const cls = f.type === 'inj' ? 'tag-inj' : f.type === 'role' ? 'tag-role' : 'tag-new-team';
     const icon = f.type === 'inj' ? '🩹' : f.type === 'role' ? '⚠️' : '🔄';
     if (compact) {
-      return `<span class="flag-tooltip"><span class="tag ${cls}" style="font-size:8px;padding:1px 5px">${icon} ${f.label}</span><span class="tooltip-text">${f.detail}</span></span>`;
+      return `<span class="flag-tooltip"><span class="tag ${cls}" style="font-size:8px;padding:1px 5px;margin-left:3px">${icon} ${f.label}</span><span class="tooltip-text">${f.detail}</span></span>`;
     }
     return `<div style="margin-top:4px;padding:4px 8px;background:rgba(0,0,0,0.2);border-radius:4px;border-left:2px solid ${f.severity==='high'?'var(--red)':f.severity==='medium'?'var(--orange)':'var(--yellow)'}">
       <span class="tag ${cls}" style="font-size:8px">${icon} ${f.label}</span>
@@ -1577,7 +1656,6 @@ function buildAllRosters() {
     }
     if (unmatched.length) console.warn('⚠️ Unmatched players on YOUR roster:', unmatched);
     players.sort((a,b) => b.value - a.value);
-    // Deduplicate by name — Sleeper sometimes gives same player two IDs
     const seenNames = new Set();
     const dedupedPlayers = players.filter(p => {
       if (seenNames.has(p.name)) return false;
@@ -1743,7 +1821,125 @@ function isOnTaxi(player) {
 // ============================================================
 // RENDER FUNCTIONS
 // ============================================================
+function renderAlertsBanner() {
+  const container = document.getElementById('alertsBanner');
+  if (!container) return;
+
+  const alerts = [];
+
+  for (const p of STATE.myRoster) {
+    const a = getArchetype(p.pos, p.age);
+    const urgency = getSellUrgency(p.pos, p.age);
+    const flags = getPlayerFlags(p.name);
+
+    // Injury / role flags — highest priority
+    for (const f of flags) {
+      const icon = f.type === 'inj' ? '🩹' : f.type === 'role' ? '⚠️' : '🔄';
+      const color = f.severity === 'high' ? 'var(--red)' : f.severity === 'medium' ? 'var(--orange)' : 'var(--yellow)';
+      const pri = f.severity === 'high' ? 0 : f.severity === 'medium' ? 1 : 2;
+      alerts.push({
+        priority: pri,
+        icon,
+        player: p.name,
+        pos: p.pos,
+        headline: f.label,
+        detail: f.detail,
+        countdown: null,
+        countdownMax: null,
+        color,
+        type: f.type
+      });
+    }
+
+    // Sell immediately
+    if (a?.cls === 'sell') {
+      alerts.push({
+        priority: 0,
+        icon: '🔴',
+        player: p.name,
+        pos: p.pos,
+        headline: 'Sell Now',
+        detail: `Age ${p.age} — past value cliff for ${p.pos}. Trade window closing fast.`,
+        countdown: 0,
+        countdownMax: 36,
+        color: 'var(--red)',
+        type: 'sell'
+      });
+    }
+    // Approaching cliff — ≤ 12 months
+    else if (urgency && urgency.months > 0 && urgency.months <= 12) {
+      alerts.push({
+        priority: 1,
+        icon: '🟠',
+        player: p.name,
+        pos: p.pos,
+        headline: 'Move Soon',
+        detail: `Age ${p.age} — ${urgency.months} months before hitting value cliff. Sell high window is now.`,
+        countdown: urgency.months,
+        countdownMax: 12,
+        color: 'var(--orange)',
+        type: 'cliff'
+      });
+    }
+    // Approaching cliff — 13–24 months
+    else if (urgency && urgency.months > 12 && urgency.months <= 24) {
+      alerts.push({
+        priority: 2,
+        icon: '🟡',
+        player: p.name,
+        pos: p.pos,
+        headline: 'On the Clock',
+        detail: `Age ${p.age} — ${urgency.months} months to value cliff. Start monitoring trade market.`,
+        countdown: urgency.months,
+        countdownMax: 24,
+        color: 'var(--yellow)',
+        type: 'watch'
+      });
+    }
+  }
+
+  alerts.sort((a, b) => a.priority - b.priority);
+
+  if (!alerts.length) {
+    container.innerHTML = `
+      <div class="alerts-banner">
+        <div class="alerts-banner-header">
+          <div class="alerts-banner-title all-clear">✅ WAR ROOM — ALL CLEAR</div>
+          <div class="mono muted" style="font-size:10px">No urgent sell windows or injury flags</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const html = `
+    <div class="alerts-banner-header">
+      <div class="alerts-banner-title">⚠ WAR ROOM ALERTS <span style="font-size:13px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);font-weight:400;margin-left:8px">${alerts.length} ITEM${alerts.length !== 1 ? 'S' : ''} NEED ATTENTION</span></div>
+    </div>
+    ${alerts.map(al => {
+      const countdownHtml = al.countdown !== null ? `
+        <div class="alert-countdown">
+          <div class="alert-countdown-num" style="color:${al.color}">${al.countdown === 0 ? 'NOW' : al.countdown}</div>
+          <div class="alert-countdown-label">${al.countdown === 0 ? 'sell now' : 'months left'}</div>
+          <div class="alert-countdown-bar">
+            <div class="alert-countdown-fill" style="width:${al.countdown === 0 ? 100 : Math.round((1 - al.countdown/al.countdownMax)*100)}%;background:${al.color}"></div>
+          </div>
+        </div>` : '';
+      return `
+        <div class="alert-card priority-${al.priority}">
+          <div class="alert-icon">${al.icon}</div>
+          <div class="alert-body">
+            <div class="alert-player">${posPill(al.pos)} ${al.player} <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${al.color};font-weight:700;margin-left:4px">${al.headline.toUpperCase()}</span></div>
+            <div class="alert-detail">${al.detail}</div>
+          </div>
+          ${countdownHtml}
+        </div>`;
+    }).join('')}`;
+
+  container.innerHTML = html;
+}
+
 function renderDashboard() {
+  renderAlertsBanner();
   const stats = calcTeamStats(CONFIG.MY_TEAM_NAME);
   const rankings = STATE.powerRankings || calcPowerRankings();
   const myRank = rankings.findIndex(r => r.name === CONFIG.MY_TEAM_NAME) + 1;
@@ -1786,7 +1982,6 @@ function renderDashboard() {
   }).join('');
   document.getElementById('posBreakdown').innerHTML = posHtml;
 
-  // Action items — tiered by urgency
   const actions = [];
   for (const p of STATE.myRoster) {
     const a = getArchetype(p.pos, p.age);
@@ -1795,7 +1990,7 @@ function renderDashboard() {
     for (const f of flags) {
       if (f.severity === 'high') {
         const icon = f.type === 'inj' ? '🩹' : f.type === 'role' ? '⚠️' : '🔄';
-        actions.push({ priority: 0, type: 'flag', msg: `${icon} <strong>${p.name}</strong> — ${f.label}: ${f.detail}`, color: f.severity==='high'?'var(--red)':'var(--orange)' });
+        actions.push({ priority: 0, type: 'flag', msg: `${icon} <strong>${p.name}</strong> — ${f.label}: ${f.detail}`, color: 'var(--red)' });
       }
     }
     if (a?.cls === 'sell') {
@@ -2185,7 +2380,6 @@ function analyzeTrade() {
   const b = STATE.tradeAssets.b;
   if (!a.length && !b.length) { document.getElementById('tradeVerdict').style.display = 'none'; return; }
 
-  // Stud factor: tiered premium
   function getStudMultiplier(value) {
     if (value >= 7000) return 1.30;
     if (value >= 5000) return 1.22;
@@ -2797,7 +2991,6 @@ function calcRookieFitScore(rookie) {
   else if (rookie.value > 3500) score += 10;
   else if (rookie.value > 2000) score += 5;
 
-  // SF bonus for QBs — conditional on actual QB room depth
   if (rookie.pos === 'QB') {
     const myQBs = STATE.myRoster.filter(p => p.pos === 'QB');
     const topQBValue = myQBs.length ? Math.max(...myQBs.map(p => p.value)) : 0;
