@@ -737,83 +737,101 @@
   .flag-tooltip:hover .tooltip-text { visibility:visible; opacity:1; }
 
   /* WAR ROOM ALERTS BANNER */
-  .alerts-banner {
-    margin-bottom: 20px;
-  }
-  .alerts-banner-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-  .alerts-banner-title {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 18px;
-    letter-spacing: 2px;
-    color: var(--red);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .alerts-banner-title.all-clear { color: var(--green); }
-  .alert-card {
-    background: var(--surface);
+  .alerts-banner { margin-bottom: 20px; }
+  .alerts-banner-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .alerts-banner-title { font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; color:var(--red); display:flex; align-items:center; gap:8px; }
+  .alerts-banner-title.all-clear { color:var(--green); }
+  .alert-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:16px; margin-bottom:8px; transition:transform 0.15s; }
+  .alert-card:hover { transform:translateX(3px); }
+  .alert-card.priority-0 { border-left:4px solid var(--red); background:rgba(255,68,68,0.04); }
+  .alert-card.priority-1 { border-left:4px solid var(--orange); background:rgba(255,140,66,0.04); }
+  .alert-card.priority-2 { border-left:4px solid var(--yellow); background:rgba(255,215,0,0.03); }
+  .alert-icon { font-size:20px; min-width:28px; text-align:center; }
+  .alert-body { flex:1; }
+  .alert-player { font-weight:600; font-size:13px; margin-bottom:2px; }
+  .alert-detail { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-dim); line-height:1.5; }
+  .alert-countdown { text-align:right; min-width:80px; }
+  .alert-countdown-num { font-family:'Bebas Neue',cursive; font-size:28px; line-height:1; }
+  .alert-countdown-label { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-muted); letter-spacing:0.5px; text-transform:uppercase; }
+  .alert-countdown-bar { height:3px; background:var(--border); border-radius:2px; margin-top:4px; overflow:hidden; }
+  .alert-countdown-fill { height:100%; border-radius:2px; }
+
+  /* TRADE WINDOW ANALYSIS */
+  .window-analysis {
+    margin-top: 16px;
+    background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 8px;
-    transition: transform 0.15s;
+    padding: 16px;
   }
-  .alert-card:hover { transform: translateX(3px); }
-  .alert-card.priority-0 { border-left: 4px solid var(--red); background: rgba(255,68,68,0.04); }
-  .alert-card.priority-1 { border-left: 4px solid var(--orange); background: rgba(255,140,66,0.04); }
-  .alert-card.priority-2 { border-left: 4px solid var(--yellow); background: rgba(255,215,0,0.03); }
-  .alert-icon {
-    font-size: 20px;
-    min-width: 28px;
-    text-align: center;
-  }
-  .alert-body { flex: 1; }
-  .alert-player {
-    font-weight: 600;
-    font-size: 13px;
-    margin-bottom: 2px;
-  }
-  .alert-detail {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    color: var(--text-dim);
-    line-height: 1.5;
-  }
-  .alert-countdown {
-    text-align: right;
-    min-width: 80px;
-  }
-  .alert-countdown-num {
+  .window-analysis-title {
     font-family: 'Bebas Neue', cursive;
-    font-size: 28px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .window-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .window-side {
+    background: var(--surface3);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .window-side-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .window-years {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 32px;
     line-height: 1;
   }
-  .alert-countdown-label {
+  .window-years-label {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 9px;
     color: var(--text-muted);
-    letter-spacing: 0.5px;
     text-transform: uppercase;
   }
-  .alert-countdown-bar {
-    height: 3px;
+  .window-bar-track {
+    height: 6px;
     background: var(--border);
-    border-radius: 2px;
-    margin-top: 4px;
+    border-radius: 3px;
+    margin-top: 6px;
     overflow: hidden;
   }
-  .alert-countdown-fill {
+  .window-bar-fill {
     height: 100%;
-    border-radius: 2px;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+  .window-player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(42,42,64,0.4);
+  }
+  .window-player-row:last-child { border-bottom: none; }
+  .window-verdict {
+    text-align: center;
+    padding: 10px;
+    background: var(--surface3);
+    border-radius: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-top: 10px;
   }
 </style>
 </head>
@@ -855,7 +873,6 @@
 
   <!-- DASHBOARD TAB -->
   <div class="tab-content active" id="tab-dashboard">
-    <!-- WAR ROOM ALERTS BANNER -->
     <div class="alerts-banner" id="alertsBanner"></div>
     <div class="grid-4" id="dashStatCards">
       <div class="stat-card">
@@ -1041,6 +1058,7 @@
           <div class="verdict-bar-b" id="verdictBarB"></div>
         </div>
         <div class="verdict-detail" id="verdictDetail"></div>
+        <div id="windowAnalysis"></div>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:12px">
@@ -1355,6 +1373,57 @@ function renderFlags(name, compact) {
       <span style="font-size:10px;color:var(--text-dim);margin-left:6px">${f.detail}</span>
     </div>`;
   }).join('');
+}
+
+// Returns estimated peak contention years remaining for a player
+// based on their position archetype brackets and current age
+function calcContentionYears(pos, age) {
+  if (!pos || !age) return 0;
+  const brackets = CONFIG.ARCHETYPES[pos];
+  if (!brackets) return 0;
+
+  // Find peak bracket max age for this position
+  const peakBracket = brackets.find(b => b.cls === 'peak');
+  const agingBracket = brackets.find(b => b.cls === 'aging');
+  const sellBracket = brackets.find(b => b.cls === 'sell');
+  const peakEnd = peakBracket ? peakBracket.max : (agingBracket ? agingBracket.max - 2 : 28);
+  const usefulEnd = agingBracket ? agingBracket.max : peakEnd;
+
+  const arch = getArchetype(pos, age);
+  if (!arch) return 0;
+
+  if (arch.cls === 'sell') return 0;
+
+  if (arch.cls === 'aging') {
+    // Partial value — years left but declining, count at 50% weight
+    const yearsLeft = Math.max(0, usefulEnd - age);
+    return parseFloat((yearsLeft * 0.5).toFixed(1));
+  }
+
+  if (arch.cls === 'peak') {
+    // Full peak years remaining
+    return parseFloat(Math.max(0, peakEnd - age).toFixed(1));
+  }
+
+  if (arch.cls === 'young') {
+    // Years until peak ends — full value throughout
+    return parseFloat(Math.max(0, peakEnd - age).toFixed(1));
+  }
+
+  return 0;
+}
+
+// For picks, estimate contention years based on projected player age at draft
+function calcPickContentionYears(pickLabel) {
+  // Picks represent future young players — assume ~4.5 years of contention window
+  // Early picks slightly more, late picks slightly less
+  if (!pickLabel) return 4.0;
+  const lower = pickLabel.toLowerCase();
+  if (lower.includes('early 1st') || lower.includes('1.0')) return 5.5;
+  if (lower.includes('mid 1st') || lower.includes('late 1st')) return 4.5;
+  if (lower.includes('2nd')) return 3.5;
+  if (lower.includes('3rd')) return 2.5;
+  return 2.0;
 }
 
 function archetypeBadge(pos, age) {
@@ -1824,94 +1893,31 @@ function isOnTaxi(player) {
 function renderAlertsBanner() {
   const container = document.getElementById('alertsBanner');
   if (!container) return;
-
   const alerts = [];
-
   for (const p of STATE.myRoster) {
     const a = getArchetype(p.pos, p.age);
     const urgency = getSellUrgency(p.pos, p.age);
     const flags = getPlayerFlags(p.name);
-
-    // Injury / role flags — highest priority
     for (const f of flags) {
       const icon = f.type === 'inj' ? '🩹' : f.type === 'role' ? '⚠️' : '🔄';
       const color = f.severity === 'high' ? 'var(--red)' : f.severity === 'medium' ? 'var(--orange)' : 'var(--yellow)';
       const pri = f.severity === 'high' ? 0 : f.severity === 'medium' ? 1 : 2;
-      alerts.push({
-        priority: pri,
-        icon,
-        player: p.name,
-        pos: p.pos,
-        headline: f.label,
-        detail: f.detail,
-        countdown: null,
-        countdownMax: null,
-        color,
-        type: f.type
-      });
+      alerts.push({ priority: pri, icon, player: p.name, pos: p.pos, headline: f.label, detail: f.detail, countdown: null, color, type: f.type });
     }
-
-    // Sell immediately
     if (a?.cls === 'sell') {
-      alerts.push({
-        priority: 0,
-        icon: '🔴',
-        player: p.name,
-        pos: p.pos,
-        headline: 'Sell Now',
-        detail: `Age ${p.age} — past value cliff for ${p.pos}. Trade window closing fast.`,
-        countdown: 0,
-        countdownMax: 36,
-        color: 'var(--red)',
-        type: 'sell'
-      });
-    }
-    // Approaching cliff — ≤ 12 months
-    else if (urgency && urgency.months > 0 && urgency.months <= 12) {
-      alerts.push({
-        priority: 1,
-        icon: '🟠',
-        player: p.name,
-        pos: p.pos,
-        headline: 'Move Soon',
-        detail: `Age ${p.age} — ${urgency.months} months before hitting value cliff. Sell high window is now.`,
-        countdown: urgency.months,
-        countdownMax: 12,
-        color: 'var(--orange)',
-        type: 'cliff'
-      });
-    }
-    // Approaching cliff — 13–24 months
-    else if (urgency && urgency.months > 12 && urgency.months <= 24) {
-      alerts.push({
-        priority: 2,
-        icon: '🟡',
-        player: p.name,
-        pos: p.pos,
-        headline: 'On the Clock',
-        detail: `Age ${p.age} — ${urgency.months} months to value cliff. Start monitoring trade market.`,
-        countdown: urgency.months,
-        countdownMax: 24,
-        color: 'var(--yellow)',
-        type: 'watch'
-      });
+      alerts.push({ priority: 0, icon: '🔴', player: p.name, pos: p.pos, headline: 'Sell Now', detail: `Age ${p.age} — past value cliff for ${p.pos}. Trade window closing fast.`, countdown: 0, countdownMax: 36, color: 'var(--red)', type: 'sell' });
+    } else if (urgency && urgency.months > 0 && urgency.months <= 12) {
+      alerts.push({ priority: 1, icon: '🟠', player: p.name, pos: p.pos, headline: 'Move Soon', detail: `Age ${p.age} — ${urgency.months} months before hitting value cliff. Sell high window is now.`, countdown: urgency.months, countdownMax: 12, color: 'var(--orange)', type: 'cliff' });
+    } else if (urgency && urgency.months > 12 && urgency.months <= 24) {
+      alerts.push({ priority: 2, icon: '🟡', player: p.name, pos: p.pos, headline: 'On the Clock', detail: `Age ${p.age} — ${urgency.months} months to value cliff. Start monitoring trade market.`, countdown: urgency.months, countdownMax: 24, color: 'var(--yellow)', type: 'watch' });
     }
   }
-
   alerts.sort((a, b) => a.priority - b.priority);
-
   if (!alerts.length) {
-    container.innerHTML = `
-      <div class="alerts-banner">
-        <div class="alerts-banner-header">
-          <div class="alerts-banner-title all-clear">✅ WAR ROOM — ALL CLEAR</div>
-          <div class="mono muted" style="font-size:10px">No urgent sell windows or injury flags</div>
-        </div>
-      </div>`;
+    container.innerHTML = `<div class="alerts-banner"><div class="alerts-banner-header"><div class="alerts-banner-title all-clear">✅ WAR ROOM — ALL CLEAR</div><div class="mono muted" style="font-size:10px">No urgent sell windows or injury flags</div></div></div>`;
     return;
   }
-
-  const html = `
+  container.innerHTML = `
     <div class="alerts-banner-header">
       <div class="alerts-banner-title">⚠ WAR ROOM ALERTS <span style="font-size:13px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);font-weight:400;margin-left:8px">${alerts.length} ITEM${alerts.length !== 1 ? 'S' : ''} NEED ATTENTION</span></div>
     </div>
@@ -1920,22 +1926,17 @@ function renderAlertsBanner() {
         <div class="alert-countdown">
           <div class="alert-countdown-num" style="color:${al.color}">${al.countdown === 0 ? 'NOW' : al.countdown}</div>
           <div class="alert-countdown-label">${al.countdown === 0 ? 'sell now' : 'months left'}</div>
-          <div class="alert-countdown-bar">
-            <div class="alert-countdown-fill" style="width:${al.countdown === 0 ? 100 : Math.round((1 - al.countdown/al.countdownMax)*100)}%;background:${al.color}"></div>
-          </div>
+          <div class="alert-countdown-bar"><div class="alert-countdown-fill" style="width:${al.countdown === 0 ? 100 : Math.round((1 - al.countdown/al.countdownMax)*100)}%;background:${al.color}"></div></div>
         </div>` : '';
-      return `
-        <div class="alert-card priority-${al.priority}">
-          <div class="alert-icon">${al.icon}</div>
-          <div class="alert-body">
-            <div class="alert-player">${posPill(al.pos)} ${al.player} <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${al.color};font-weight:700;margin-left:4px">${al.headline.toUpperCase()}</span></div>
-            <div class="alert-detail">${al.detail}</div>
-          </div>
-          ${countdownHtml}
-        </div>`;
+      return `<div class="alert-card priority-${al.priority}">
+        <div class="alert-icon">${al.icon}</div>
+        <div class="alert-body">
+          <div class="alert-player">${posPill(al.pos)} ${al.player} <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${al.color};font-weight:700;margin-left:4px">${al.headline.toUpperCase()}</span></div>
+          <div class="alert-detail">${al.detail}</div>
+        </div>
+        ${countdownHtml}
+      </div>`;
     }).join('')}`;
-
-  container.innerHTML = html;
 }
 
 function renderDashboard() {
@@ -2422,8 +2423,8 @@ function analyzeTrade() {
     label.style.color = 'var(--green)';
     detail.innerHTML = `Raw values nearly equal (${fmt(rawA)} vs ${fmt(rawB)})<br>Difference of ${fmt(Math.abs(diff))} — both sides can feel good about this`;
   } else if (diff > 0) {
-    const severity = pct > 40 ? '🛑 MASSIVE OVERPAY' : pct > 20 ? '⚠️ YOU WIN THIS TRADE' : '✅ SLIGHT EDGE TO YOU';
-    const color = pct > 40 ? 'var(--green)' : pct > 20 ? 'var(--accent)' : 'var(--accent)';
+    const severity = pct > 40 ? '🛑 MASSIVE OVERPAY FOR YOU' : pct > 20 ? '✅ YOU WIN THIS TRADE' : '✅ SLIGHT EDGE TO YOU';
+    const color = pct > 40 ? 'var(--green)' : 'var(--accent)';
     label.textContent = severity;
     label.style.color = color;
     detail.innerHTML = `You receive ${fmt(rawA)} · You give ${fmt(rawB)}<br>You win by ${fmt(diff)} (${pct.toFixed(0)}%)<br>Stud-adjusted: ${aPct}% vs ${bPct}%`;
@@ -2434,6 +2435,75 @@ function analyzeTrade() {
     label.style.color = color;
     detail.innerHTML = `You receive ${fmt(rawA)} · You give ${fmt(rawB)}<br>They win by ${fmt(Math.abs(diff))} (${pct.toFixed(0)}%)<br>Stud-adjusted: ${aPct}% vs ${bPct}%`;
   }
+
+  // ── Contention window analysis ───────────────────────────────────────────
+  const windowEl = document.getElementById('windowAnalysis');
+  if (!windowEl) return;
+
+  function sideContentionYears(assets) {
+    return assets.map(asset => {
+      if (asset.type === 'pick') return { name: asset.label, years: calcPickContentionYears(asset.label) };
+      return { name: asset.name, years: calcContentionYears(asset.pos, asset.age) };
+    });
+  }
+
+  const sideA = sideContentionYears(a);
+  const sideB = sideContentionYears(b);
+  const totalYrsA = parseFloat(sideA.reduce((s,x) => s+x.years, 0).toFixed(1));
+  const totalYrsB = parseFloat(sideB.reduce((s,x) => s+x.years, 0).toFixed(1));
+  const maxYrs = Math.max(totalYrsA, totalYrsB, 1);
+  const yrsWinner = totalYrsA > totalYrsB ? 'YOU' : totalYrsA < totalYrsB ? 'THEM' : 'EVEN';
+  const yrsDiff = Math.abs(totalYrsA - totalYrsB).toFixed(1);
+  const yrsColor = yrsWinner === 'YOU' ? 'var(--green)' : yrsWinner === 'THEM' ? 'var(--red)' : 'var(--yellow)';
+
+  let windowInsight = '';
+  if (totalYrsA === 0 && totalYrsB === 0) {
+    windowInsight = 'Both sides are past peak — lateral move with no window advantage.';
+  } else if (Math.abs(totalYrsA - totalYrsB) < 0.5) {
+    windowInsight = 'Contention windows are roughly equal — age-neutral swap.';
+  } else if (totalYrsA > totalYrsB + 2) {
+    windowInsight = `You gain ${yrsDiff} more years of peak production. Strong long-term return.`;
+  } else if (totalYrsB > totalYrsA + 2) {
+    windowInsight = `You give up ${yrsDiff} years of future peak value. Raw value needs to compensate.`;
+  } else {
+    windowInsight = `${yrsDiff}-year window gap — ${yrsWinner === 'YOU' ? 'slight edge to your future' : 'slight edge to their future'}.`;
+  }
+
+  windowEl.innerHTML = `
+    <div class="window-analysis">
+      <div class="window-analysis-title">⏳ CONTENTION WINDOW ANALYSIS</div>
+      <div class="window-row">
+        <div class="window-side">
+          <div class="window-side-label" style="color:var(--accent2)">YOU RECEIVE</div>
+          <div class="window-years" style="color:${totalYrsA >= totalYrsB ? 'var(--green)' : 'var(--red)'}">${totalYrsA}</div>
+          <div class="window-years-label">peak years</div>
+          <div class="window-bar-track"><div class="window-bar-fill" style="width:${Math.round(totalYrsA/maxYrs*100)}%;background:var(--accent2)"></div></div>
+          <div style="margin-top:8px">
+            ${sideA.map(p => `<div class="window-player-row">
+              <span style="color:var(--text-dim)">${p.name.length > 18 ? p.name.substring(0,17)+'…' : p.name}</span>
+              <span class="mono" style="font-size:10px;color:${p.years > 3 ? 'var(--green)' : p.years > 1 ? 'var(--yellow)' : 'var(--red)'}">${p.years} yrs</span>
+            </div>`).join('')}
+          </div>
+        </div>
+        <div style="text-align:center;font-size:18px;color:var(--text-muted)">⇄</div>
+        <div class="window-side">
+          <div class="window-side-label" style="color:var(--accent)">YOU GIVE</div>
+          <div class="window-years" style="color:${totalYrsB >= totalYrsA ? 'var(--green)' : 'var(--red)'}">${totalYrsB}</div>
+          <div class="window-years-label">peak years</div>
+          <div class="window-bar-track"><div class="window-bar-fill" style="width:${Math.round(totalYrsB/maxYrs*100)}%;background:var(--accent)"></div></div>
+          <div style="margin-top:8px">
+            ${sideB.map(p => `<div class="window-player-row">
+              <span style="color:var(--text-dim)">${p.name.length > 18 ? p.name.substring(0,17)+'…' : p.name}</span>
+              <span class="mono" style="font-size:10px;color:${p.years > 3 ? 'var(--green)' : p.years > 1 ? 'var(--yellow)' : 'var(--red)'}">${p.years} yrs</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="window-verdict">
+        <span style="color:${yrsColor};font-weight:600">${yrsWinner === 'EVEN' ? '⚖ EVEN WINDOW' : yrsWinner === 'YOU' ? `✅ YOU GAIN ${yrsDiff} YRS` : `⚠️ YOU GIVE UP ${yrsDiff} YRS`}</span><br>
+        ${windowInsight}
+      </div>
+    </div>`;
 }
 
 function clearTrade() {
