@@ -1101,7 +1101,7 @@ const CONFIG = {
   ARCHETYPES: {
     QB: [{label:'Young Developing Asset', max:24.99, cls:'young'},{label:'Peak Asset', max:30.99, cls:'peak'},{label:'Aging Contender', max:33.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}],
     WR: [{label:'Young Developing Asset', max:25.99, cls:'young'},{label:'Peak Asset', max:28.99, cls:'peak'},{label:'Aging Contender', max:30.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}],
-    RB: [{label:'Young Developing Asset', max:22.99, cls:'young'},{label:'Peak Asset', max:25.99, cls:'peak'},{label:'Sell Immediately', max:99, cls:'sell'}],
+    RB: [{label:'Young Developing Asset', max:22.99, cls:'young'},{label:'Peak Asset', max:25.99, cls:'peak'},{label:'Aging Contender', max:27.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}],
     TE: [{label:'Young Developing Asset', max:24.99, cls:'young'},{label:'Peak Asset', max:30.99, cls:'peak'},{label:'Aging Contender', max:32.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}]
   },
   // VORP replacement ranks — 12-team SF TE+ format
@@ -1733,19 +1733,27 @@ function renderDashboard() {
   }).join('');
   document.getElementById('posBreakdown').innerHTML = posHtml;
 
-  // Action items
+  // Action items — tiered by urgency
   const actions = [];
   for (const p of STATE.myRoster) {
     const a = getArchetype(p.pos, p.age);
-    if (a?.cls === 'sell') actions.push({ type: 'sell', msg: `🔴 Sell ${p.name} (${p.pos}, age ${p.age}) — ${a.label}`, color: 'var(--red)' });
+    const urgency = getSellUrgency(p.pos, p.age);
+    if (a?.cls === 'sell') {
+      actions.push({ priority: 0, type: 'sell', msg: `🔴 <strong>Sell ${p.name}</strong> (${p.pos}, age ${p.age}) — value window is closing`, color: 'var(--red)' });
+    } else if (urgency && urgency.months <= 12 && urgency.months > 0) {
+      actions.push({ priority: 1, type: 'cliff', msg: `🟠 <strong>Move ${p.name} soon</strong> (${p.pos}, age ${p.age}) — ${urgency.label} before value drops`, color: 'var(--orange)' });
+    } else if (urgency && urgency.months <= 24 && urgency.months > 12) {
+      actions.push({ priority: 2, type: 'watch', msg: `🟡 Watch: <strong>${p.name}</strong> (${p.pos}, age ${p.age}) — ${urgency.label} to value cliff`, color: 'var(--yellow)' });
+    }
   }
-  if (STATE.myPicks?.length < 4) actions.push({ type: 'picks', msg: `⚠️ Low pick capital — only ${STATE.myPicks?.length || 0} picks`, color: 'var(--yellow)' });
+  actions.sort((a, b) => a.priority - b.priority);
+  if (STATE.myPicks?.length < 4) actions.push({ priority: 3, type: 'picks', msg: `⚠️ Low pick capital — only ${STATE.myPicks?.length || 0} picks in the vault`, color: 'var(--yellow)' });
   const teVORP = STATE.myRoster.filter(p=>p.pos==='TE').reduce((s,p)=>s+p.vorp,0);
-  if (teVORP < -2000) actions.push({ type: 'te', msg: `📍 TE room VORP is weak (${fmt(teVORP)}) — consider upgrading`, color: 'var(--orange)' });
+  if (teVORP < -2000) actions.push({ priority: 4, type: 'te', msg: `📍 TE room VORP is weak (${fmt(teVORP)}) — consider upgrading`, color: 'var(--orange)' });
 
   document.getElementById('actionItems').innerHTML = actions.length
-    ? actions.map(a => `<div style="padding:10px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:12px;border-left:3px solid ${a.color}">${a.msg}</div>`).join('')
-    : '<div class="mono muted" style="font-size:12px;padding:12px">No urgent actions — roster looks healthy</div>';
+    ? actions.map(a => `<div style="padding:10px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:12px;border-left:3px solid ${a.color};line-height:1.5">${a.msg}</div>`).join('')
+    : '<div class="mono muted" style="font-size:12px;padding:12px">✅ No urgent actions — roster looks healthy</div>';
 
   // Roster overview table
   renderRosterTable('rosterOverviewBody', STATE.myRoster, false);
@@ -2117,19 +2125,25 @@ function analyzeTrade() {
   const b = STATE.tradeAssets.b;
   if (!a.length && !b.length) { document.getElementById('tradeVerdict').style.display = 'none'; return; }
 
-  // Stud factor: top asset premium
+  // Stud factor: tiered premium — elite studs are worth disproportionately more in SF
+  function getStudMultiplier(value) {
+    if (value >= 7000) return 1.30; // Franchise cornerstone (Mahomes tier)
+    if (value >= 5000) return 1.22; // Clear-cut stud
+    if (value >= 3500) return 1.15; // Strong starter
+    return 1.08;                    // Depth/role player
+  }
   function tradeScore(assets) {
     if (!assets.length) return 0;
     const sorted = [...assets].sort((x,y) => y.value - x.value);
-    const top = sorted[0].value;
+    const top = sorted[0];
     const rest = sorted.slice(1).reduce((s,x) => s+x.value, 0);
-    // TE premium: bonus for TEs
+    // TE premium: bonus for TEs (TE+ format scarcity)
     let teBonus = 0;
     for (const asset of assets) {
       if (asset.pos === 'TE') teBonus += asset.value * 0.08;
     }
-    // Stud factor: top asset worth 1.15x
-    return (top * 1.15) + (rest * 0.9) + teBonus;
+    // Tiered stud factor — non-linear value of elite assets
+    return (top.value * getStudMultiplier(top.value)) + (rest * 0.9) + teBonus;
   }
 
   const scoreA = tradeScore(a);
@@ -2725,11 +2739,22 @@ function calcRookieFitScore(rookie) {
   else if (rookie.value > 3500) score += 10;
   else if (rookie.value > 2000) score += 5;
 
-  // SF bonus for QBs
-  if (rookie.pos === 'QB') score += 10;
+  // SF bonus for QBs — conditional on actual QB room depth
+  if (rookie.pos === 'QB') {
+    const myQBs = STATE.myRoster.filter(p => p.pos === 'QB');
+    const topQBValue = myQBs.length ? Math.max(...myQBs.map(p => p.value)) : 0;
+    if (posNeed.count < 2) score += 12;
+    else if (topQBValue < 6000) score += 6;
+    else score -= 5; // already elite at QB, rookie QB not a priority
+  }
 
-  // TE premium bonus
-  if (rookie.pos === 'TE') score += 8;
+  // TE premium bonus — conditional on actual TE room weakness
+  if (rookie.pos === 'TE') {
+    const myTEVORP = STATE.myRoster.filter(p => p.pos === 'TE').reduce((s,p) => s+p.vorp, 0);
+    if (posNeed.count < 2) score += 12;
+    else if (myTEVORP < 0) score += 8;
+    else if (myTEVORP < 2000) score += 4;
+  }
 
   return Math.min(100, Math.max(0, Math.round(score)));
 }
