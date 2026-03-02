@@ -723,19 +723,98 @@
 
   .tag-taxi { background: rgba(180,76,255,0.2); color: var(--purple); }
   .tag-rookie { background: rgba(255,215,0,0.2); color: var(--gold); }
+  .tag-inj { background: rgba(255,68,68,0.2); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
+  .tag-role { background: rgba(255,140,66,0.2); color: var(--orange); border: 1px solid rgba(255,140,66,0.3); }
+  .tag-new-team { background: rgba(180,76,255,0.2); color: var(--purple); border: 1px solid rgba(180,76,255,0.3); }
+  .flag-tooltip { position:relative; display:inline-block; }
+  .flag-tooltip .tooltip-text {
+    visibility:hidden; opacity:0; transition:opacity 0.15s;
+    background:var(--surface3); color:var(--text); border:1px solid var(--border);
+    border-radius:6px; padding:6px 10px; font-size:11px; white-space:nowrap;
+    position:absolute; z-index:200; bottom:125%; left:50%; transform:translateX(-50%);
+    pointer-events:none; box-shadow:0 4px 16px rgba(0,0,0,0.5);
+  }
+  .flag-tooltip:hover .tooltip-text { visibility:visible; opacity:1; }
 
-  /* HISTORICAL DNA */
-  .comp-card { background:var(--surface3); border:1px solid var(--border); border-radius:8px; padding:12px; min-width:150px; flex:1; }
-  .comp-card.hit { border-top:3px solid var(--green); }
-  .comp-card.miss { border-top:3px solid var(--red); }
-  .comp-card.pending { border-top:3px solid var(--text-muted); }
-  .dna-expand { background:var(--surface); border-left:3px solid var(--accent); }
-  .metric-row { display:flex; justify-content:space-between; padding:3px 0; font-family:'IBM Plex Mono',monospace; font-size:11px; border-bottom:1px solid rgba(42,42,64,0.4); }
-  .metric-row:last-child { border-bottom:none; }
-  .mv-elite { color:var(--accent); }
-  .mv-good  { color:var(--green); }
-  .mv-avg   { color:var(--yellow); }
-  .mv-poor  { color:var(--red); }
+  /* WAR ROOM ALERTS BANNER */
+  .alerts-banner {
+    margin-bottom: 20px;
+  }
+  .alerts-banner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .alerts-banner-title {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .alerts-banner-title.all-clear { color: var(--green); }
+  .alert-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+    transition: transform 0.15s;
+  }
+  .alert-card:hover { transform: translateX(3px); }
+  .alert-card.priority-0 { border-left: 4px solid var(--red); background: rgba(255,68,68,0.04); }
+  .alert-card.priority-1 { border-left: 4px solid var(--orange); background: rgba(255,140,66,0.04); }
+  .alert-card.priority-2 { border-left: 4px solid var(--yellow); background: rgba(255,215,0,0.03); }
+  .alert-icon {
+    font-size: 20px;
+    min-width: 28px;
+    text-align: center;
+  }
+  .alert-body { flex: 1; }
+  .alert-player {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  .alert-detail {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .alert-countdown {
+    text-align: right;
+    min-width: 80px;
+  }
+  .alert-countdown-num {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 28px;
+    line-height: 1;
+  }
+  .alert-countdown-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .alert-countdown-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .alert-countdown-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
 </style>
 </head>
 <body>
@@ -776,6 +855,8 @@
 
   <!-- DASHBOARD TAB -->
   <div class="tab-content active" id="tab-dashboard">
+    <!-- WAR ROOM ALERTS BANNER -->
+    <div class="alerts-banner" id="alertsBanner"></div>
     <div class="grid-4" id="dashStatCards">
       <div class="stat-card">
         <div class="stat-value" id="ds-rank" style="color:var(--accent)">—</div>
@@ -1075,7 +1156,6 @@
               <th>KTC Value ↓</th>
               <th>Fit Score</th>
               <th>Pick Range</th>
-              <th>🧬 Top Comp</th>
             </tr>
           </thead>
           <tbody id="rookieBoardBody">
@@ -1115,7 +1195,7 @@ const CONFIG = {
   ARCHETYPES: {
     QB: [{label:'Young Developing Asset', max:24.99, cls:'young'},{label:'Peak Asset', max:30.99, cls:'peak'},{label:'Aging Contender', max:33.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}],
     WR: [{label:'Young Developing Asset', max:25.99, cls:'young'},{label:'Peak Asset', max:28.99, cls:'peak'},{label:'Aging Contender', max:30.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}],
-    RB: [{label:'Young Developing Asset', max:22.99, cls:'young'},{label:'Peak Asset', max:25.99, cls:'peak'},{label:'Sell Immediately', max:99, cls:'sell'}],
+    RB: [{label:'Young Developing Asset', max:22.99, cls:'young'},{label:'Peak Asset', max:25.99, cls:'peak'},{label:'Aging Contender', max:27.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}],
     TE: [{label:'Young Developing Asset', max:24.99, cls:'young'},{label:'Peak Asset', max:30.99, cls:'peak'},{label:'Aging Contender', max:32.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}]
   },
   // VORP replacement ranks — 12-team SF TE+ format
@@ -1152,6 +1232,17 @@ const CONFIG = {
   },
 
   // Pick values (KTC approximate)
+  PLAYER_FLAGS: {
+    'Patrick Mahomes':    [{ type:'inj',      severity:'high',   label:'ACL Recovery',        detail:'Torn ACL Week 16. Timeline uncertain for 2026 season start.' }],
+    'George Kittle':      [{ type:'inj',      severity:'high',   label:'Achilles Recovery',   detail:'Achilles injury. High-risk for 2026 — TE production deeply uncertain.' }],
+    'Alvin Kamara':       [{ type:'role',     severity:'medium', label:'Age/Role Risk',        detail:'Age 31 in 2026. Saints likely to reduce workload or move on.' }],
+    'Marvin Mims':        [{ type:'role',     severity:'medium', label:'Depth Chart Risk',     detail:'Competing for targets with Sutton/Dulcich in Denver. No guaranteed role.' }],
+    'Juwan Johnson':      [{ type:'role',     severity:'high',   label:'Low Opportunity',      detail:'TE2/TE3 role. Minimal target share behind elite competition.' }],
+    'Kendre Miller':      [{ type:'inj',      severity:'medium', label:'Injury History',       detail:'Recurring hamstring issues. Durability concern limits upside.' }],
+    'DeVonta Smith':      [{ type:'role',     severity:'low',    label:'System Watch',         detail:'Monitor target share under new OC — historically WR2 in Philly system.' }],
+    'DK Metcalf':         [{ type:'new-team', severity:'low',    label:'New QB Watch',         detail:'Adapting to new QB situation — monitor chemistry and target volume.' }],
+  },
+
   PICK_VALUES: {
     '2026 Early 1st': 5994, '2026 Mid 1st': 4687, '2026 Late 1st': 4283,
     '2026 Early 2nd': 3486, '2026 Mid 2nd': 3056, '2026 Late 2nd': 2798,
@@ -1244,6 +1335,26 @@ function getSellUrgency(pos, age) {
     }
   }
   return { months: 0, label: 'SELL NOW', color: 'var(--red)' };
+}
+
+function getPlayerFlags(name) {
+  return CONFIG.PLAYER_FLAGS?.[name] || [];
+}
+
+function renderFlags(name, compact) {
+  const flags = getPlayerFlags(name);
+  if (!flags.length) return '';
+  return flags.map(f => {
+    const cls = f.type === 'inj' ? 'tag-inj' : f.type === 'role' ? 'tag-role' : 'tag-new-team';
+    const icon = f.type === 'inj' ? '🩹' : f.type === 'role' ? '⚠️' : '🔄';
+    if (compact) {
+      return `<span class="flag-tooltip"><span class="tag ${cls}" style="font-size:8px;padding:1px 5px;margin-left:3px">${icon} ${f.label}</span><span class="tooltip-text">${f.detail}</span></span>`;
+    }
+    return `<div style="margin-top:4px;padding:4px 8px;background:rgba(0,0,0,0.2);border-radius:4px;border-left:2px solid ${f.severity==='high'?'var(--red)':f.severity==='medium'?'var(--orange)':'var(--yellow)'}">
+      <span class="tag ${cls}" style="font-size:8px">${icon} ${f.label}</span>
+      <span style="font-size:10px;color:var(--text-dim);margin-left:6px">${f.detail}</span>
+    </div>`;
+  }).join('');
 }
 
 function archetypeBadge(pos, age) {
@@ -1351,7 +1462,7 @@ async function fetchRosters() {
     const name = CONFIG.OWNER_MAP[r.owner_id];
     if (name) {
       // Combine players + taxi — picks live in taxi in dynasty leagues
-      const allIds = [...(r.players || []), ...(r.taxi || [])];
+      const allIds = [...new Set([...(r.players || []), ...(r.taxi || [])])];
       rosterMap[r.owner_id] = allIds;
       rosterIdMap[r.roster_id] = name;
       if (name === CONFIG.MY_TEAM_NAME) {
@@ -1545,7 +1656,13 @@ function buildAllRosters() {
     }
     if (unmatched.length) console.warn('⚠️ Unmatched players on YOUR roster:', unmatched);
     players.sort((a,b) => b.value - a.value);
-    allRosters[ownerName] = players;
+    const seenNames = new Set();
+    const dedupedPlayers = players.filter(p => {
+      if (seenNames.has(p.name)) return false;
+      seenNames.add(p.name);
+      return true;
+    });
+    allRosters[ownerName] = dedupedPlayers;
   }
   STATE.allRosters = allRosters;
   STATE.myRoster = allRosters[CONFIG.MY_TEAM_NAME] || [];
@@ -1704,7 +1821,125 @@ function isOnTaxi(player) {
 // ============================================================
 // RENDER FUNCTIONS
 // ============================================================
+function renderAlertsBanner() {
+  const container = document.getElementById('alertsBanner');
+  if (!container) return;
+
+  const alerts = [];
+
+  for (const p of STATE.myRoster) {
+    const a = getArchetype(p.pos, p.age);
+    const urgency = getSellUrgency(p.pos, p.age);
+    const flags = getPlayerFlags(p.name);
+
+    // Injury / role flags — highest priority
+    for (const f of flags) {
+      const icon = f.type === 'inj' ? '🩹' : f.type === 'role' ? '⚠️' : '🔄';
+      const color = f.severity === 'high' ? 'var(--red)' : f.severity === 'medium' ? 'var(--orange)' : 'var(--yellow)';
+      const pri = f.severity === 'high' ? 0 : f.severity === 'medium' ? 1 : 2;
+      alerts.push({
+        priority: pri,
+        icon,
+        player: p.name,
+        pos: p.pos,
+        headline: f.label,
+        detail: f.detail,
+        countdown: null,
+        countdownMax: null,
+        color,
+        type: f.type
+      });
+    }
+
+    // Sell immediately
+    if (a?.cls === 'sell') {
+      alerts.push({
+        priority: 0,
+        icon: '🔴',
+        player: p.name,
+        pos: p.pos,
+        headline: 'Sell Now',
+        detail: `Age ${p.age} — past value cliff for ${p.pos}. Trade window closing fast.`,
+        countdown: 0,
+        countdownMax: 36,
+        color: 'var(--red)',
+        type: 'sell'
+      });
+    }
+    // Approaching cliff — ≤ 12 months
+    else if (urgency && urgency.months > 0 && urgency.months <= 12) {
+      alerts.push({
+        priority: 1,
+        icon: '🟠',
+        player: p.name,
+        pos: p.pos,
+        headline: 'Move Soon',
+        detail: `Age ${p.age} — ${urgency.months} months before hitting value cliff. Sell high window is now.`,
+        countdown: urgency.months,
+        countdownMax: 12,
+        color: 'var(--orange)',
+        type: 'cliff'
+      });
+    }
+    // Approaching cliff — 13–24 months
+    else if (urgency && urgency.months > 12 && urgency.months <= 24) {
+      alerts.push({
+        priority: 2,
+        icon: '🟡',
+        player: p.name,
+        pos: p.pos,
+        headline: 'On the Clock',
+        detail: `Age ${p.age} — ${urgency.months} months to value cliff. Start monitoring trade market.`,
+        countdown: urgency.months,
+        countdownMax: 24,
+        color: 'var(--yellow)',
+        type: 'watch'
+      });
+    }
+  }
+
+  alerts.sort((a, b) => a.priority - b.priority);
+
+  if (!alerts.length) {
+    container.innerHTML = `
+      <div class="alerts-banner">
+        <div class="alerts-banner-header">
+          <div class="alerts-banner-title all-clear">✅ WAR ROOM — ALL CLEAR</div>
+          <div class="mono muted" style="font-size:10px">No urgent sell windows or injury flags</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const html = `
+    <div class="alerts-banner-header">
+      <div class="alerts-banner-title">⚠ WAR ROOM ALERTS <span style="font-size:13px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);font-weight:400;margin-left:8px">${alerts.length} ITEM${alerts.length !== 1 ? 'S' : ''} NEED ATTENTION</span></div>
+    </div>
+    ${alerts.map(al => {
+      const countdownHtml = al.countdown !== null ? `
+        <div class="alert-countdown">
+          <div class="alert-countdown-num" style="color:${al.color}">${al.countdown === 0 ? 'NOW' : al.countdown}</div>
+          <div class="alert-countdown-label">${al.countdown === 0 ? 'sell now' : 'months left'}</div>
+          <div class="alert-countdown-bar">
+            <div class="alert-countdown-fill" style="width:${al.countdown === 0 ? 100 : Math.round((1 - al.countdown/al.countdownMax)*100)}%;background:${al.color}"></div>
+          </div>
+        </div>` : '';
+      return `
+        <div class="alert-card priority-${al.priority}">
+          <div class="alert-icon">${al.icon}</div>
+          <div class="alert-body">
+            <div class="alert-player">${posPill(al.pos)} ${al.player} <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${al.color};font-weight:700;margin-left:4px">${al.headline.toUpperCase()}</span></div>
+            <div class="alert-detail">${al.detail}</div>
+          </div>
+          ${countdownHtml}
+        </div>`;
+    }).join('')}`;
+
+  container.innerHTML = html;
+}
+
 function renderDashboard() {
+  renderAlertsBanner();
   const stats = calcTeamStats(CONFIG.MY_TEAM_NAME);
   const rankings = STATE.powerRankings || calcPowerRankings();
   const myRank = rankings.findIndex(r => r.name === CONFIG.MY_TEAM_NAME) + 1;
@@ -1747,19 +1982,33 @@ function renderDashboard() {
   }).join('');
   document.getElementById('posBreakdown').innerHTML = posHtml;
 
-  // Action items
   const actions = [];
   for (const p of STATE.myRoster) {
     const a = getArchetype(p.pos, p.age);
-    if (a?.cls === 'sell') actions.push({ type: 'sell', msg: `🔴 Sell ${p.name} (${p.pos}, age ${p.age}) — ${a.label}`, color: 'var(--red)' });
+    const urgency = getSellUrgency(p.pos, p.age);
+    const flags = getPlayerFlags(p.name);
+    for (const f of flags) {
+      if (f.severity === 'high') {
+        const icon = f.type === 'inj' ? '🩹' : f.type === 'role' ? '⚠️' : '🔄';
+        actions.push({ priority: 0, type: 'flag', msg: `${icon} <strong>${p.name}</strong> — ${f.label}: ${f.detail}`, color: 'var(--red)' });
+      }
+    }
+    if (a?.cls === 'sell') {
+      actions.push({ priority: 0, type: 'sell', msg: `🔴 <strong>Sell ${p.name}</strong> (${p.pos}, age ${p.age}) — value window is closing`, color: 'var(--red)' });
+    } else if (urgency && urgency.months <= 12 && urgency.months > 0) {
+      actions.push({ priority: 1, type: 'cliff', msg: `🟠 <strong>Move ${p.name} soon</strong> (${p.pos}, age ${p.age}) — ${urgency.label} before value drops`, color: 'var(--orange)' });
+    } else if (urgency && urgency.months <= 24 && urgency.months > 12) {
+      actions.push({ priority: 2, type: 'watch', msg: `🟡 Watch: <strong>${p.name}</strong> (${p.pos}, age ${p.age}) — ${urgency.label} to value cliff`, color: 'var(--yellow)' });
+    }
   }
-  if (STATE.myPicks?.length < 4) actions.push({ type: 'picks', msg: `⚠️ Low pick capital — only ${STATE.myPicks?.length || 0} picks`, color: 'var(--yellow)' });
+  actions.sort((a, b) => a.priority - b.priority);
+  if (STATE.myPicks?.length < 4) actions.push({ priority: 3, type: 'picks', msg: `⚠️ Low pick capital — only ${STATE.myPicks?.length || 0} picks in the vault`, color: 'var(--yellow)' });
   const teVORP = STATE.myRoster.filter(p=>p.pos==='TE').reduce((s,p)=>s+p.vorp,0);
-  if (teVORP < -2000) actions.push({ type: 'te', msg: `📍 TE room VORP is weak (${fmt(teVORP)}) — consider upgrading`, color: 'var(--orange)' });
+  if (teVORP < -2000) actions.push({ priority: 4, type: 'te', msg: `📍 TE room VORP is weak (${fmt(teVORP)}) — consider upgrading`, color: 'var(--orange)' });
 
   document.getElementById('actionItems').innerHTML = actions.length
-    ? actions.map(a => `<div style="padding:10px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:12px;border-left:3px solid ${a.color}">${a.msg}</div>`).join('')
-    : '<div class="mono muted" style="font-size:12px;padding:12px">No urgent actions — roster looks healthy</div>';
+    ? actions.map(a => `<div style="padding:10px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:12px;border-left:3px solid ${a.color};line-height:1.5">${a.msg}</div>`).join('')
+    : '<div class="mono muted" style="font-size:12px;padding:12px">✅ No urgent actions — roster looks healthy</div>';
 
   // Roster overview table
   renderRosterTable('rosterOverviewBody', STATE.myRoster, false);
@@ -1779,7 +2028,7 @@ function renderRosterTable(tbodyId, players, full) {
     const vorpStyle = `color:${vorpColor(p.vorp)}`;
     return `<tr>
       <td>${posPill(p.pos)}</td>
-      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : ''}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}</td>
+      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : ''}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}${renderFlags(p.name, true)}</td>
       <td class="mono dim" style="font-size:11px">${p.team||'—'}</td>
       <td class="mono" style="font-size:12px">${p.age||'—'}</td>
       <td class="mono" style="color:var(--accent);font-size:12px">${fmt(p.value)}</td>
@@ -1843,7 +2092,7 @@ function toggleTeamRoster(teamName) {
             const a = getArchetype(p.pos, p.age);
             return `<tr>
               <td>${posPill(p.pos)}</td>
-              <td style="font-weight:500">${p.name}${p.rookie ? '<span class="tag tag-rookie">R</span>' : ''}</td>
+              <td style="font-weight:500">${p.name}${p.rookie ? '<span class="tag tag-rookie">R</span>' : ''}${renderFlags(p.name, true)}</td>
               <td class="mono" style="font-size:11px">${p.age||'—'}</td>
               <td class="mono" style="color:var(--accent);font-size:11px">${fmt(p.value)}</td>
               <td class="mono" style="font-size:11px;color:${vorpColor(p.vorp)}">${p.vorp>0?'+':''}${fmt(p.vorp)}</td>
@@ -2078,7 +2327,7 @@ function onTradeSearch(side) {
   if (!matches.length) { list.style.display = 'none'; return; }
   list.innerHTML = matches.map(p =>
     `<div class="autocomplete-item" onclick="addPlayerToTrade('${side}','${p.name.replace(/'/g,"\\'")}',${p.value},'${p.pos}',${p.age})">
-      <span>${posPill(p.pos)} ${p.name}</span>
+      <span>${posPill(p.pos)} ${p.name} ${renderFlags(p.name, true)}</span>
       <span class="mono" style="color:var(--accent);font-size:11px">${fmt(p.value)}</span>
     </div>`
   ).join('');
@@ -2118,7 +2367,7 @@ function renderTradeAssets() {
     document.getElementById(`tradeAssets_${side}`).innerHTML = assets.map((a, i) =>
       `<div class="trade-asset-item">
         ${a.pos !== 'PICK' ? posPill(a.pos) : '<span class="badge badge-aging">PICK</span>'}
-        <span style="flex:1;font-size:12px">${a.label}</span>
+        <span style="flex:1;font-size:12px">${a.label}${renderFlags(a.name, true)}</span>
         <span class="mono" style="color:var(--accent);font-size:11px">${fmt(a.value)}</span>
         <button class="remove-btn" onclick="removeAsset('${side}',${i})">✕</button>
       </div>`
@@ -2131,19 +2380,22 @@ function analyzeTrade() {
   const b = STATE.tradeAssets.b;
   if (!a.length && !b.length) { document.getElementById('tradeVerdict').style.display = 'none'; return; }
 
-  // Stud factor: top asset premium
+  function getStudMultiplier(value) {
+    if (value >= 7000) return 1.30;
+    if (value >= 5000) return 1.22;
+    if (value >= 3500) return 1.15;
+    return 1.08;
+  }
   function tradeScore(assets) {
     if (!assets.length) return 0;
     const sorted = [...assets].sort((x,y) => y.value - x.value);
-    const top = sorted[0].value;
+    const top = sorted[0];
     const rest = sorted.slice(1).reduce((s,x) => s+x.value, 0);
-    // TE premium: bonus for TEs
     let teBonus = 0;
     for (const asset of assets) {
       if (asset.pos === 'TE') teBonus += asset.value * 0.08;
     }
-    // Stud factor: top asset worth 1.15x
-    return (top * 1.15) + (rest * 0.9) + teBonus;
+    return (top.value * getStudMultiplier(top.value)) + (rest * 0.9) + teBonus;
   }
 
   const scoreA = tradeScore(a);
@@ -2739,11 +2991,19 @@ function calcRookieFitScore(rookie) {
   else if (rookie.value > 3500) score += 10;
   else if (rookie.value > 2000) score += 5;
 
-  // SF bonus for QBs
-  if (rookie.pos === 'QB') score += 10;
-
-  // TE premium bonus
-  if (rookie.pos === 'TE') score += 8;
+  if (rookie.pos === 'QB') {
+    const myQBs = STATE.myRoster.filter(p => p.pos === 'QB');
+    const topQBValue = myQBs.length ? Math.max(...myQBs.map(p => p.value)) : 0;
+    if (posNeed.count < 2) score += 12;
+    else if (topQBValue < 6000) score += 6;
+    else score -= 5;
+  }
+  if (rookie.pos === 'TE') {
+    const myTEVORP = STATE.myRoster.filter(p => p.pos === 'TE').reduce((s,p) => s+p.vorp, 0);
+    if (posNeed.count < 2) score += 12;
+    else if (myTEVORP < 0) score += 8;
+    else if (myTEVORP < 2000) score += 4;
+  }
 
   return Math.min(100, Math.max(0, Math.round(score)));
 }
@@ -2864,17 +3124,13 @@ function renderRookieBoard() {
 function renderRookieBoardTable(rookies) {
   const filter = STATE.rookieFilter || 'ALL';
   const filtered = filter === 'ALL' ? rookies : rookies.filter(r => r.pos === filter);
-  document.getElementById('rookieBoardBody').innerHTML = filtered.map((r) => {
+  document.getElementById('rookieBoardBody').innerHTML = filtered.map((r, i) => {
     const fit = calcRookieFitScore(r);
     const fitInfo = getFitLabel(fit);
     const overallRank = rookies.indexOf(r) + 1;
     const pickRange = getPickRange(overallRank);
     const isMyNeed = fit >= 65;
-    const prospect = buildProspect2026(r);
-    const comps = prospect ? findHistoricalComps(prospect) : [];
-    const topComp = comps[0];
-    const rowId = 'dna-' + r.name.replace(/[^a-z0-9]/gi,'');
-    return `<tr style="cursor:pointer;${isMyNeed ? 'background:rgba(0,212,255,0.04)' : ''}" onclick="toggleDNARow('${rowId}')">
+    return `<tr style="${isMyNeed ? 'background:rgba(0,212,255,0.04)' : ''}">
       <td class="mono" style="font-size:12px;color:var(--text-muted)">${overallRank}</td>
       <td style="font-weight:500">${r.name}${isMyNeed ? ' <span style="font-size:9px;color:var(--accent)">★</span>' : ''}</td>
       <td>${posPill(r.pos)}</td>
@@ -2890,14 +3146,6 @@ function renderRookieBoardTable(rookies) {
         </div>
       </td>
       <td class="mono" style="font-size:10px;color:var(--text-muted)">${pickRange}</td>
-      <td class="mono" style="font-size:10px">
-        ${topComp ? `<span style="color:var(--accent)">${topComp.n}</span> <span class="muted">${topComp.sim}%</span>` : '<span class="muted">—</span>'}
-      </td>
-    </tr>
-    <tr id="${rowId}" style="display:none">
-      <td colspan="9" style="padding:0" class="dna-expand">
-        ${renderDNAPanel(r, prospect, comps)}
-      </td>
     </tr>`;
   }).join('');
 }
@@ -2911,1354 +3159,6 @@ function filterRookieBoard(filter, btn) {
     .sort((a, b) => b.value - a.value);
   renderRookieBoardTable(rookies);
 }
-
-const PROSPECT_DB={wr:[
-{n:"Calvin Johnson",yr:"2000s",dc:2,f:4.35,dom:55.30,boa:19.90,ht:77,bmi:28.00,ras:10.00,ppg:null,fin:null},
-{n:"Andre Johnson",yr:"2000s",dc:3,f:4.40,dom:28.80,boa:20.20,ht:74,bmi:28.90,ras:9.98,ppg:null,fin:null},
-{n:"Torry Holt",yr:"2000s",dc:6,f:4.44,dom:41.00,boa:19.90,ht:73,bmi:25.30,ras:9.76,ppg:null,fin:null},
-{n:"Tim Brown",yr:"2000s",dc:6,f:4.39,dom:63.00,boa:19.00,ht:72,bmi:26.20,ras:null,ppg:null,fin:null},
-{n:"Plaxico Burress",yr:"2000s",dc:8,f:4.59,dom:45.50,boa:21.10,ht:77,bmi:27.40,ras:null,ppg:null,fin:null},
-{n:"Santana Moss",yr:"2000s",dc:16,f:4.31,dom:24.80,boa:19.30,ht:70,bmi:26.00,ras:null,ppg:null,fin:null},
-{n:"Marvin Harrison",yr:"2000s",dc:19,f:4.49,dom:53.40,boa:21.00,ht:72,bmi:24.50,ras:null,ppg:null,fin:null},
-{n:"Randy Moss",yr:"2000s",dc:21,f:4.36,dom:52.20,boa:20.60,ht:76,bmi:25.60,ras:9.67,ppg:null,fin:null},
-{n:"Dez Bryant",yr:"2000s",dc:24,f:4.57,dom:62.50,boa:18.80,ht:74,bmi:28.50,ras:9.05,ppg:null,fin:null},
-{n:"Santonio Holmes",yr:"2000s",dc:25,f:4.40,dom:48.60,boa:21.50,ht:71,bmi:26.80,ras:8.05,ppg:null,fin:null},
-{n:"Roddy White",yr:"2000s",dc:27,f:4.50,dom:50.50,boa:20.80,ht:73,bmi:27.40,ras:9.82,ppg:null,fin:null},
-{n:"Reggie Wayne",yr:"2000s",dc:30,f:4.45,dom:32.10,boa:18.80,ht:72,bmi:26.90,ras:null,ppg:null,fin:null},
-{n:"Isaac Bruce",yr:"2000s",dc:33,f:4.55,dom:31.00,boa:20.90,ht:72,bmi:24.40,ras:8.84,ppg:null,fin:null},
-{n:"Amani Toomer",yr:"2000s",dc:34,f:4.50,dom:27.00,boa:19.90,ht:75,bmi:24.60,ras:10.00,ppg:null,fin:null},
-{n:"Chad Johnson",yr:"2000s",dc:37,f:4.57,dom:34.40,boa:22.60,ht:73,bmi:25.30,ras:5.85,ppg:null,fin:null},
-{n:"Jordy Nelson",yr:"2000s",dc:37,f:4.51,dom:49.60,boa:20.30,ht:75,bmi:27.20,ras:7.40,ppg:null,fin:null},
-{n:"DeSean Jackson",yr:"2000s",dc:50,f:4.35,dom:32.10,boa:18.80,ht:70,bmi:25.10,ras:7.50,ppg:null,fin:null},
-{n:"Greg Jennings",yr:"2000s",dc:52,f:4.42,dom:46.50,boa:19.80,ht:71,bmi:27.50,ras:8.60,ppg:null,fin:null},
-{n:"Anquan Boldin",yr:"2000s",dc:54,f:4.73,dom:41.20,boa:19.90,ht:73,bmi:29.50,ras:3.36,ppg:null,fin:null},
-{n:"Steve Smith",yr:"2000s",dc:76,f:4.41,dom:31.00,boa:20.30,ht:69,bmi:27.30,ras:7.76,ppg:null,fin:null},
-{n:"Terrell Owens",yr:"2000s",dc:92,f:4.63,dom:31.90,boa:19.70,ht:75,bmi:26.60,ras:7.91,ppg:null,fin:null},
-{n:"Hines Ward",yr:"2000s",dc:92,f:null,dom:38.00,boa:20.30,ht:72,bmi:27.40,ras:6.13,ppg:null,fin:null},
-{n:"Derrick Mason",yr:"2000s",dc:98,f:4.55,dom:38.10,boa:21.50,ht:71,bmi:26.90,ras:4.81,ppg:null,fin:null},
-{n:"Brandon Marshall",yr:"2000s",dc:118,f:4.52,dom:42.50,boa:21.50,ht:76,bmi:28.00,ras:8.18,ppg:null,fin:null},
-{n:"Joe Horn",yr:"2000s",dc:131,f:4.47,dom:null,boa:null,ht:73,bmi:26.40,ras:null,ppg:null,fin:null},
-{n:"Antonio Brown",yr:"2000s",dc:186,f:4.56,dom:32.80,boa:19.20,ht:70,bmi:26.70,ras:3.85,ppg:null,fin:null},
-{n:"T.J. Houshmandzadeh",yr:"2000s",dc:196,f:4.61,dom:30.50,boa:22.90,ht:73,bmi:27.80,ras:null,ppg:null,fin:null},
-{n:"Donald Driver",yr:"2000s",dc:213,f:null,dom:null,boa:null,ht:72,bmi:26.30,ras:null,ppg:null,fin:null},
-{n:"Wes Welker",yr:"2000s",dc:null,f:4.70,dom:17.40,boa:20.40,ht:69,bmi:27.30,ras:3.27,ppg:null,fin:null},
-{n:"Doug Baldwin",yr:"2000s",dc:null,f:4.53,dom:27.00,boa:20.00,ht:70,bmi:27.10,ras:7.40,ppg:null,fin:null},
-{n:"A.J. Green",yr:"2011",dc:4,f:4.50,dom:28.00,boa:10.10,ht:75.62,bmi:25.70,ras:9.34,ppg:7.00,fin:14.00},
-{n:"Julio Jones",yr:"2011",dc:6,f:4.39,dom:30.00,boa:15.70,ht:74.75,bmi:27.50,ras:9.92,ppg:8.00,fin:8.00},
-{n:"Jonathan Baldwin",yr:"2011",dc:26,f:4.50,dom:28.00,boa:51.20,ht:76.38,bmi:28.00,ras:9.08,ppg:0.00,fin:0.00},
-{n:"Titus Young",yr:"2011",dc:44,f:4.49,dom:19.00,boa:16.80,ht:71.38,bmi:24.30,ras:5.30,ppg:0.00,fin:0.00},
-{n:"Torrey Smith",yr:"2011",dc:58,f:4.43,dom:27.00,boa:22.60,ht:72.88,bmi:27.80,ras:9.85,ppg:2.00,fin:29.00},
-{n:"Greg Little",yr:"2011",dc:59,f:4.53,dom:13.00,boa:13.10,ht:74.50,bmi:28.20,ras:9.56,ppg:0.00,fin:0.00},
-{n:"Randall Cobb",yr:"2011",dc:64,f:4.46,dom:21.00,boa:7.20,ht:70.25,bmi:27.50,ras:3.65,ppg:3.00,fin:16.00},
-{n:"Austin Pettis",yr:"2011",dc:78,f:4.61,dom:20.00,boa:-2.90,ht:74.62,bmi:26.10,ras:7.99,ppg:0.00,fin:0.00},
-{n:"Leonard Hankerson",yr:"2011",dc:79,f:4.43,dom:18.00,boa:20.30,ht:73.50,bmi:27.60,ras:7.35,ppg:0.00,fin:0.00},
-{n:"Vincent Brown",yr:"2011",dc:82,f:4.68,dom:23.00,boa:17.40,ht:71.25,bmi:26.50,ras:2.71,ppg:0.00,fin:0.00},
-{n:"Jerrel Jernigan",yr:"2011",dc:83,f:4.46,dom:20.00,boa:6.00,ht:68.88,bmi:27.90,ras:5.55,ppg:0.00,fin:0.00},
-{n:"Kris Durham",yr:"2011",dc:106,f:4.51,dom:8.00,boa:19.90,ht:77.25,bmi:25.50,ras:8.24,ppg:0.00,fin:0.00},
-{n:"Clyde Gates",yr:"2011",dc:110,f:4.37,dom:null,boa:null,ht:71.75,bmi:25.80,ras:8.07,ppg:0.00,fin:0.00},
-{n:"Greg Salas",yr:"2011",dc:111,f:4.56,dom:22.00,boa:15.80,ht:73.12,bmi:27.70,ras:8.85,ppg:0.00,fin:0.00},
-{n:"Cecil Shorts",yr:"2011",dc:113,f:4.59,dom:null,boa:null,ht:71.75,bmi:27.80,ras:8.23,ppg:1.00,fin:22.00},
-{n:"Tandon Doss",yr:"2011",dc:122,f:4.67,dom:20.00,boa:9.00,ht:74.00,bmi:26.60,ras:4.85,ppg:0.00,fin:0.00},
-{n:"Kealoha Pilares",yr:"2011",dc:129,f:4.47,dom:13.00,boa:-7.80,ht:69.88,bmi:28.80,ras:9.55,ppg:0.00,fin:0.00},
-{n:"Denarius Moore",yr:"2011",dc:145,f:4.45,dom:17.00,boa:34.80,ht:71.62,bmi:26.30,ras:7.79,ppg:0.00,fin:0.00},
-{n:"Jeremy Kerley",yr:"2011",dc:150,f:4.62,dom:11.00,boa:-21.90,ht:69.50,bmi:27.80,ras:4.95,ppg:0.00,fin:0.00},
-{n:"Ryan Whalen",yr:"2011",dc:162,f:4.62,dom:17.00,boa:3.20,ht:73.12,bmi:26.60,ras:9.20,ppg:0.00,fin:0.00},
-{n:"Dwayne Harris",yr:"2011",dc:171,f:4.55,dom:22.00,boa:0.20,ht:70.38,bmi:28.70,ras:2.73,ppg:0.00,fin:0.00},
-{n:"Aldrick Robinson",yr:"2011",dc:173,f:4.43,dom:23.00,boa:45.60,ht:69.62,bmi:26.40,ras:8.92,ppg:0.00,fin:0.00},
-{n:"Ronald Johnson",yr:"2011",dc:177,f:4.57,dom:14.00,boa:2.60,ht:71.25,bmi:27.80,ras:6.95,ppg:0.00,fin:0.00},
-{n:"Scotty McKnight",yr:"2011",dc:216,f:4.50,dom:23.00,boa:7.50,ht:70.50,bmi:26.10,ras:7.67,ppg:0.00,fin:0.00},
-{n:"Stephen Burton",yr:"2011",dc:225,f:4.56,dom:null,boa:null,ht:73.38,bmi:29.20,ras:6.74,ppg:0.00,fin:0.00},
-{n:"DeMarco Sampson",yr:"2011",dc:239,f:4.41,dom:21.00,boa:null,ht:74.00,bmi:26.20,ras:8.96,ppg:0.00,fin:0.00},
-{n:"Kamar Aiken",yr:"2011",dc:null,f:4.50,dom:20.00,boa:28.80,ht:73.12,bmi:27.60,ras:8.22,ppg:1.00,fin:31.00},
-{n:"Dontrelle Inman",yr:"2011",dc:null,f:4.52,dom:8.00,boa:15.80,ht:74.88,bmi:25.60,ras:7.88,ppg:0.00,fin:0.00},
-{n:"Andre Holmes",yr:"2011",dc:null,f:4.53,dom:null,boa:null,ht:76.38,bmi:27.10,ras:6.27,ppg:0.00,fin:0.00},
-{n:"Doug Baldwin",yr:"2011",dc:null,f:4.53,dom:13.00,boa:17.50,ht:69.75,bmi:27.10,ras:7.40,ppg:3.00,fin:10.00},
-{n:"Justin Blackmon",yr:"2012",dc:5,f:4.53,dom:28.00,boa:16.60,ht:72.88,bmi:27.30,ras:7.29,ppg:0.00,fin:0.00},
-{n:"Michael Floyd",yr:"2012",dc:13,f:4.47,dom:28.00,boa:15.20,ht:74.62,bmi:27.50,ras:7.50,ppg:1.00,fin:23.00},
-{n:"Kendall Wright",yr:"2012",dc:20,f:4.61,dom:29.00,boa:6.10,ht:70.25,bmi:28.10,ras:3.04,ppg:1.00,fin:22.00},
-{n:"A.J. Jenkins",yr:"2012",dc:30,f:4.39,dom:25.00,boa:31.20,ht:72.25,bmi:26.00,ras:8.96,ppg:0.00,fin:0.00},
-{n:"Brian Quick",yr:"2012",dc:33,f:4.55,dom:null,boa:null,ht:75.50,bmi:27.50,ras:6.02,ppg:0.00,fin:0.00},
-{n:"Stephen Hill",yr:"2012",dc:43,f:4.36,dom:26.00,boa:21.40,ht:76.00,bmi:26.20,ras:9.63,ppg:0.00,fin:0.00},
-{n:"Alshon Jeffery",yr:"2012",dc:45,f:4.53,dom:34.00,boa:32.30,ht:74.88,bmi:27.00,ras:9.01,ppg:6.00,fin:29.00},
-{n:"Ryan Broyles",yr:"2012",dc:54,f:4.57,dom:27.00,boa:4.10,ht:70.12,bmi:27.00,ras:null,ppg:0.00,fin:0.00},
-{n:"Rueben Randle",yr:"2012",dc:63,f:4.55,dom:24.00,boa:40.20,ht:74.88,bmi:26.00,ras:5.76,ppg:0.00,fin:0.00},
-{n:"DeVier Posey",yr:"2012",dc:69,f:4.50,dom:19.00,boa:10.70,ht:73.62,bmi:27.00,ras:8.77,ppg:0.00,fin:0.00},
-{n:"T.J. Graham",yr:"2012",dc:70,f:4.41,dom:10.00,boa:21.70,ht:71.38,bmi:25.10,ras:5.64,ppg:0.00,fin:0.00},
-{n:"Mohamed Sanu",yr:"2012",dc:83,f:4.67,dom:24.00,boa:-18.90,ht:73.50,bmi:27.80,ras:6.47,ppg:0.00,fin:0.00},
-{n:"T.Y. Hilton",yr:"2012",dc:93,f:4.39,dom:33.00,boa:27.60,ht:69.50,bmi:27.00,ras:5.29,ppg:7.00,fin:22.00},
-{n:"Chris Givens",yr:"2012",dc:97,f:4.41,dom:15.00,boa:31.80,ht:71.12,bmi:27.60,ras:7.42,ppg:0.00,fin:0.00},
-{n:"Travis Benjamin",yr:"2012",dc:101,f:4.36,dom:17.00,boa:30.70,ht:69.88,bmi:25.10,ras:6.52,ppg:0.00,fin:0.00},
-{n:"Joe Adams",yr:"2012",dc:105,f:4.55,dom:15.00,boa:6.70,ht:70.62,bmi:25.70,ras:3.65,ppg:0.00,fin:0.00},
-{n:"Devon Wylie",yr:"2012",dc:108,f:4.39,dom:8.00,boa:6.20,ht:69.25,bmi:27.50,ras:9.00,ppg:0.00,fin:0.00},
-{n:"Jarius Wright",yr:"2012",dc:119,f:4.42,dom:19.00,boa:27.00,ht:69.62,bmi:25.80,ras:7.08,ppg:0.00,fin:0.00},
-{n:"Keshawn Martin",yr:"2012",dc:122,f:4.45,dom:12.00,boa:4.50,ht:71.50,bmi:26.40,ras:7.77,ppg:0.00,fin:0.00},
-{n:"Nick Toon",yr:"2012",dc:123,f:4.49,dom:20.00,boa:10.70,ht:73.88,bmi:26.20,ras:9.17,ppg:0.00,fin:0.00},
-{n:"Greg Childs",yr:"2012",dc:134,f:4.55,dom:13.00,boa:12.50,ht:75.12,bmi:27.40,ras:9.65,ppg:0.00,fin:0.00},
-{n:"Danny Coale",yr:"2012",dc:145,f:4.50,dom:21.00,boa:17.30,ht:71.88,bmi:25.80,ras:6.69,ppg:0.00,fin:0.00},
-{n:"Marvin Jones",yr:"2012",dc:159,f:4.46,dom:20.00,boa:15.10,ht:73.88,bmi:25.70,ras:8.86,ppg:5.00,fin:25.00},
-{n:"Juron Criner",yr:"2012",dc:161,f:4.68,dom:21.00,boa:27.20,ht:74.50,bmi:28.20,ras:4.73,ppg:0.00,fin:0.00},
-{n:"B.J. Cunningham",yr:"2012",dc:173,f:4.59,dom:23.00,boa:9.90,ht:73.38,bmi:28.40,ras:3.24,ppg:0.00,fin:0.00},
-{n:"Marvin McNutt",yr:"2012",dc:184,f:4.54,dom:24.00,boa:27.10,ht:74.75,bmi:27.00,ras:7.75,ppg:0.00,fin:0.00},
-{n:"Tommy Streeter",yr:"2012",dc:188,f:4.40,dom:11.00,boa:48.30,ht:76.88,bmi:26.10,ras:8.68,ppg:0.00,fin:0.00},
-{n:"LaVon Brazill",yr:"2012",dc:196,f:4.48,dom:15.00,boa:5.60,ht:70.62,bmi:26.80,ras:5.03,ppg:0.00,fin:0.00},
-{n:"Rishard Matthews",yr:"2012",dc:212,f:4.62,dom:33.00,boa:19.60,ht:72.38,bmi:28.50,ras:6.28,ppg:2.00,fin:35.00},
-{n:"Toney Clemons",yr:"2012",dc:216,f:4.45,dom:11.00,boa:14.40,ht:74.12,bmi:27.00,ras:9.10,ppg:0.00,fin:0.00},
-{n:"Jeremy Ebert",yr:"2012",dc:220,f:4.46,dom:19.00,boa:26.30,ht:70.75,bmi:21.30,ras:7.84,ppg:0.00,fin:0.00},
-{n:"Junior Hemingway",yr:"2012",dc:223,f:4.53,dom:12.00,boa:36.70,ht:72.88,bmi:29.30,ras:9.72,ppg:0.00,fin:0.00},
-{n:"Jordan White",yr:"2012",dc:229,f:4.69,dom:26.00,boa:21.30,ht:71.75,bmi:28.20,ras:4.89,ppg:0.00,fin:0.00},
-{n:"Jermaine Kearse",yr:"2012",dc:null,f:4.58,dom:28.00,boa:32.40,ht:72.88,bmi:27.60,ras:6.18,ppg:0.00,fin:0.00},
-{n:"Griff Whalen",yr:"2012",dc:null,f:4.60,dom:7.00,boa:6.40,ht:70.50,bmi:24.40,ras:6.03,ppg:0.00,fin:0.00},
-{n:"Josh Gordon",yr:"2012",dc:null,f:4.57,dom:11.00,boa:44.20,ht:75.12,bmi:28.10,ras:8.93,ppg:1.00,fin:2.00},
-{n:"Cole Beasley",yr:"2012",dc:null,f:4.54,dom:18.00,boa:-8.00,ht:67.88,bmi:26.90,ras:4.94,ppg:2.00,fin:30.00},
-{n:"Rod Streater",yr:"2012",dc:null,f:4.51,dom:22.00,boa:null,ht:74.38,bmi:25.00,ras:9.33,ppg:0.00,fin:0.00},
-{n:"Tavon Austin",yr:"2013",dc:8,f:4.34,dom:22.00,boa:0.40,ht:68.50,bmi:26.50,ras:6.45,ppg:1.00,fin:25.00},
-{n:"DeAndre Hopkins",yr:"2013",dc:27,f:4.57,dom:27.00,boa:18.40,ht:73.00,bmi:28.20,ras:4.94,ppg:9.00,fin:16.00},
-{n:"Cordarrell Patterson",yr:"2013",dc:29,f:4.42,dom:19.00,boa:27.40,ht:73.88,bmi:27.70,ras:7.68,ppg:2.00,fin:20.00},
-{n:"Justin Hunter",yr:"2013",dc:34,f:4.44,dom:18.00,boa:13.40,ht:76.00,bmi:23.90,ras:8.68,ppg:0.00,fin:0.00},
-{n:"Robert Woods",yr:"2013",dc:41,f:4.51,dom:28.00,boa:-2.10,ht:72.38,bmi:27.30,ras:3.55,ppg:4.00,fin:18.00},
-{n:"Aaron Dobson",yr:"2013",dc:59,f:4.42,dom:21.00,boa:32.70,ht:74.75,bmi:26.20,ras:8.52,ppg:0.00,fin:0.00},
-{n:"Terrance Williams",yr:"2013",dc:76,f:4.52,dom:19.00,boa:19.20,ht:74.00,bmi:26.70,ras:4.76,ppg:0.00,fin:0.00},
-{n:"Keenan Allen",yr:"2013",dc:78,f:4.76,dom:32.00,boa:3.20,ht:74.00,bmi:26.40,ras:null,ppg:9.00,fin:17.00},
-{n:"Marquise Goodwin",yr:"2013",dc:80,f:4.27,dom:11.00,boa:0.10,ht:68.88,bmi:27.00,ras:9.27,ppg:0.00,fin:0.00},
-{n:"Markus Wheaton",yr:"2013",dc:81,f:4.45,dom:20.00,boa:14.20,ht:71.00,bmi:26.40,ras:8.38,ppg:0.00,fin:0.00},
-{n:"Stedman Bailey",yr:"2013",dc:94,f:4.52,dom:28.00,boa:29.10,ht:70.25,bmi:27.70,ras:5.64,ppg:0.00,fin:0.00},
-{n:"Ace Sanders",yr:"2013",dc:100,f:4.58,dom:14.00,boa:-6.20,ht:67.00,bmi:27.10,ras:1.89,ppg:0.00,fin:0.00},
-{n:"Josh Boyce",yr:"2013",dc:101,f:4.38,dom:27.00,boa:18.80,ht:71.12,bmi:28.70,ras:9.60,ppg:0.00,fin:0.00},
-{n:"Chris Harper",yr:"2013",dc:122,f:4.53,dom:24.00,boa:12.40,ht:72.75,bmi:30.20,ras:7.16,ppg:0.00,fin:0.00},
-{n:"Quinton Patton",yr:"2013",dc:127,f:4.53,dom:37.00,boa:22.80,ht:72.00,bmi:27.70,ras:5.64,ppg:0.00,fin:0.00},
-{n:"Kenny Stills",yr:"2013",dc:139,f:4.38,dom:20.00,boa:4.30,ht:72.50,bmi:26.30,ras:7.13,ppg:0.00,fin:0.00},
-{n:"Tavarres King",yr:"2013",dc:156,f:4.47,dom:14.00,boa:33.30,ht:72.25,bmi:25.60,ras:6.31,ppg:0.00,fin:0.00},
-{n:"Corey Fuller",yr:"2013",dc:163,f:4.43,dom:14.00,boa:37.80,ht:74.25,bmi:26.20,ras:5.83,ppg:0.00,fin:0.00},
-{n:"Ryan Swope",yr:"2013",dc:166,f:4.34,dom:20.00,boa:4.70,ht:72.12,bmi:27.80,ras:9.54,ppg:0.00,fin:0.00},
-{n:"Justin Brown",yr:"2013",dc:178,f:4.65,dom:14.00,boa:8.30,ht:75.12,bmi:26.10,ras:4.63,ppg:0.00,fin:0.00},
-{n:"Alan Bonner",yr:"2013",dc:187,f:4.59,dom:null,boa:null,ht:70.25,bmi:27.70,ras:2.70,ppg:0.00,fin:0.00},
-{n:"Cobi Hamilton",yr:"2013",dc:189,f:4.56,dom:18.00,boa:16.40,ht:73.75,bmi:27.20,ras:2.44,ppg:0.00,fin:0.00},
-{n:"Brice Butler",yr:"2013",dc:195,f:4.42,dom:8.00,boa:10.00,ht:75.25,bmi:26.60,ras:9.79,ppg:0.00,fin:0.00},
-{n:"Charles Johnson",yr:"2013",dc:202,f:4.44,dom:null,boa:null,ht:74.00,bmi:27.60,ras:9.50,ppg:0.00,fin:0.00},
-{n:"Kevin Dorsey",yr:"2013",dc:210,f:4.52,dom:11.00,boa:10.40,ht:73.38,bmi:27.30,ras:7.66,ppg:0.00,fin:0.00},
-{n:"Marquess Wilson",yr:"2013",dc:222,f:4.51,dom:29.00,boa:41.00,ht:74.62,bmi:22.40,ras:7.05,ppg:0.00,fin:0.00},
-{n:"Aaron Mellette",yr:"2013",dc:224,f:4.54,dom:null,boa:null,ht:74.38,bmi:27.90,ras:5.03,ppg:0.00,fin:0.00},
-{n:"Adam Thielen",yr:"2013",dc:null,f:4.54,dom:null,boa:null,ht:73.12,bmi:25.00,ras:7.23,ppg:7.00,fin:22.00},
-{n:"Kenbrell Thompkins",yr:"2013",dc:null,f:4.54,dom:16.00,boa:3.30,ht:72.62,bmi:25.10,ras:5.25,ppg:0.00,fin:0.00},
-{n:"Jaron Brown",yr:"2013",dc:null,f:4.45,dom:9.00,boa:9.50,ht:74.38,bmi:26.30,ras:9.72,ppg:0.00,fin:0.00},
-{n:"Sammy Watkins",yr:"2014",dc:4,f:4.43,dom:26.00,boa:9.70,ht:72.75,bmi:27.80,ras:8.45,ppg:2.00,fin:22.00},
-{n:"Mike Evans",yr:"2014",dc:7,f:4.53,dom:28.00,boa:26.60,ht:76.75,bmi:27.40,ras:7.00,ppg:11.00,fin:11.00},
-{n:"Odell Beckham Jr.",yr:"2014",dc:12,f:4.43,dom:26.00,boa:20.00,ht:71.25,bmi:27.60,ras:8.81,ppg:5.00,fin:11.00},
-{n:"Brandin Cooks",yr:"2014",dc:20,f:4.33,dom:25.00,boa:24.20,ht:69.75,bmi:27.10,ras:9.14,ppg:7.00,fin:20.00},
-{n:"Kelvin Benjamin",yr:"2014",dc:28,f:4.61,dom:20.00,boa:26.90,ht:77.00,bmi:28.10,ras:3.49,ppg:2.00,fin:20.00},
-{n:"Marqise Lee",yr:"2014",dc:39,f:4.52,dom:33.00,boa:19.80,ht:71.75,bmi:26.00,ras:7.11,ppg:0.00,fin:0.00},
-{n:"Jordan Matthews",yr:"2014",dc:42,f:4.46,dom:36.00,boa:12.40,ht:75.12,bmi:26.50,ras:9.38,ppg:2.00,fin:22.00},
-{n:"Paul Richardson",yr:"2014",dc:45,f:4.40,dom:28.00,boa:28.00,ht:72.38,bmi:23.70,ras:7.63,ppg:0.00,fin:0.00},
-{n:"Davante Adams",yr:"2014",dc:53,f:4.56,dom:34.00,boa:12.90,ht:72.88,bmi:28.00,ras:6.54,ppg:10.00,fin:9.00},
-{n:"Cody Latimer",yr:"2014",dc:56,f:4.44,dom:20.00,boa:24.40,ht:74.50,bmi:27.60,ras:9.93,ppg:0.00,fin:0.00},
-{n:"Allen Robinson",yr:"2014",dc:61,f:4.56,dom:26.00,boa:12.50,ht:74.62,bmi:28.20,ras:8.86,ppg:4.00,fin:14.00},
-{n:"Jarvis Landry",yr:"2014",dc:63,f:4.65,dom:22.00,boa:-3.40,ht:71.50,bmi:28.60,ras:0.27,ppg:6.00,fin:17.00},
-{n:"Josh Huff",yr:"2014",dc:86,f:4.51,dom:18.00,boa:25.10,ht:71.25,bmi:28.70,ras:6.61,ppg:0.00,fin:0.00},
-{n:"Donte Moncrief",yr:"2014",dc:90,f:4.40,dom:28.00,boa:26.00,ht:74.38,bmi:28.40,ras:9.46,ppg:0.00,fin:0.00},
-{n:"John Brown",yr:"2014",dc:91,f:4.34,dom:null,boa:null,ht:70.00,bmi:25.70,ras:6.46,ppg:2.00,fin:22.00},
-{n:"Dri Archer",yr:"2014",dc:97,f:4.26,dom:null,boa:8.80,ht:67.75,bmi:26.30,ras:8.98,ppg:0.00,fin:0.00},
-{n:"Jalen Saunders",yr:"2014",dc:100,f:4.44,dom:23.00,boa:26.00,ht:68.88,bmi:24.40,ras:3.96,ppg:0.00,fin:0.00},
-{n:"Bruce Ellington",yr:"2014",dc:102,f:4.45,dom:17.00,boa:12.30,ht:69.38,bmi:29.10,ras:9.22,ppg:0.00,fin:0.00},
-{n:"Shaquelle Evans",yr:"2014",dc:111,f:4.51,dom:14.00,boa:16.10,ht:73.25,bmi:28.10,ras:6.52,ppg:0.00,fin:0.00},
-{n:"Martavis Bryant",yr:"2014",dc:114,f:4.42,dom:11.00,boa:72.70,ht:75.75,bmi:25.70,ras:9.45,ppg:2.00,fin:45.00},
-{n:"Kevin Norwood",yr:"2014",dc:119,f:4.48,dom:10.00,boa:21.10,ht:74.00,bmi:25.40,ras:5.91,ppg:0.00,fin:0.00},
-{n:"Ryan Grant",yr:"2014",dc:130,f:4.64,dom:20.00,boa:28.80,ht:72.38,bmi:25.20,ras:5.09,ppg:0.00,fin:0.00},
-{n:"Devin Street",yr:"2014",dc:134,f:4.55,dom:23.00,boa:21.30,ht:74.88,bmi:24.70,ras:8.96,ppg:0.00,fin:0.00},
-{n:"Jared Abbrederis",yr:"2014",dc:164,f:4.50,dom:29.00,boa:19.80,ht:73.00,bmi:25.70,ras:4.66,ppg:0.00,fin:0.00},
-{n:"Robert Herron",yr:"2014",dc:169,f:4.48,dom:17.00,boa:15.60,ht:69.12,bmi:28.50,ras:6.70,ppg:0.00,fin:0.00},
-{n:"T.J. Jones",yr:"2014",dc:173,f:4.48,dom:6.00,boa:8.90,ht:71.62,bmi:25.50,ras:6.44,ppg:0.00,fin:0.00},
-{n:"Matt Hazel",yr:"2014",dc:174,f:4.50,dom:null,boa:null,ht:73.00,bmi:26.10,ras:6.97,ppg:0.00,fin:0.00},
-{n:"Walt Powell",yr:"2014",dc:180,f:4.63,dom:null,boa:null,ht:71.38,bmi:26.40,ras:2.93,ppg:0.00,fin:0.00},
-{n:"Quincy Enunwa",yr:"2014",dc:193,f:4.45,dom:15.00,boa:7.90,ht:74.00,bmi:28.90,ras:9.85,ppg:0.00,fin:0.00},
-{n:"Michael Campanaro",yr:"2014",dc:195,f:4.46,dom:24.00,boa:-0.10,ht:69.38,bmi:27.50,ras:9.03,ppg:0.00,fin:0.00},
-{n:"Jeff Janis",yr:"2014",dc:213,f:4.42,dom:null,boa:null,ht:74.88,bmi:27.40,ras:9.93,ppg:0.00,fin:0.00},
-{n:"James Wright",yr:"2014",dc:216,f:4.50,dom:3.00,boa:null,ht:72.62,bmi:26.50,ras:8.28,ppg:0.00,fin:0.00},
-{n:"Tevin Reese",yr:"2014",dc:217,f:4.46,dom:17.00,boa:14.20,ht:70.50,bmi:23.40,ras:8.99,ppg:0.00,fin:0.00},
-{n:"Jeremy Gallon",yr:"2014",dc:221,f:4.49,dom:23.00,boa:6.70,ht:67.50,bmi:29.00,ras:5.49,ppg:0.00,fin:0.00},
-{n:"Brandon Coleman",yr:"2014",dc:null,f:4.56,dom:22.00,boa:55.20,ht:78.00,bmi:26.00,ras:4.08,ppg:0.00,fin:0.00},
-{n:"Willie Snead",yr:"2014",dc:null,f:4.62,dom:28.00,boa:20.50,ht:71.00,bmi:27.20,ras:1.84,ppg:1.00,fin:31.00},
-{n:"Bennie Fowler",yr:"2014",dc:null,f:4.52,dom:12.00,boa:24.70,ht:73.25,bmi:28.60,ras:7.02,ppg:0.00,fin:0.00},
-{n:"Albert Wilson",yr:"2014",dc:null,f:4.43,dom:40.00,boa:19.40,ht:69.38,bmi:29.80,ras:7.18,ppg:0.00,fin:0.00},
-{n:"Allen Hurns",yr:"2014",dc:null,f:4.55,dom:19.00,boa:13.90,ht:73.25,bmi:27.00,ras:3.64,ppg:1.00,fin:16.00},
-{n:"Amari Cooper",yr:"2015",dc:4,f:4.42,dom:33.00,boa:12.50,ht:72.88,bmi:27.80,ras:8.57,ppg:8.00,fin:17.00},
-{n:"Kevin White",yr:"2015",dc:7,f:4.35,dom:27.00,boa:10.60,ht:74.62,bmi:26.90,ras:9.72,ppg:0.00,fin:0.00},
-{n:"DeVante Parker",yr:"2015",dc:14,f:4.45,dom:22.00,boa:39.90,ht:74.62,bmi:26.10,ras:9.75,ppg:1.00,fin:7.00},
-{n:"Nelson Agholor",yr:"2015",dc:20,f:4.42,dom:24.00,boa:14.70,ht:72.12,bmi:26.90,ras:7.38,ppg:2.00,fin:26.00},
-{n:"Breshad Perriman",yr:"2015",dc:26,f:4.30,dom:23.00,boa:49.70,ht:74.00,bmi:27.20,ras:9.95,ppg:0.00,fin:0.00},
-{n:"Phillip Dorsett",yr:"2015",dc:29,f:4.33,dom:16.00,boa:27.50,ht:69.38,bmi:26.50,ras:8.47,ppg:0.00,fin:0.00},
-{n:"Devin Smith",yr:"2015",dc:37,f:4.42,dom:24.00,boa:56.30,ht:72.38,bmi:26.60,ras:8.61,ppg:0.00,fin:0.00},
-{n:"Dorial Green-Beckham",yr:"2015",dc:40,f:4.49,dom:23.00,boa:19.00,ht:77.12,bmi:28.10,ras:6.30,ppg:0.00,fin:0.00},
-{n:"Tyler Lockett",yr:"2015",dc:69,f:4.40,dom:31.00,boa:6.90,ht:69.88,bmi:26.10,ras:7.71,ppg:5.00,fin:13.00},
-{n:"Jaelen Strong",yr:"2015",dc:70,f:4.44,dom:31.00,boa:18.30,ht:74.38,bmi:27.90,ras:9.14,ppg:0.00,fin:0.00},
-{n:"Chris Conley",yr:"2015",dc:76,f:4.35,dom:15.00,boa:20.70,ht:73.88,bmi:27.30,ras:9.68,ppg:0.00,fin:0.00},
-{n:"Sammie Coates",yr:"2015",dc:87,f:4.43,dom:23.00,boa:51.00,ht:73.38,bmi:28.00,ras:9.86,ppg:0.00,fin:0.00},
-{n:"Ty Montgomery",yr:"2015",dc:94,f:4.55,dom:18.00,boa:-0.70,ht:71.88,bmi:29.30,ras:7.75,ppg:0.00,fin:0.00},
-{n:"Jamison Crowder",yr:"2015",dc:102,f:4.56,dom:27.00,boa:18.90,ht:68.38,bmi:28.10,ras:1.31,ppg:1.00,fin:39.00},
-{n:"Justin Hardy",yr:"2015",dc:104,f:4.56,dom:28.00,boa:7.30,ht:70.25,bmi:27.50,ras:4.87,ppg:0.00,fin:0.00},
-{n:"Vince Mayle",yr:"2015",dc:120,f:4.67,dom:19.00,boa:27.50,ht:74.00,bmi:28.80,ras:4.63,ppg:0.00,fin:0.00},
-{n:"DeAndre Smelter",yr:"2015",dc:129,f:4.57,dom:30.00,boa:4.90,ht:74.00,bmi:29.00,ras:null,ppg:0.00,fin:0.00},
-{n:"Rashad Greene",yr:"2015",dc:131,f:4.53,dom:24.00,boa:4.20,ht:71.38,bmi:25.40,ras:5.37,ppg:0.00,fin:0.00},
-{n:"Stefon Diggs",yr:"2015",dc:138,f:4.46,dom:28.00,boa:13.30,ht:72.00,bmi:26.40,ras:5.66,ppg:8.00,fin:14.00},
-{n:"Tony Lippett",yr:"2015",dc:148,f:4.61,dom:17.00,boa:20.20,ht:74.50,bmi:24.60,ras:3.99,ppg:0.00,fin:0.00},
-{n:"J.J. Nelson",yr:"2015",dc:151,f:4.28,dom:22.00,boa:52.40,ht:70.25,bmi:22.40,ras:7.92,ppg:0.00,fin:0.00},
-{n:"Kenny Bell",yr:"2015",dc:154,f:4.42,dom:25.00,boa:15.90,ht:73.12,bmi:26.00,ras:9.20,ppg:0.00,fin:0.00},
-{n:"Keith Mumphery",yr:"2015",dc:167,f:4.54,dom:10.00,boa:21.80,ht:71.62,bmi:29.20,ras:4.36,ppg:0.00,fin:0.00},
-{n:"Kaelin Clay",yr:"2015",dc:168,f:4.51,dom:20.00,boa:8.60,ht:69.62,bmi:28.00,ras:2.18,ppg:0.00,fin:0.00},
-{n:"Geremy Davis",yr:"2015",dc:170,f:4.54,dom:21.00,boa:17.90,ht:74.38,bmi:27.70,ras:9.66,ppg:0.00,fin:0.00},
-{n:"Evan Spencer",yr:"2015",dc:171,f:4.50,dom:5.00,boa:-16.20,ht:73.38,bmi:27.40,ras:8.37,ppg:0.00,fin:0.00},
-{n:"Bud Sasser",yr:"2015",dc:185,f:4.58,dom:14.00,boa:9.80,ht:74.62,bmi:27.70,ras:7.45,ppg:0.00,fin:0.00},
-{n:"Darren Waller",yr:"2015",dc:188,f:4.46,dom:18.00,boa:5.90,ht:78.12,bmi:29.50,ras:9.05,ppg:2.00,fin:3.00},
-{n:"Neal Sterling",yr:"2015",dc:195,f:4.68,dom:null,boa:null,ht:75.38,bmi:31.30,ras:6.62,ppg:0.00,fin:0.00},
-{n:"Andre Debose",yr:"2015",dc:196,f:4.49,dom:6.00,boa:null,ht:71.62,bmi:26.40,ras:8.13,ppg:0.00,fin:0.00},
-{n:"Da'Ron Brown",yr:"2015",dc:208,f:4.54,dom:19.00,boa:17.70,ht:72.12,bmi:27.80,ras:8.12,ppg:0.00,fin:0.00},
-{n:"Dezmin Lewis",yr:"2015",dc:209,f:4.58,dom:null,boa:null,ht:75.75,bmi:26.00,ras:4.77,ppg:0.00,fin:0.00},
-{n:"Mario Alford",yr:"2015",dc:213,f:4.43,dom:22.00,boa:32.60,ht:68.50,bmi:27.40,ras:5.40,ppg:0.00,fin:0.00},
-{n:"Tre McBride",yr:"2015",dc:220,f:4.41,dom:null,boa:null,ht:72.25,bmi:28.50,ras:9.56,ppg:0.00,fin:0.00},
-{n:"Titus Davis",yr:"2015",dc:null,f:4.51,dom:33.00,boa:40.00,ht:72.75,bmi:25.90,ras:4.08,ppg:0.00,fin:0.00},
-{n:"Jake Kumerow",yr:"2015",dc:null,f:4.58,dom:null,boa:null,ht:76.50,bmi:24.70,ras:5.59,ppg:0.00,fin:0.00},
-{n:"Tyrell Wiliiams",yr:"2015",dc:null,f:4.48,dom:null,boa:null,ht:75.50,bmi:25.50,ras:9.89,ppg:1.00,fin:16.00},
-{n:"Damiere Byrd",yr:"2015",dc:null,f:4.32,dom:9.00,boa:36.90,ht:69.25,bmi:23.90,ras:9.18,ppg:0.00,fin:0.00},
-{n:"Corey Coleman",yr:"2016",dc:15,f:4.42,dom:24.00,boa:9.20,ht:71.00,bmi:27.10,ras:9.66,ppg:0.00,fin:0.00},
-{n:"Will Fuller",yr:"2016",dc:21,f:4.32,dom:26.00,boa:27.30,ht:72.12,bmi:25.20,ras:7.17,ppg:2.00,fin:41.00},
-{n:"Josh Doctson",yr:"2016",dc:22,f:4.50,dom:23.00,boa:20.40,ht:74.00,bmi:25.90,ras:9.41,ppg:0.00,fin:0.00},
-{n:"Laquon Treadwell",yr:"2016",dc:23,f:4.69,dom:21.00,boa:-8.80,ht:74.00,bmi:28.40,ras:3.34,ppg:0.00,fin:0.00},
-{n:"Sterling Shepard",yr:"2016",dc:41,f:4.48,dom:26.00,boa:20.80,ht:70.25,bmi:27.80,ras:7.62,ppg:3.00,fin:46.00},
-{n:"Micahel Thomas",yr:"2016",dc:48,f:4.57,dom:19.00,boa:7.20,ht:74.75,bmi:26.50,ras:9.12,ppg:4.00,fin:5.00},
-{n:"Tyler Boyd",yr:"2016",dc:56,f:4.58,dom:41.00,boa:6.20,ht:73.50,bmi:26.00,ras:4.27,ppg:3.00,fin:25.00},
-{n:"Braxton Miller",yr:"2016",dc:86,f:4.50,dom:4.00,boa:12.40,ht:73.38,bmi:26.50,ras:8.59,ppg:0.00,fin:0.00},
-{n:"Leonte Carroo",yr:"2016",dc:87,f:4.50,dom:32.00,boa:47.20,ht:71.88,bmi:28.60,ras:6.97,ppg:0.00,fin:0.00},
-{n:"Chris Moore",yr:"2016",dc:105,f:4.53,dom:15.00,boa:45.10,ht:73.00,bmi:27.20,ras:7.95,ppg:0.00,fin:0.00},
-{n:"Malcolm Mitchell",yr:"2016",dc:110,f:4.45,dom:19.00,boa:1.10,ht:71.62,bmi:26.90,ras:8.08,ppg:0.00,fin:0.00},
-{n:"Ricardo Louis",yr:"2016",dc:112,f:4.43,dom:14.00,boa:0.40,ht:74.00,bmi:27.60,ras:9.23,ppg:0.00,fin:0.00},
-{n:"Pharoh Cooper",yr:"2016",dc:115,f:4.70,dom:25.00,boa:19.20,ht:71.00,bmi:28.30,ras:2.06,ppg:0.00,fin:0.00},
-{n:"Demarcus Robinson",yr:"2016",dc:124,f:4.59,dom:18.00,boa:1.40,ht:73.38,bmi:26.80,ras:5.86,ppg:0.00,fin:0.00},
-{n:"Tajae Sharpe",yr:"2016",dc:129,f:4.55,dom:29.00,boa:11.00,ht:74.00,bmi:24.90,ras:5.31,ppg:0.00,fin:0.00},
-{n:"Jordan Payton",yr:"2016",dc:143,f:4.47,dom:18.00,boa:11.60,ht:73.12,bmi:27.30,ras:6.85,ppg:0.00,fin:0.00},
-{n:"Trevor Davis",yr:"2016",dc:154,f:4.42,dom:11.00,boa:24.50,ht:73.12,bmi:24.80,ras:9.14,ppg:0.00,fin:0.00},
-{n:"Tyreek Hill",yr:"2016",dc:156,f:4.34,dom:8.00,boa:null,ht:68.12,bmi:26.50,ras:9.39,ppg:9.00,fin:9.00},
-{n:"Rashard Higgins",yr:"2016",dc:163,f:4.64,dom:34.00,boa:14.50,ht:73.38,bmi:25.90,ras:1.66,ppg:0.00,fin:0.00},
-{n:"Jakeem Grant",yr:"2016",dc:171,f:4.42,dom:17.00,boa:8.00,ht:65.88,bmi:26.60,ras:6.39,ppg:0.00,fin:0.00},
-{n:"Kolby Listenbee",yr:"2016",dc:177,f:4.39,dom:8.00,boa:44.00,ht:72.00,bmi:26.70,ras:7.92,ppg:0.00,fin:0.00},
-{n:"Cody Core",yr:"2016",dc:184,f:4.47,dom:9.00,boa:15.50,ht:74.62,bmi:25.60,ras:7.39,ppg:0.00,fin:0.00},
-{n:"Mike Thomas",yr:"2016",dc:191,f:4.59,dom:28.00,boa:null,ht:73.25,bmi:26.40,ras:7.66,ppg:0.00,fin:0.00},
-{n:"Aaron Burbridge",yr:"2016",dc:198,f:4.56,dom:16.00,boa:3.30,ht:72.00,bmi:27.90,ras:2.78,ppg:0.00,fin:0.00},
-{n:"Devin Lucien",yr:"2016",dc:196,f:4.54,dom:12.00,boa:23.30,ht:72.50,bmi:29.30,ras:6.69,ppg:0.00,fin:0.00},
-{n:"Demarcus Ayers",yr:"2016",dc:200,f:4.72,dom:16.00,boa:11.60,ht:69.38,bmi:26.90,ras:0.89,ppg:0.00,fin:0.00},
-{n:"Daniel Braverman",yr:"2016",dc:201,f:4.58,dom:23.00,boa:-13.80,ht:69.88,bmi:25.10,ras:2.55,ppg:0.00,fin:0.00},
-{n:"Devin Fuller",yr:"2016",dc:209,f:4.44,dom:10.00,boa:-18.80,ht:72.00,bmi:26.30,ras:8.34,ppg:0.00,fin:0.00},
-{n:"Charone Peake",yr:"2016",dc:212,f:4.45,dom:6.00,boa:-7.30,ht:74.38,bmi:26.80,ras:5.76,ppg:0.00,fin:0.00},
-{n:"Kenny Lawler",yr:"2016",dc:214,f:4.64,dom:16.00,boa:-3.80,ht:74.50,bmi:26.10,ras:2.08,ppg:0.00,fin:0.00},
-{n:"Geronimo Allison",yr:"2016",dc:null,f:4.67,dom:23.00,boa:30.30,ht:75.25,bmi:24.50,ras:2.72,ppg:0.00,fin:0.00},
-{n:"Alex Erickson",yr:"2016",dc:null,f:4.59,dom:23.00,boa:12.90,ht:71.88,bmi:26.40,ras:6.94,ppg:0.00,fin:0.00},
-{n:"Johnny Holton",yr:"2016",dc:null,f:4.54,dom:11.00,boa:42.70,ht:72.62,bmi:25.10,ras:3.79,ppg:0.00,fin:0.00},
-{n:"Jaydon Mickens",yr:"2016",dc:null,f:4.59,dom:17.00,boa:-7.30,ht:69.88,bmi:25.00,ras:6.79,ppg:0.00,fin:0.00},
-{n:"Corey Davis",yr:"2017",dc:5,f:4.53,dom:42.00,boa:20.60,ht:74.75,bmi:26.10,ras:null,ppg:1.00,fin:31.00},
-{n:"Mike Williams",yr:"2017",dc:7,f:4.59,dom:16.00,boa:27.30,ht:75.75,bmi:26.50,ras:7.24,ppg:2.00,fin:21.00},
-{n:"John Ross",yr:"2017",dc:9,f:4.22,dom:18.00,boa:20.60,ht:70.75,bmi:26.20,ras:9.51,ppg:0.00,fin:0.00},
-{n:"Zay Jones",yr:"2017",dc:37,f:4.45,dom:26.00,boa:-3.90,ht:74.12,bmi:25.80,ras:9.71,ppg:0.00,fin:0.00},
-{n:"Curtis Samuel",yr:"2017",dc:40,f:4.31,dom:15.00,boa:2.30,ht:70.62,bmi:27.30,ras:7.46,ppg:1.00,fin:25.00},
-{n:"Juju Smith-Schuster",yr:"2017",dc:62,f:4.54,dom:27.00,boa:20.40,ht:73.38,bmi:28.40,ras:7.33,ppg:3.00,fin:14.00},
-{n:"Cooper Kupp",yr:"2017",dc:69,f:4.62,dom:31.00,boa:null,ht:73.75,bmi:26.20,ras:5.00,ppg:5.00,fin:22.00},
-{n:"Taywan Taylor",yr:"2017",dc:72,f:4.50,dom:22.00,boa:26.00,ht:71.00,bmi:28.30,ras:8.70,ppg:0.00,fin:0.00},
-{n:"ArDarius Stewart",yr:"2017",dc:79,f:4.49,dom:17.00,boa:14.90,ht:71.12,bmi:28.40,ras:5.89,ppg:0.00,fin:0.00},
-{n:"Carlos Henderson",yr:"2017",dc:82,f:4.46,dom:22.00,boa:41.90,ht:71.00,bmi:27.80,ras:5.75,ppg:0.00,fin:0.00},
-{n:"Chris Godwin",yr:"2017",dc:84,f:4.42,dom:26.00,boa:19.20,ht:73.00,bmi:27.60,ras:9.66,ppg:4.00,fin:18.00},
-{n:"Kenny Golladay",yr:"2017",dc:96,f:4.50,dom:41.00,boa:20.40,ht:75.75,bmi:26.50,ras:8.95,ppg:2.00,fin:14.00},
-{n:"Chad Williams",yr:"2017",dc:98,f:4.45,dom:null,boa:null,ht:72.50,bmi:28.10,ras:9.01,ppg:0.00,fin:0.00},
-{n:"Amara Darboh",yr:"2017",dc:106,f:4.45,dom:26.00,boa:17.40,ht:73.62,bmi:27.50,ras:9.60,ppg:0.00,fin:0.00},
-{n:"Dede Westbrook",yr:"2017",dc:99,f:4.44,dom:27.00,boa:24.50,ht:71.62,bmi:24.10,ras:4.84,ppg:0.00,fin:0.00},
-{n:"Josh Reynolds",yr:"2017",dc:106,f:4.52,dom:28.00,boa:37.20,ht:74.88,bmi:24.20,ras:9.10,ppg:0.00,fin:0.00},
-{n:"Mack Hollins",yr:"2017",dc:108,f:4.53,dom:17.00,boa:65.40,ht:76.00,bmi:26.90,ras:null,ppg:0.00,fin:0.00},
-{n:"Josh Malone",yr:"2017",dc:118,f:4.40,dom:18.00,boa:33.10,ht:74.75,bmi:26.00,ras:7.03,ppg:0.00,fin:0.00},
-{n:"Ryan Switzer",yr:"2017",dc:123,f:4.51,dom:19.00,boa:-5.00,ht:68.50,bmi:27.50,ras:4.83,ppg:0.00,fin:0.00},
-{n:"Jehu Chesson",yr:"2017",dc:129,f:4.47,dom:14.00,boa:19.40,ht:74.88,bmi:25.50,ras:7.95,ppg:0.00,fin:0.00},
-{n:"Chad Hansen",yr:"2017",dc:131,f:4.53,dom:17.00,boa:8.40,ht:73.88,bmi:25.90,ras:7.39,ppg:0.00,fin:0.00},
-{n:"Shelton Gibson",yr:"2017",dc:150,f:4.50,dom:20.00,boa:64.40,ht:70.75,bmi:26.60,ras:3.98,ppg:0.00,fin:0.00},
-{n:"Rodney Adams",yr:"2017",dc:155,f:4.44,dom:19.00,boa:7.50,ht:73.25,bmi:24.90,ras:6.02,ppg:0.00,fin:0.00},
-{n:"Isaiah McKenzie",yr:"2017",dc:157,f:4.42,dom:12.00,boa:15.40,ht:67.50,bmi:27.10,ras:6.37,ppg:0.00,fin:0.00},
-{n:"DeAngelo Yancey",yr:"2017",dc:160,f:4.58,dom:21.00,boa:54.90,ht:73.62,bmi:28.20,ras:9.08,ppg:0.00,fin:0.00},
-{n:"Trent Taylor",yr:"2017",dc:162,f:4.63,dom:26.00,boa:-0.30,ht:68.00,bmi:27.50,ras:4.00,ppg:0.00,fin:0.00},
-{n:"Robert Davis",yr:"2017",dc:185,f:4.44,dom:24.00,boa:14.20,ht:74.62,bmi:27.40,ras:9.79,ppg:0.00,fin:0.00},
-{n:"Stacy Coley",yr:"2017",dc:193,f:4.45,dom:17.00,boa:-4.90,ht:71.88,bmi:26.40,ras:4.46,ppg:0.00,fin:0.00},
-{n:"David Moore",yr:"2017",dc:200,f:4.48,dom:null,boa:null,ht:72.62,bmi:28.90,ras:8.99,ppg:0.00,fin:0.00},
-{n:"Isaiah Ford",yr:"2017",dc:211,f:4.61,dom:32.00,boa:15.90,ht:73.00,bmi:26.60,ras:5.06,ppg:0.00,fin:0.00},
-{n:"Noah Brown",yr:"2017",dc:213,f:4.64,dom:9.00,boa:14.90,ht:74.00,bmi:28.50,ras:6.88,ppg:0.00,fin:0.00},
-{n:"Malachi Dupre",yr:"2017",dc:221,f:4.52,dom:26.00,boa:15.30,ht:74.50,bmi:25.20,ras:7.20,ppg:0.00,fin:0.00},
-{n:"Tim Patrick",yr:"2017",dc:null,f:4.52,dom:16.00,boa:9.80,ht:76.00,bmi:25.30,ras:9.52,ppg:0.00,fin:0.00},
-{n:"Zach Pascal",yr:"2017",dc:null,f:4.55,dom:30.00,boa:11.20,ht:73.75,bmi:28.10,ras:8.18,ppg:0.00,fin:0.00},
-{n:"Kendrick Bourne",yr:"2017",dc:null,f:4.68,dom:null,boa:null,ht:73.25,bmi:26.80,ras:4.96,ppg:0.00,fin:0.00},
-{n:"Greg Ward",yr:"2017",dc:null,f:4.64,dom:null,boa:null,ht:70.75,bmi:25.90,ras:3.02,ppg:0.00,fin:0.00},
-{n:"D.J. Moore",yr:"2018",dc:24,f:4.42,dom:34.00,boa:21.60,ht:72.00,bmi:9.62,ras:103.62,ppg:9.60,fin:13.90},
-{n:"Calvin Ridley",yr:"2018",dc:26,f:4.43,dom:29.00,boa:3.30,ht:72.50,bmi:9.12,ras:104.12,ppg:5.10,fin:12.40},
-{n:"Courtland Sutton",yr:"2018",dc:40,f:4.54,dom:27.00,boa:37.50,ht:75.38,bmi:9.75,ras:107.75,ppg:9.80,fin:16.50},
-{n:"Dante Pettis",yr:"2018",dc:44,f:4.53,dom:18.00,boa:10.40,ht:72.50,bmi:9.50,ras:104.75,ppg:8.00,fin:13.80},
-{n:"Christian Kirk",yr:"2018",dc:47,f:4.47,dom:30.00,boa:-4.70,ht:70.38,bmi:9.88,ras:100.75,ppg:6.30,fin:12.20},
-{n:"Anthony Miller",yr:"2018",dc:51,f:4.55,dom:30.00,boa:12.90,ht:71.12,bmi:10.62,ras:102.75,ppg:9.30,fin:15.10},
-{n:"James Washington",yr:"2018",dc:60,f:4.54,dom:27.00,boa:31.10,ht:71.00,bmi:9.75,ras:103.38,ppg:5.60,fin:19.80},
-{n:"DJ Chark",yr:"2018",dc:61,f:4.34,dom:17.00,boa:45.40,ht:74.88,bmi:9.25,ras:107.25,ppg:9.90,fin:20.50},
-{n:"Michael Gallup",yr:"2018",dc:81,f:4.51,dom:38.00,boa:9.70,ht:72.75,bmi:9.25,ras:104.25,ppg:5.90,fin:15.30},
-{n:"Tre'Quan Smith",yr:"2018",dc:91,f:4.49,dom:31.00,boa:31.60,ht:73.75,bmi:9.50,ras:107.12,ppg:6.90,fin:16.40},
-{n:"Keke Coutee",yr:"2018",dc:99,f:4.43,dom:17.00,boa:19.00,ht:69.75,bmi:8.38,ras:99.62,ppg:5.70,fin:15.20},
-{n:"Antonio Calloway",yr:"2018",dc:101,f:4.41,dom:23.00,boa:29.30,ht:70.62,bmi:9.50,ras:102.12,ppg:6.20,fin:15.70},
-{n:"DaeSean Hamilton",yr:"2018",dc:109,f:4.57,dom:21.00,boa:-1.40,ht:72.62,bmi:9.38,ras:103.62,ppg:8.10,fin:13.30},
-{n:"Jaleel Scott",yr:"2018",dc:128,f:4.56,dom:19.00,boa:21.70,ht:76.75,bmi:10.50,ras:110.25,ppg:7.60,fin:13.80},
-{n:"J'Mon Moore",yr:"2018",dc:129,f:4.60,dom:19.00,boa:16.50,ht:74.62,bmi:9.38,ras:107.50,ppg:8.40,fin:15.70},
-{n:"Justin Watson",yr:"2018",dc:135,f:4.49,dom:null,boa:null,ht:74.38,bmi:9.25,ras:108.12,ppg:9.60,fin:13.40},
-{n:"Daurice Fountain",yr:"2018",dc:150,f:4.56,dom:null,boa:null,ht:73.50,bmi:10.12,ras:107.50,ppg:8.00,fin:14.30},
-{n:"Jordan Lasley",yr:"2018",dc:153,f:4.50,dom:16.00,boa:30.00,ht:73.00,bmi:9.62,ras:105.75,ppg:4.50,fin:16.80},
-{n:"Marquez Valdes-Scantling",yr:"2018",dc:165,f:4.37,dom:15.00,boa:19.90,ht:76.00,bmi:10.25,ras:108.25,ppg:9.30,fin:15.40},
-{n:"Damion Ratley",yr:"2018",dc:161,f:4.44,dom:10.00,boa:54.00,ht:73.75,bmi:9.50,ras:104.75,ppg:9.00,fin:19.60},
-{n:"Deon Cain",yr:"2018",dc:171,f:4.43,dom:18.00,boa:34.80,ht:73.88,bmi:8.75,ras:106.88,ppg:6.50,fin:15.70},
-{n:"Ray-Ray McCloud",yr:"2018",dc:173,f:4.53,dom:9.00,boa:-16.70,ht:69.50,bmi:9.25,ras:99.75,ppg:3.70,fin:9.70},
-{n:"Dylan Cantrell",yr:"2018",dc:177,f:4.59,dom:10.00,boa:-3.10,ht:74.88,bmi:9.25,ras:106.25,ppg:9.90,fin:11.90},
-{n:"Russell Gage",yr:"2018",dc:180,f:4.55,dom:8.00,boa:-4.40,ht:72.00,bmi:9.12,ras:105.00,ppg:8.00,fin:13.30},
-{n:"Equanimeous St. Brown",yr:"2018",dc:193,f:4.48,dom:18.00,boa:21.60,ht:76.75,bmi:9.75,ras:109.75,ppg:9.80,fin:16.10},
-{n:"Cedrick Wilson",yr:"2018",dc:194,f:4.55,dom:35.00,boa:34.20,ht:74.25,bmi:9.75,ras:105.75,ppg:6.90,fin:19.00},
-{n:"Braxton Berrios",yr:"2018",dc:196,f:4.49,dom:10.00,boa:-14.30,ht:68.62,bmi:9.25,ras:96.62,ppg:5.70,fin:11.80},
-{n:"Javon Wims",yr:"2018",dc:198,f:4.53,dom:17.00,boa:13.90,ht:74.88,bmi:9.25,ras:106.38,ppg:5.40,fin:14.70},
-{n:"Marcell Ateman",yr:"2018",dc:202,f:4.62,dom:13.00,boa:28.90,ht:76.50,bmi:9.88,ras:109.38,ppg:5.20,fin:16.90},
-{n:"Richie James",yr:"2018",dc:214,f:4.48,dom:26.00,boa:11.90,ht:70.12,bmi:9.25,ras:101.38,ppg:6.00,fin:13.40},
-{n:"Auden Tate",yr:"2018",dc:227,f:4.68,dom:21.00,boa:9.50,ht:76.88,bmi:9.38,ras:110.62,ppg:1.80,fin:14.70},
-{n:"Austin Proehl",yr:"2018",dc:229,f:null,dom:8.00,boa:12.00,ht:69.12,bmi:8.50,ras:98.00,ppg:3.60,fin:13.90},
-{n:"Trey Quinn",yr:"2018",dc:230,f:4.55,dom:15.00,boa:-22.00,ht:71.38,bmi:10.12,ras:102.12,ppg:7.00,fin:11.10},
-{n:"Allen Lazard",yr:"2018",dc:null,f:4.55,dom:28.00,boa:18.80,ht:76.62,bmi:9.75,ras:108.88,ppg:8.60,fin:13.90},
-{n:"Byron Pringle",yr:"2018",dc:null,f:4.46,dom:33.00,boa:51.70,ht:73.12,bmi:9.25,ras:105.12,ppg:7.30,fin:19.60},
-{n:"Robert Foster",yr:"2018",dc:null,f:4.41,dom:3.00,boa:-10.70,ht:73.62,bmi:9.25,ras:105.75,ppg:6.60,fin:11.10},
-{n:"Trent Sherfield",yr:"2018",dc:null,f:4.50,dom:18.00,boa:15.90,ht:72.25,bmi:9.62,ras:104.12,ppg:8.90,fin:13.70},
-{n:"Marquise Brown",yr:"2019",dc:25,f:null,dom:24.00,boa:3.29,ht:69.38,bmi:24.50,ras:null,ppg:2.00,fin:35.00},
-{n:"N'Keal Harry",yr:"2019",dc:32,f:4.53,dom:32.00,boa:2.75,ht:74.88,bmi:29.30,ras:8.45,ppg:0.00,fin:0.00},
-{n:"Deebo Samuel",yr:"2019",dc:36,f:4.48,dom:17.00,boa:1.99,ht:71.25,bmi:29.80,ras:7.92,ppg:4.00,fin:20.00},
-{n:"A.J. Brown",yr:"2019",dc:51,f:4.49,dom:25.00,boa:2.99,ht:72.50,bmi:30.60,ras:8.60,ppg:null,fin:null},
-{n:"Mecole Hardman",yr:"2019",dc:56,f:4.33,dom:11.00,boa:1.51,ht:70.25,bmi:26.80,ras:8.30,ppg:0.00,fin:0.00},
-{n:"JJ Arcega-Whiteside",yr:"2019",dc:57,f:4.54,dom:29.00,boa:2.29,ht:74.00,bmi:28.90,ras:6.16,ppg:0.00,fin:0.00},
-{n:"Parris Campbell",yr:"2019",dc:59,f:4.31,dom:13.00,boa:1.77,ht:71.88,bmi:27.80,ras:9.76,ppg:0.00,fin:0.00},
-{n:"Andy Isabella",yr:"2019",dc:62,f:4.31,dom:26.00,boa:4.13,ht:68.75,bmi:27.80,ras:7.27,ppg:0.00,fin:0.00},
-{n:"D.K. Metcalf",yr:"2019",dc:64,f:4.33,dom:12.00,boa:1.49,ht:75.38,bmi:28.50,ras:9.66,ppg:null,fin:null},
-{n:"Diontae Johnson",yr:"2019",dc:66,f:4.53,dom:23.00,boa:3.02,ht:70.50,bmi:26.30,ras:4.21,ppg:2.00,fin:16.00},
-{n:"Jalen Hurd",yr:"2019",dc:67,f:4.69,dom:11.00,boa:2.31,ht:76.62,bmi:26.80,ras:8.22,ppg:0.00,fin:0.00},
-{n:"Terry McLaurin",yr:"2019",dc:76,f:4.35,dom:11.00,boa:1.19,ht:72.12,bmi:28.20,ras:9.57,ppg:null,fin:null},
-{n:"Miles Boykin",yr:"2019",dc:93,f:4.42,dom:14.00,boa:2.09,ht:75.75,bmi:26.80,ras:9.94,ppg:0.00,fin:0.00},
-{n:"Hakeem Butler",yr:"2019",dc:97,f:4.48,dom:23.00,boa:3.65,ht:77.62,bmi:26.90,ras:9.47,ppg:0.00,fin:0.00},
-{n:"Gary Jennings",yr:"2019",dc:114,f:4.42,dom:14.00,boa:2.28,ht:73.00,bmi:28.20,ras:9.04,ppg:0.00,fin:0.00},
-{n:"Riley Ridley",yr:"2019",dc:120,f:4.58,dom:13.00,boa:1.39,ht:73.25,bmi:26.30,ras:4.57,ppg:0.00,fin:0.00},
-{n:"Hunter Renfrow",yr:"2019",dc:139,f:4.59,dom:13.00,boa:1.28,ht:70.25,bmi:26.40,ras:2.94,ppg:1.00,fin:11.00},
-{n:"Darius Slayton",yr:"2019",dc:161,f:4.39,dom:19.00,boa:1.76,ht:73.00,bmi:25.10,ras:8.92,ppg:1.00,fin:35.00},
-{n:"KeeSean Johnson",yr:"2019",dc:161,f:4.60,dom:29.00,boa:3.05,ht:73.12,bmi:26.50,ras:3.21,ppg:0.00,fin:0.00},
-{n:"Travis Fulgham",yr:"2019",dc:171,f:4.58,dom:18.00,boa:2.26,ht:74.38,bmi:27.60,ras:8.01,ppg:0.00,fin:0.00},
-{n:"Juwann Winfree",yr:"2019",dc:174,f:4.58,dom:9.00,boa:0.79,ht:73.12,bmi:28.50,ras:7.16,ppg:0.00,fin:0.00},
-{n:"Marcus Green",yr:"2019",dc:190,f:4.46,dom:25.00,boa:null,ht:67.88,bmi:28.90,ras:7.24,ppg:0.00,fin:0.00},
-{n:"Kelvin Harmon",yr:"2019",dc:193,f:4.60,dom:24.00,boa:2.39,ht:74.12,bmi:28.40,ras:4.91,ppg:0.00,fin:0.00},
-{n:"Scott Miller",yr:"2019",dc:195,f:4.44,dom:25.00,boa:2.84,ht:69.12,bmi:25.70,ras:7.74,ppg:0.00,fin:0.00},
-{n:"John Ursua",yr:"2019",dc:209,f:4.61,dom:25.00,boa:null,ht:69.12,bmi:26.30,ras:6.45,ppg:0.00,fin:0.00},
-{n:"Terry Godwin",yr:"2019",dc:210,f:4.55,dom:16.00,boa:2.10,ht:71.50,bmi:25.70,ras:5.28,ppg:0.00,fin:0.00},
-{n:"Dillon MItchell",yr:"2019",dc:212,f:4.46,dom:19.00,boa:2.67,ht:73.00,bmi:26.00,ras:7.96,ppg:0.00,fin:0.00},
-{n:"Olabisi Johnson",yr:"2019",dc:225,f:4.51,dom:13.00,boa:1.70,ht:72.50,bmi:27.70,ras:8.17,ppg:0.00,fin:0.00},
-{n:"Emanuel Hall",yr:"2019",dc:null,f:4.39,dom:13.00,boa:1.90,ht:73.88,bmi:25.80,ras:9.87,ppg:0.00,fin:0.00},
-{n:"Stanley Morgan",yr:"2019",dc:null,f:4.53,dom:23.00,boa:2.49,ht:72.00,bmi:27.40,ras:8.63,ppg:0.00,fin:0.00},
-{n:"Jalen Guyton",yr:"2019",dc:null,f:4.44,dom:21.00,boa:1.60,ht:72.88,bmi:28.00,ras:9.63,ppg:0.00,fin:0.00},
-{n:"DeMarkus Lodge",yr:"2019",dc:null,f:4.55,dom:12.00,boa:1.99,ht:74.12,bmi:25.90,ras:3.62,ppg:0.00,fin:0.00},
-{n:"Jakobi Meyers",yr:"2019",dc:null,f:4.63,dom:16.00,boa:2.07,ht:73.62,bmi:26.10,ras:6.36,ppg:3.00,fin:25.00},
-{n:"Greg Dortch",yr:"2019",dc:null,f:4.64,dom:28.00,boa:2.43,ht:67.12,bmi:27.10,ras:3.11,ppg:0.00,fin:0.00},
-{n:"Jazz Ferguson",yr:"2019",dc:null,f:4.45,dom:null,boa:null,ht:77.12,bmi:26.90,ras:7.32,ppg:0.00,fin:0.00},
-{n:"Ashton Dulin",yr:"2019",dc:null,f:4.43,dom:null,boa:4.29,ht:73.00,bmi:28.40,ras:8.94,ppg:0.00,fin:0.00},
-{n:"Emmanuel Butler",yr:"2019",dc:null,f:4.53,dom:null,boa:null,ht:75.38,bmi:27.10,ras:3.78,ppg:0.00,fin:0.00},
-{n:"Olamide Zaccheus",yr:"2019",dc:null,f:4.54,dom:23.00,boa:3.00,ht:68.12,bmi:28.60,ras:6.18,ppg:0.00,fin:0.00},
-{n:"Preston Williams",yr:"2019",dc:null,f:4.66,dom:17.00,boa:2.68,ht:76.00,bmi:25.70,ras:2.77,ppg:0.00,fin:0.00},
-{n:"Deonte Harris",yr:"2019",dc:null,f:4.53,dom:null,boa:null,ht:66.00,bmi:27.60,ras:5.21,ppg:0.00,fin:0.00},
-{n:"Henry Ruggs",yr:"2020",dc:12,f:4.27,dom:15.00,boa:1.84,ht:71.00,bmi:25.20,ras:9.55,ppg:0.00,fin:0.00},
-{n:"Jerry Jeudy",yr:"2020",dc:15,f:4.45,dom:20.00,boa:3.00,ht:73.00,bmi:25.50,ras:6.77,ppg:2.00,fin:18.00},
-{n:"Ceedee Lamb",yr:"2020",dc:17,f:4.50,dom:25.00,boa:3.48,ht:73.62,bmi:25.70,ras:7.45,ppg:null,fin:null},
-{n:"Jalen Reagor",yr:"2020",dc:21,f:4.47,dom:29.00,boa:2.60,ht:70.62,bmi:28.70,ras:6.05,ppg:0.00,fin:0.00},
-{n:"Justin Jefferson",yr:"2020",dc:22,f:4.42,dom:19.00,boa:2.72,ht:73.25,bmi:26.60,ras:9.69,ppg:null,fin:null},
-{n:"Brandon Aiyuk",yr:"2020",dc:25,f:4.50,dom:26.00,boa:3.11,ht:71.62,bmi:27.80,ras:8.46,ppg:null,fin:null},
-{n:"Tee Higgins",yr:"2020",dc:33,f:4.59,dom:21.00,boa:2.29,ht:75.62,bmi:26.30,ras:4.16,ppg:null,fin:null},
-{n:"Michael Pittman",yr:"2020",dc:34,f:4.52,dom:17.00,boa:2.48,ht:76.00,bmi:27.10,ras:8.29,ppg:null,fin:null},
-{n:"LaViska Shenault",yr:"2020",dc:42,f:4.58,dom:21.00,boa:2.41,ht:72.62,bmi:29.90,ras:6.97,ppg:0.00,fin:0.00},
-{n:"Chase Claypool",yr:"2020",dc:49,f:4.42,dom:17.00,boa:2.49,ht:76.25,bmi:29.00,ras:9.98,ppg:1.00,fin:19.00},
-{n:"Van Jefferson",yr:"2020",dc:57,f:null,dom:15.00,boa:1.41,ht:73.50,bmi:26.00,ras:null,ppg:0.00,fin:0.00},
-{n:"Denzel Mims",yr:"2020",dc:59,f:4.38,dom:22.00,boa:2.35,ht:74.88,bmi:25.90,ras:9.77,ppg:0.00,fin:0.00},
-{n:"KJ Hamler",yr:"2020",dc:78,f:null,dom:29.00,boa:2.45,ht:68.62,bmi:24.80,ras:null,ppg:0.00,fin:0.00},
-{n:"Lynn Bowden",yr:"2020",dc:80,f:null,dom:21.00,boa:2.52,ht:70.62,bmi:28.40,ras:null,ppg:0.00,fin:0.00},
-{n:"Bryan Edwards",yr:"2020",dc:81,f:null,dom:27.00,boa:2.00,ht:74.75,bmi:26.50,ras:null,ppg:0.00,fin:0.00},
-{n:"Devin Duvernay",yr:"2020",dc:92,f:4.39,dom:17.00,boa:2.95,ht:70.50,bmi:27.90,ras:7.87,ppg:0.00,fin:0.00},
-{n:"Gabriel Davis",yr:"2020",dc:118,f:4.54,dom:21.00,boa:2.72,ht:74.00,bmi:27.70,ras:6.88,ppg:0.00,fin:0.00},
-{n:"Antonio Gandy-Golden",yr:"2020",dc:132,f:4.60,dom:36.00,boa:3.09,ht:76.00,bmi:27.10,ras:6.15,ppg:0.00,fin:0.00},
-{n:"Joe Reed",yr:"2020",dc:133,f:4.47,dom:12.00,boa:1.31,ht:72.50,bmi:29.60,ras:9.35,ppg:0.00,fin:0.00},
-{n:"Tyler Johnson",yr:"2020",dc:144,f:null,dom:36.00,boa:4.08,ht:73.38,bmi:26.40,ras:null,ppg:0.00,fin:0.00},
-{n:"Collin Johnson",yr:"2020",dc:148,f:null,dom:18.00,boa:2.07,ht:77.62,bmi:25.70,ras:null,ppg:0.00,fin:0.00},
-{n:"Quintez Cephus",yr:"2020",dc:149,f:4.73,dom:19.00,boa:2.57,ht:72.88,bmi:26.60,ras:4.53,ppg:0.00,fin:0.00},
-{n:"John Hightower",yr:"2020",dc:151,f:4.43,dom:20.00,boa:2.03,ht:73.50,bmi:24.30,ras:8.02,ppg:0.00,fin:0.00},
-{n:"Isaiah Coulter",yr:"2020",dc:154,f:4.45,dom:null,boa:2.06,ht:73.88,bmi:25.40,ras:6.70,ppg:0.00,fin:0.00},
-{n:"Darnell Mooney",yr:"2020",dc:156,f:4.38,dom:30.00,boa:3.31,ht:70.12,bmi:25.30,ras:7.03,ppg:2.00,fin:28.00},
-{n:"K.J. Osborn",yr:"2020",dc:159,f:4.48,dom:16.00,boa:2.13,ht:71.50,bmi:27.50,ras:8.00,ppg:0.00,fin:0.00},
-{n:"Donavan Peoples-Jones",yr:"2020",dc:168,f:4.48,dom:16.00,boa:1.76,ht:73.62,bmi:27.20,ras:9.63,ppg:0.00,fin:0.00},
-{n:"Quez Watkins",yr:"2020",dc:181,f:4.35,dom:25.00,boa:2.69,ht:72.12,bmi:25.10,ras:7.41,ppg:0.00,fin:0.00},
-{n:"James Proche",yr:"2020",dc:182,f:null,dom:29.00,boa:2.56,ht:70.62,bmi:28.00,ras:4.07,ppg:0.00,fin:0.00},
-{n:"Isaiah Hodgins",yr:"2020",dc:188,f:4.61,dom:27.00,boa:2.79,ht:75.62,bmi:25.60,ras:7.56,ppg:0.00,fin:0.00},
-{n:"Dezmon Patmon",yr:"2020",dc:193,f:4.48,dom:9.00,boa:1.21,ht:76.00,bmi:27.40,ras:8.47,ppg:0.00,fin:0.00},
-{n:"Freddie Swain",yr:"2020",dc:196,f:4.46,dom:9.00,boa:1.11,ht:72.25,bmi:26.00,ras:8.29,ppg:0.00,fin:0.00},
-{n:"Jauan Jennings",yr:"2020",dc:195,f:4.72,dom:16.00,boa:2.69,ht:75.12,bmi:26.90,ras:2.73,ppg:null,fin:null},
-{n:"K.J. Hill",yr:"2020",dc:198,f:4.60,dom:14.00,boa:1.58,ht:71.88,bmi:26.60,ras:3.92,ppg:0.00,fin:0.00},
-{n:"Jeff Thomas",yr:"2020",dc:null,f:4.45,dom:16.00,boa:1.58,ht:68.88,bmi:25.10,ras:6.69,ppg:0.00,fin:0.00},
-{n:"Kendrick Rogers",yr:"2020",dc:null,f:4.51,dom:9.00,boa:0.78,ht:76.25,bmi:25.30,ras:7.35,ppg:0.00,fin:0.00},
-{n:"Kalija Lipscomb",yr:"2020",dc:null,f:4.57,dom:23.00,boa:2.20,ht:71.88,bmi:28.10,ras:5.83,ppg:0.00,fin:0.00},
-{n:"Binjimen Victor",yr:"2020",dc:null,f:4.60,dom:9.00,boa:1.41,ht:75.75,bmi:24.10,ras:5.23,ppg:0.00,fin:0.00},
-{n:"Marquez Callaway",yr:"2020",dc:null,f:4.55,dom:18.00,boa:1.99,ht:73.25,bmi:27.00,ras:8.90,ppg:0.00,fin:0.00},
-{n:"Kyle Pitts",yr:"2021",dc:4,f:4.53,dom:12.00,boa:1.63,ht:77.62,bmi:27.70,ras:9.66,ppg:null,fin:null},
-{n:"Ja'Marr Chase",yr:"2021",dc:5,f:4.40,dom:21.00,boa:3.14,ht:72.38,bmi:27.30,ras:9.81,ppg:null,fin:null},
-{n:"Jaylen Waddle",yr:"2021",dc:6,f:null,dom:14.00,boa:1.94,ht:69.50,bmi:26.60,ras:null,ppg:null,fin:null},
-{n:"Devonta Smith",yr:"2021",dc:10,f:null,dom:23.00,boa:4.37,ht:72.25,bmi:22.40,ras:null,ppg:null,fin:null},
-{n:"Kadarius Toney",yr:"2021",dc:20,f:4.42,dom:10.00,boa:2.08,ht:71.62,bmi:26.40,ras:9.00,ppg:0.00,fin:0.00},
-{n:"Rashod Bateman",yr:"2021",dc:27,f:4.52,dom:32.00,boa:3.77,ht:72.38,bmi:25.80,ras:8.05,ppg:0.00,fin:0.00},
-{n:"Elijah Moore",yr:"2021",dc:34,f:4.47,dom:28.00,boa:3.56,ht:69.50,bmi:26.30,ras:8.68,ppg:1.00,fin:48.00},
-{n:"Rondale Moore",yr:"2021",dc:49,f:4.35,dom:18.00,boa:2.47,ht:67.00,bmi:28.20,ras:9.33,ppg:0.00,fin:0.00},
-{n:"D'Wayne Eskridge",yr:"2021",dc:56,f:4.44,dom:19.00,boa:4.92,ht:68.75,bmi:28.10,ras:6.73,ppg:0.00,fin:0.00},
-{n:"Chatarius \"Tutu\" Atwell",yr:"2021",dc:57,f:4.40,dom:28.00,boa:4.23,ht:68.12,bmi:22.90,ras:6.26,ppg:0.00,fin:0.00},
-{n:"Terrace Marshall Jr",yr:"2021",dc:59,f:4.42,dom:15.00,boa:1.74,ht:74.50,bmi:26.30,ras:9.77,ppg:0.00,fin:0.00},
-{n:"Josh Palmer",yr:"2021",dc:78,f:4.56,dom:15.00,boa:1.67,ht:73.00,bmi:27.70,ras:7.60,ppg:0.00,fin:0.00},
-{n:"Dyami Brown",yr:"2021",dc:83,f:4.47,dom:21.00,boa:3.08,ht:73.25,bmi:25.60,ras:8.38,ppg:0.00,fin:0.00},
-{n:"Amari Rodgers",yr:"2021",dc:86,f:4.56,dom:13.00,boa:2.08,ht:69.50,bmi:31.20,ras:5.37,ppg:0.00,fin:0.00},
-{n:"Nico Collins",yr:"2021",dc:90,f:4.50,dom:16.00,boa:1.82,ht:76.12,bmi:26.20,ras:9.57,ppg:null,fin:null},
-{n:"Anthony Schwartz",yr:"2021",dc:92,f:4.30,dom:18.00,boa:1.76,ht:72.00,bmi:25.20,ras:6.91,ppg:0.00,fin:0.00},
-{n:"Dez Fitzpatrick",yr:"2021",dc:100,f:4.52,dom:22.00,boa:2.65,ht:73.75,bmi:26.70,ras:8.82,ppg:0.00,fin:0.00},
-{n:"Amon-ra St. Brown",yr:"2021",dc:103,f:4.60,dom:25.00,boa:2.56,ht:71.50,bmi:27.50,ras:7.14,ppg:null,fin:null},
-{n:"Jaelon Darden",yr:"2021",dc:120,f:4.49,dom:23.00,boa:3.54,ht:67.62,bmi:26.50,ras:7.15,ppg:0.00,fin:0.00},
-{n:"Tylan Wallace",yr:"2021",dc:122,f:4.52,dom:26.00,boa:3.03,ht:71.38,bmi:27.10,ras:4.72,ppg:0.00,fin:0.00},
-{n:"Ihmir Smith-Marsette",yr:"2021",dc:141,f:4.52,dom:18.00,boa:1.76,ht:72.75,bmi:23.90,ras:6.81,ppg:0.00,fin:0.00},
-{n:"Simi Fehoko",yr:"2021",dc:163,f:4.48,dom:19.00,boa:2.64,ht:75.88,bmi:27.00,ras:9.17,ppg:0.00,fin:0.00},
-{n:"Cornell Powell",yr:"2021",dc:165,f:4.57,dom:6.00,boa:1.80,ht:72.25,bmi:27.80,ras:7.58,ppg:0.00,fin:0.00},
-{n:"Frank Darby",yr:"2021",dc:163,f:4.64,dom:13.00,boa:null,ht:72.00,bmi:26.30,ras:5.92,ppg:0.00,fin:0.00},
-{n:"Marquez Stevenson",yr:"2021",dc:179,f:null,dom:21.00,boa:2.91,ht:70.12,bmi:26.10,ras:5.39,ppg:0.00,fin:0.00},
-{n:"Shi Smith",yr:"2021",dc:180,f:4.48,dom:22.00,boa:2.15,ht:69.50,bmi:26.70,ras:6.79,ppg:0.00,fin:0.00},
-{n:"Racey McMath",yr:"2021",dc:181,f:4.32,dom:4.00,boa:0.50,ht:74.50,bmi:27.90,ras:7.44,ppg:0.00,fin:0.00},
-{n:"Jalen Camp",yr:"2021",dc:185,f:4.53,dom:11.00,boa:1.48,ht:73.88,bmi:29.00,ras:9.75,ppg:0.00,fin:0.00},
-{n:"Demetric Felton",yr:"2021",dc:187,f:4.64,dom:9.00,boa:null,ht:68.62,bmi:28.70,ras:0.91,ppg:0.00,fin:0.00},
-{n:"Seth Williams",yr:"2021",dc:195,f:4.50,dom:28.00,boa:2.10,ht:75.00,bmi:26.40,ras:6.88,ppg:0.00,fin:0.00},
-{n:"Dazz Newsome",yr:"2021",dc:197,f:4.62,dom:18.00,boa:2.36,ht:70.12,bmi:26.50,ras:2.18,ppg:0.00,fin:0.00},
-{n:"Mike Strachan",yr:"2021",dc:193,f:4.55,dom:null,boa:null,ht:77.38,bmi:26.80,ras:9.22,ppg:0.00,fin:0.00},
-{n:"Tre Nixon",yr:"2021",dc:207,f:4.49,dom:11.00,boa:1.82,ht:72.12,bmi:25.40,ras:8.98,ppg:0.00,fin:0.00},
-{n:"Ben Skowronek",yr:"2021",dc:214,f:null,dom:14.00,boa:1.40,ht:74.88,bmi:27.50,ras:null,ppg:0.00,fin:0.00},
-{n:"Kawaan Baker",yr:"2021",dc:220,f:4.48,dom:20.00,boa:2.04,ht:72.50,bmi:28.50,ras:9.08,ppg:0.00,fin:0.00},
-{n:"Dax Milne",yr:"2021",dc:223,f:4.61,dom:13.00,boa:null,ht:72.62,bmi:25.50,ras:4.59,ppg:0.00,fin:0.00},
-{n:"Tamorrion Terry",yr:"2021",dc:null,f:4.49,dom:25.00,boa:2.75,ht:74.75,bmi:25.90,ras:7.30,ppg:0.00,fin:0.00},
-{n:"Trevon Grimes",yr:"2021",dc:null,f:4.54,dom:10.00,boa:1.25,ht:76.00,bmi:27.10,ras:8.45,ppg:0.00,fin:0.00},
-{n:"Cade Johnson",yr:"2021",dc:null,f:4.56,dom:null,boa:4.16,ht:70.62,bmi:26.70,ras:3.04,ppg:0.00,fin:0.00},
-{n:"Josh Imatorbhebhe",yr:"2021",dc:null,f:4.57,dom:19.00,boa:1.74,ht:74.00,bmi:28.80,ras:8.97,ppg:0.00,fin:0.00},
-{n:"Brennan Eagles",yr:"2021",dc:null,f:4.58,dom:11.00,boa:1.36,ht:75.62,bmi:27.90,ras:8.97,ppg:0.00,fin:0.00},
-{n:"Jonathan Adams Jr",yr:"2021",dc:null,f:4.59,dom:14.00,boa:2.40,ht:74.00,bmi:27.00,ras:7.53,ppg:0.00,fin:0.00},
-{n:"Tyler Vaughns",yr:"2021",dc:null,f:4.69,dom:21.00,boa:2.17,ht:74.00,bmi:23.60,ras:1.34,ppg:0.00,fin:0.00},
-{n:"Terrell Jana",yr:"2021",dc:null,f:4.69,dom:10.00,boa:1.69,ht:71.12,bmi:26.40,ras:2.51,ppg:0.00,fin:0.00},
-{n:"Branden Mack",yr:"2021",dc:null,f:4.71,dom:17.00,boa:1.92,ht:77.00,bmi:25.70,ras:2.39,ppg:0.00,fin:0.00},
-{n:"Marlon Williams",yr:"2021",dc:null,f:4.71,dom:15.00,boa:null,ht:71.25,bmi:29.10,ras:3.29,ppg:0.00,fin:0.00},
-{n:"Sage Surratt",yr:"2021",dc:null,f:4.74,dom:23.00,boa:2.13,ht:74.50,bmi:26.80,ras:5.66,ppg:0.00,fin:0.00},
-{n:"Jhamon Ausbon",yr:"2021",dc:null,f:4.75,dom:18.00,boa:1.93,ht:74.38,bmi:27.90,ras:4.67,ppg:0.00,fin:0.00},
-{n:"Damonte Coxie",yr:"2021",dc:null,f:4.81,dom:19.00,boa:2.89,ht:74.12,bmi:25.40,ras:1.74,ppg:0.00,fin:0.00},
-{n:"Austin Watkins Jr.",yr:"2021",dc:null,f:4.60,dom:20.00,boa:null,ht:73.50,bmi:27.30,ras:2.63,ppg:0.00,fin:0.00},
-{n:"Warren Jackson",yr:"2021",dc:null,f:4.76,dom:17.00,boa:2.51,ht:78.00,bmi:25.30,ras:2.63,ppg:0.00,fin:0.00},
-{n:"Drake London",yr:"2022",dc:8,f:null,dom:23.00,boa:2.68,ht:75.88,bmi:26.00,ras:null,ppg:null,fin:null},
-{n:"Garrett Wilson",yr:"2022",dc:10,f:4.38,dom:22.00,boa:3.21,ht:71.75,bmi:25.10,ras:7.80,ppg:null,fin:null},
-{n:"Chris Olave",yr:"2022",dc:11,f:4.39,dom:21.00,boa:3.24,ht:72.75,bmi:25.20,ras:8.69,ppg:null,fin:null},
-{n:"Jameson Williams",yr:"2022",dc:12,f:null,dom:14.00,boa:2.75,ht:73.50,bmi:23.50,ras:null,ppg:null,fin:null},
-{n:"Jahan Dotson",yr:"2022",dc:16,f:4.43,dom:25.00,boa:2.88,ht:70.62,bmi:25.30,ras:6.34,ppg:0.00,fin:0.00},
-{n:"Treylon Burks",yr:"2022",dc:18,f:4.55,dom:31.00,boa:3.52,ht:74.00,bmi:28.90,ras:5.83,ppg:0.00,fin:0.00},
-{n:"Christian Watson",yr:"2022",dc:34,f:4.36,dom:24.00,boa:3.12,ht:76.12,bmi:25.70,ras:9.96,ppg:null,fin:null},
-{n:"Wan'Dale Robinson",yr:"2022",dc:43,f:4.44,dom:29.00,boa:3.64,ht:68.00,bmi:27.10,ras:7.36,ppg:null,fin:null},
-{n:"John Metchie",yr:"2022",dc:44,f:null,dom:13.00,boa:2.16,ht:71.25,bmi:26.10,ras:null,ppg:0.00,fin:0.00},
-{n:"Tyquan Thornton",yr:"2022",dc:50,f:4.28,dom:19.00,boa:2.60,ht:74.38,bmi:23.20,ras:8.56,ppg:0.00,fin:0.00},
-{n:"George Pickens",yr:"2022",dc:52,f:4.47,dom:17.00,boa:1.75,ht:75.25,bmi:24.40,ras:9.37,ppg:null,fin:null},
-{n:"Alec Pierce",yr:"2022",dc:53,f:4.41,dom:15.00,boa:2.21,ht:75.12,bmi:26.30,ras:9.82,ppg:0.00,fin:0.00},
-{n:"Skyy Moore",yr:"2022",dc:54,f:4.41,dom:28.00,boa:3.48,ht:69.62,bmi:28.00,ras:7.59,ppg:0.00,fin:0.00},
-{n:"Velus Jones",yr:"2022",dc:71,f:4.31,dom:10.00,boa:0.98,ht:71.75,bmi:27.80,ras:7.16,ppg:0.00,fin:0.00},
-{n:"Jalen Tolbert",yr:"2022",dc:88,f:4.49,dom:30.00,boa:3.63,ht:73.12,bmi:25.70,ras:8.62,ppg:0.00,fin:0.00},
-{n:"David Bell",yr:"2022",dc:99,f:4.65,dom:30.00,boa:2.39,ht:72.88,bmi:28.00,ras:4.03,ppg:null,fin:null},
-{n:"Danny Gray",yr:"2022",dc:105,f:4.33,dom:18.00,boa:1.72,ht:71.88,bmi:25.20,ras:6.81,ppg:0.00,fin:0.00},
-{n:"Erik Ezukanma",yr:"2022",dc:116,f:4.55,dom:17.00,boa:1.88,ht:73.88,bmi:26.80,ras:7.03,ppg:0.00,fin:0.00},
-{n:"Romeo Doubs",yr:"2022",dc:123,f:4.58,dom:24.00,boa:2.79,ht:73.88,bmi:25.80,ras:null,ppg:null,fin:null},
-{n:"Calvin Austin",yr:"2022",dc:129,f:4.32,dom:18.00,boa:2.58,ht:67.75,bmi:26.90,ras:9.08,ppg:null,fin:null},
-{n:"Khalil Shakir",yr:"2022",dc:133,f:4.43,dom:27.00,boa:3.24,ht:71.88,bmi:26.60,ras:8.32,ppg:null,fin:null},
-{n:"Montrell Washington",yr:"2022",dc:147,f:4.48,dom:null,boa:null,ht:68.88,bmi:26.10,ras:4.33,ppg:0.00,fin:0.00},
-{n:"Kyle Philips",yr:"2022",dc:148,f:4.58,dom:19.00,boa:2.21,ht:71.25,bmi:26.40,ras:8.32,ppg:0.00,fin:0.00},
-{n:"Jalen Nailor",yr:"2022",dc:172,f:4.46,dom:16.00,boa:2.13,ht:71.00,bmi:25.90,ras:8.08,ppg:null,fin:null},
-{n:"Michael Woods ll",yr:"2022",dc:184,f:4.55,dom:16.00,boa:2.18,ht:73.50,bmi:26.80,ras:7.64,ppg:0.00,fin:0.00},
-{n:"Bo Melton",yr:"2022",dc:200,f:4.39,dom:22.00,boa:2.02,ht:71.00,bmi:26.40,ras:9.25,ppg:null,fin:null},
-{n:"Dareke Young",yr:"2022",dc:204,f:4.47,dom:null,boa:null,ht:74.00,bmi:28.80,ras:9.93,ppg:0.00,fin:0.00},
-{n:"Samori Toure",yr:"2022",dc:229,f:4.53,dom:30.00,boa:2.75,ht:72.88,bmi:25.80,ras:6.15,ppg:0.00,fin:0.00},
-{n:"Kevin Austin",yr:"2022",dc:null,f:4.43,dom:9.00,boa:1.96,ht:74.38,bmi:25.50,ras:9.94,ppg:0.00,fin:0.00},
-{n:"Braylon Sanders",yr:"2022",dc:null,f:4.48,dom:8.00,boa:1.29,ht:72.12,bmi:26.30,ras:7.62,ppg:0.00,fin:0.00},
-{n:"Isaiah Weston",yr:"2022",dc:null,f:4.42,dom:null,boa:2.74,ht:75.50,bmi:26.60,ras:9.62,ppg:0.00,fin:0.00},
-{n:"Devon Williams",yr:"2022",dc:null,f:4.65,dom:10.00,boa:1.50,ht:77.00,bmi:24.90,ras:5.60,ppg:0.00,fin:0.00},
-{n:"Reggie Roberson Jr",yr:"2022",dc:null,f:4.53,dom:15.00,boa:1.71,ht:71.00,bmi:26.80,ras:4.39,ppg:0.00,fin:0.00},
-{n:"Makai Polk",yr:"2022",dc:null,f:4.59,dom:19.00,boa:1.49,ht:75.12,bmi:24.40,ras:4.90,ppg:0.00,fin:0.00},
-{n:"Tre Turner",yr:"2022",dc:null,f:4.51,dom:22.00,boa:2.14,ht:73.25,bmi:23.60,ras:3.55,ppg:0.00,fin:0.00},
-{n:"Dontario Drummond",yr:"2022",dc:null,f:4.61,dom:17.00,boa:1.24,ht:72.88,bmi:28.40,ras:5.70,ppg:0.00,fin:0.00},
-{n:"Dai'Jean Dixon",yr:"2022",dc:null,f:4.62,dom:null,boa:3.05,ht:74.62,bmi:25.10,ras:5.90,ppg:0.00,fin:0.00},
-{n:"Josh Johnson",yr:"2022",dc:null,f:4.62,dom:18.00,boa:2.66,ht:70.50,bmi:25.50,ras:3.72,ppg:0.00,fin:0.00},
-{n:"Charleston Rambo",yr:"2022",dc:null,f:4.57,dom:14.00,boa:2.53,ht:72.62,bmi:23.30,ras:5.82,ppg:0.00,fin:0.00},
-{n:"Ty Fryfogle",yr:"2022",dc:null,f:4.53,dom:17.00,boa:2.47,ht:73.12,bmi:26.90,ras:7.20,ppg:0.00,fin:0.00},
-{n:"Tanner Conner",yr:"2022",dc:null,f:4.50,dom:null,boa:null,ht:75.00,bmi:28.20,ras:8.85,ppg:0.00,fin:0.00},
-{n:"Justyn Ross",yr:"2022",dc:null,f:4.64,dom:22.00,boa:1.97,ht:75.62,bmi:25.00,ras:2.64,ppg:0.00,fin:0.00},
-{n:"Kalil Pimpleton",yr:"2022",dc:null,f:4.49,dom:19.00,boa:null,ht:67.62,bmi:26.30,ras:6.55,ppg:0.00,fin:0.00},
-{n:"Lance McCutcheon",yr:"2022",dc:null,f:4.53,dom:null,boa:null,ht:74.12,bmi:26.60,ras:null,ppg:0.00,fin:0.00},
-{n:"Shemar Bridges",yr:"2022",dc:null,f:4.68,dom:null,boa:null,ht:75.62,bmi:25.70,ras:4.13,ppg:0.00,fin:0.00},
-{n:"Rashid Shaheed",yr:"2022",dc:null,f:null,dom:null,boa:null,ht:70.62,bmi:25.50,ras:null,ppg:null,fin:null},
-{n:"Jaxon Smith-Njigba",yr:"2023",dc:20,f:4.53,dom:11.00,boa:3.25,ht:72.62,bmi:26.60,ras:8.26,ppg:null,fin:null},
-{n:"Quentin Johnson",yr:"2023",dc:21,f:4.58,dom:24.00,boa:2.35,ht:74.75,bmi:26.50,ras:8.65,ppg:null,fin:null},
-{n:"Zay Flowers",yr:"2023",dc:22,f:4.42,dom:30.00,boa:2.45,ht:69.25,bmi:26.90,ras:8.30,ppg:null,fin:null},
-{n:"Jordan Addison",yr:"2023",dc:23,f:4.49,dom:26.00,boa:2.93,ht:71.12,bmi:24.10,ras:5.92,ppg:null,fin:null},
-{n:"Jonathan Mingo",yr:"2023",dc:40,f:4.46,dom:14.00,boa:2.22,ht:73.75,bmi:28.20,ras:9.86,ppg:0.00,fin:0.00},
-{n:"Jayden Reed",yr:"2023",dc:51,f:4.45,dom:27.00,boa:2.57,ht:70.88,bmi:27.30,ras:6.74,ppg:null,fin:null},
-{n:"Rashee Rice",yr:"2023",dc:56,f:4.51,dom:20.00,boa:2.64,ht:72.62,bmi:27.00,ras:9.53,ppg:null,fin:null},
-{n:"Marvin Mims",yr:"2023",dc:64,f:4.38,dom:23.00,boa:2.66,ht:70.88,bmi:25.50,ras:9.40,ppg:null,fin:null},
-{n:"Nathaniel Dell",yr:"2023",dc:70,f:4.49,dom:30.00,boa:2.90,ht:68.38,bmi:25.10,ras:5.82,ppg:null,fin:null},
-{n:"Jalin Hyatt",yr:"2023",dc:74,f:4.40,dom:17.00,boa:3.00,ht:72.12,bmi:23.90,ras:8.75,ppg:null,fin:null},
-{n:"Cedric Tillman",yr:"2023",dc:75,f:4.54,dom:10.00,boa:2.89,ht:75.38,bmi:26.60,ras:8.66,ppg:null,fin:null},
-{n:"Josh Downs",yr:"2023",dc:80,f:4.48,dom:23.00,boa:3.52,ht:68.75,bmi:25.20,ras:8.99,ppg:null,fin:null},
-{n:"Michael Wilson",yr:"2023",dc:95,f:4.58,dom:12.00,boa:1.51,ht:73.88,bmi:28.40,ras:9.51,ppg:null,fin:null},
-{n:"Tre Tucker",yr:"2023",dc:101,f:4.40,dom:11.00,boa:1.62,ht:68.62,bmi:27.80,ras:7.17,ppg:null,fin:null},
-{n:"Derius Davis",yr:"2023",dc:119,f:4.36,dom:10.00,boa:1.67,ht:68.38,bmi:25.40,ras:5.89,ppg:0.00,fin:0.00},
-{n:"Charlie Jones",yr:"2023",dc:125,f:4.43,dom:16.00,boa:2.33,ht:71.38,bmi:24.40,ras:8.49,ppg:0.00,fin:0.00},
-{n:"Tyler Scott",yr:"2023",dc:127,f:4.44,dom:16.00,boa:2.17,ht:69.88,bmi:26.00,ras:8.61,ppg:0.00,fin:0.00},
-{n:"Justin Shorter",yr:"2023",dc:144,f:4.55,dom:9.00,boa:1.58,ht:76.25,bmi:27.90,ras:7.94,ppg:0.00,fin:0.00},
-{n:"Dontayvion Wicks",yr:"2023",dc:153,f:4.62,dom:17.00,boa:2.17,ht:73.62,bmi:28.50,ras:9.14,ppg:null,fin:null},
-{n:"Puka Nacua",yr:"2023",dc:171,f:4.56,dom:17.00,boa:2.06,ht:73.75,bmi:27.20,ras:5.17,ppg:null,fin:null},
-{n:"Parker Washington",yr:"2023",dc:168,f:null,dom:21.00,boa:1.69,ht:69.75,bmi:29.30,ras:null,ppg:0.00,fin:0.00},
-{n:"Kayshon Boutte",yr:"2023",dc:170,f:4.50,dom:18.00,boa:1.75,ht:71.25,bmi:27.20,ras:4.97,ppg:0.00,fin:0.00},
-{n:"Trey Palmer",yr:"2023",dc:174,f:4.33,dom:14.00,boa:3.07,ht:72.25,bmi:26.20,ras:6.16,ppg:0.00,fin:0.00},
-{n:"A.T. Perry",yr:"2023",dc:178,f:4.47,dom:17.00,boa:2.49,ht:75.50,bmi:24.70,ras:9.85,ppg:0.00,fin:0.00},
-{n:"Elijah Higgins",yr:"2023",dc:180,f:4.54,dom:12.00,boa:1.57,ht:75.00,bmi:29.10,ras:8.87,ppg:0.00,fin:0.00},
-{n:"Xavier Hutchinson",yr:"2023",dc:188,f:4.53,dom:30.00,boa:2.44,ht:73.88,bmi:27.20,ras:7.25,ppg:0.00,fin:0.00},
-{n:"Andrei Iosivas",yr:"2023",dc:189,f:4.43,dom:25.00,boa:2.68,ht:74.88,bmi:27.10,ras:9.96,ppg:null,fin:null},
-{n:"Demario Douglas",yr:"2023",dc:193,f:4.44,dom:18.00,boa:2.51,ht:68.25,bmi:27.20,ras:7.34,ppg:null,fin:null},
-{n:"Antoine Green",yr:"2023",dc:194,f:4.47,dom:9.00,boa:1.61,ht:73.75,bmi:26.10,ras:8.68,ppg:0.00,fin:0.00},
-{n:"Colton Dowell",yr:"2023",dc:203,f:4.42,dom:null,boa:null,ht:74.88,bmi:27.10,ras:9.78,ppg:0.00,fin:0.00},
-{n:"Jalen Brooks",yr:"2023",dc:219,f:4.69,dom:8.00,boa:1.20,ht:73.00,bmi:26.50,ras:5.59,ppg:0.00,fin:0.00},
-{n:"Ronnie Bell",yr:"2023",dc:228,f:4.54,dom:16.00,boa:2.40,ht:71.62,bmi:26.80,ras:8.20,ppg:0.00,fin:0.00},
-{n:"Grant DuBose",yr:"2023",dc:231,f:4.57,dom:27.00,boa:2.26,ht:74.38,bmi:25.80,ras:8.78,ppg:0.00,fin:0.00},
-{n:"Jared Wayne",yr:"2023",dc:null,f:4.73,dom:17.00,boa:2.72,ht:74.75,bmi:26.70,ras:9.24,ppg:0.00,fin:0.00},
-{n:"Tyler Hudson",yr:"2023",dc:null,f:4.74,dom:34.00,boa:3.29,ht:73.00,bmi:25.90,ras:1.75,ppg:0.00,fin:0.00},
-{n:"C.J. Johnson",yr:"2023",dc:null,f:4.66,dom:22.00,boa:2.10,ht:73.50,bmi:29.60,ras:3.82,ppg:0.00,fin:0.00},
-{n:"Matt Landers",yr:"2023",dc:null,f:4.37,dom:13.00,boa:2.52,ht:76.38,bmi:24.30,ras:9.85,ppg:0.00,fin:0.00},
-{n:"Bryce Ford-Wheaton",yr:"2023",dc:null,f:4.38,dom:null,boa:1.59,ht:75.75,bmi:26.90,ras:9.96,ppg:0.00,fin:0.00},
-{n:"Jake Bobo",yr:"2023",dc:null,f:4.99,dom:14.00,boa:1.94,ht:76.00,bmi:25.10,ras:2.55,ppg:0.00,fin:0.00},
-{n:"Dontay Demus Jr.",yr:"2023",dc:null,f:4.57,dom:19.00,boa:2.30,ht:75.00,bmi:26.50,ras:7.81,ppg:0.00,fin:0.00},
-{n:"Rakim Jarerett",yr:"2023",dc:null,f:4.44,dom:18.00,boa:1.70,ht:71.88,bmi:26.80,ras:8.41,ppg:0.00,fin:0.00},
-{n:"Joseph Ngata",yr:"2023",dc:null,f:4.54,dom:9.00,boa:1.10,ht:75.12,bmi:27.10,ras:7.30,ppg:0.00,fin:0.00},
-{n:"Jacob Copeleand",yr:"2023",dc:null,f:4.42,dom:9.00,boa:1.55,ht:71.25,bmi:28.00,ras:8.15,ppg:0.00,fin:0.00},
-{n:"Jason Brownlee",yr:"2023",dc:null,f:4.59,dom:35.00,boa:2.58,ht:74.00,bmi:25.40,ras:8.96,ppg:0.00,fin:0.00},
-{n:"Marvin Harrison Jr",yr:"2024",dc:4,f:null,dom:25.00,boa:3.08,ht:75.25,bmi:26.10,ras:null,ppg:null,fin:null},
-{n:"Malik Nabers",yr:"2024",dc:6,f:4.38,dom:24.00,boa:3.82,ht:72.25,bmi:27.10,ras:9.70,ppg:null,fin:null},
-{n:"Rome Odunze",yr:"2024",dc:9,f:4.45,dom:20.00,boa:2.85,ht:74.88,bmi:27.10,ras:9.92,ppg:null,fin:null},
-{n:"Brian Thomas Jr",yr:"2024",dc:23,f:4.33,dom:15.00,boa:2.86,ht:74.88,bmi:26.70,ras:9.82,ppg:null,fin:null},
-{n:"Xavier Worthy",yr:"2024",dc:28,f:4.21,dom:30.00,boa:2.84,ht:71.25,bmi:23.00,ras:9.39,ppg:null,fin:null},
-{n:"Ricky Pearsall",yr:"2024",dc:31,f:4.41,dom:19.00,boa:2.49,ht:73.00,bmi:24.90,ras:9.90,ppg:null,fin:null},
-{n:"Xavier Legette",yr:"2024",dc:32,f:4.39,dom:11.00,boa:3.05,ht:73.00,bmi:29.20,ras:9.88,ppg:null,fin:null},
-{n:"Keon Coleman",yr:"2024",dc:33,f:4.61,dom:18.00,boa:1.94,ht:75.25,bmi:26.50,ras:8.08,ppg:0.00,fin:0.00},
-{n:"Ladd McConkey",yr:"2024",dc:34,f:4.39,dom:14.00,boa:1.55,ht:71.62,bmi:25.80,ras:9.30,ppg:null,fin:null},
-{n:"Ja'Lynn Polk",yr:"2024",dc:37,f:4.52,dom:13.00,boa:2.02,ht:73.38,bmi:26.80,ras:8.78,ppg:0.00,fin:0.00},
-{n:"Adonai Mitchell",yr:"2024",dc:52,f:4.34,dom:14.00,boa:1.78,ht:74.25,bmi:26.30,ras:9.99,ppg:null,fin:null},
-{n:"Malachi Corley",yr:"2024",dc:65,f:4.56,dom:17.00,boa:2.08,ht:71.00,bmi:30.00,ras:7.76,ppg:0.00,fin:0.00},
-{n:"Jermaine Burton",yr:"2024",dc:80,f:4.45,dom:19.00,boa:2.46,ht:72.25,bmi:26.60,ras:9.06,ppg:0.00,fin:0.00},
-{n:"Roman Wilson",yr:"2024",dc:84,f:4.39,dom:16.00,boa:2.19,ht:70.75,bmi:26.40,ras:8.59,ppg:0.00,fin:0.00},
-{n:"Jalen McMillan",yr:"2024",dc:93,f:4.47,dom:14.00,boa:1.91,ht:73.00,bmi:26.00,ras:8.56,ppg:null,fin:null},
-{n:"Luke McCaffery",yr:"2024",dc:101,f:4.46,dom:12.00,boa:2.30,ht:73.62,bmi:26.00,ras:9.40,ppg:0.00,fin:0.00},
-{n:"Troy Franklin",yr:"2024",dc:98,f:4.41,dom:20.00,boa:2.69,ht:73.88,bmi:23.10,ras:9.00,ppg:null,fin:null},
-{n:"Javon Baker",yr:"2024",dc:106,f:4.54,dom:15.00,boa:3.11,ht:73.25,bmi:26.60,ras:7.70,ppg:0.00,fin:0.00},
-{n:"Devontez Walker",yr:"2024",dc:109,f:4.36,dom:22.00,boa:2.64,ht:73.50,bmi:25.50,ras:9.76,ppg:0.00,fin:0.00},
-{n:"Jacob Cowing",yr:"2024",dc:131,f:4.38,dom:32.00,boa:2.89,ht:68.38,bmi:25.40,ras:6.22,ppg:0.00,fin:0.00},
-{n:"Anthony Gould",yr:"2024",dc:135,f:4.39,dom:11.00,boa:1.89,ht:68.38,bmi:26.50,ras:8.81,ppg:0.00,fin:0.00},
-{n:"Ainias Smith",yr:"2024",dc:145,f:4.55,dom:17.00,boa:1.87,ht:69.38,bmi:28.00,ras:7.36,ppg:0.00,fin:0.00},
-{n:"Jamari Thrash",yr:"2024",dc:149,f:4.46,dom:20.00,boa:3.74,ht:71.75,bmi:26.10,ras:6.63,ppg:0.00,fin:0.00},
-{n:"Bub Means",yr:"2024",dc:163,f:4.43,dom:19.00,boa:null,ht:73.00,bmi:28.00,ras:9.70,ppg:0.00,fin:0.00},
-{n:"Jha'Quan Jackson",yr:"2024",dc:166,f:4.42,dom:13.00,boa:1.46,ht:69.12,bmi:27.80,ras:5.21,ppg:0.00,fin:0.00},
-{n:"Malik Washington",yr:"2024",dc:168,f:4.47,dom:20.00,boa:3.60,ht:68.50,bmi:28.90,ras:8.51,ppg:null,fin:null},
-{n:"Johnny Wilson",yr:"2024",dc:169,f:4.52,dom:14.00,boa:2.27,ht:78.38,bmi:26.70,ras:9.68,ppg:0.00,fin:0.00},
-{n:"Casey Washington",yr:"2024",dc:171,f:4.46,dom:11.00,boa:1.62,ht:72.75,bmi:26.70,ras:7.15,ppg:0.00,fin:0.00},
-{n:"Tejhaun Palmer",yr:"2024",dc:175,f:4.45,dom:15.00,boa:2.01,ht:73.75,bmi:27.60,ras:9.57,ppg:0.00,fin:0.00},
-{n:"Jordan Whittington",yr:"2024",dc:197,f:null,dom:10.00,boa:1.61,ht:72.62,bmi:27.70,ras:null,ppg:null,fin:null},
-{n:"Ryan Flournoy",yr:"2024",dc:200,f:4.44,dom:null,boa:null,ht:72.75,bmi:27.30,ras:9.88,ppg:null,fin:null},
-{n:"Brenden Rice",yr:"2024",dc:197,f:4.50,dom:17.00,boa:1.72,ht:74.38,bmi:26.70,ras:7.92,ppg:0.00,fin:0.00},
-{n:"Devaughn Vele",yr:"2024",dc:207,f:4.47,dom:11.00,boa:1.81,ht:76.00,bmi:24.70,ras:9.52,ppg:0.00,fin:0.00},
-{n:"Tahj Washington",yr:"2024",dc:213,f:4.57,dom:15.00,boa:2.30,ht:69.75,bmi:25.60,ras:5.13,ppg:0.00,fin:0.00},
-{n:"Cornelius Johnson",yr:"2024",dc:225,f:4.44,dom:15.00,boa:1.67,ht:74.75,bmi:27.10,ras:9.91,ppg:0.00,fin:0.00},
-{n:"Isaiah Williams",yr:"2024",dc:null,f:4.63,dom:17.00,boa:2.55,ht:69.25,bmi:26.90,ras:6.18,ppg:0.00,fin:0.00},
-{n:"Jalen Coker",yr:"2024",dc:null,f:4.57,dom:37.00,boa:null,ht:73.38,bmi:27.30,ras:8.44,ppg:null,fin:null},
-{n:"Lideatrick Griffin",yr:"2024",dc:null,f:4.43,dom:12.00,boa:1.89,ht:70.00,bmi:26.00,ras:6.77,ppg:0.00,fin:0.00},
-{n:"Marcus Rosemy-Jacksaint",yr:"2024",dc:null,f:4.81,dom:null,boa:null,ht:73.12,bmi:25.70,ras:1.66,ppg:0.00,fin:0.00},
-{n:"Tayvion Robinson",yr:"2024",dc:null,f:4.75,dom:20.00,boa:2.32,ht:70.50,bmi:27.30,ras:1.40,ppg:0.00,fin:0.00},
-{n:"Xavier Weaver",yr:"2024",dc:null,f:4.47,dom:20.00,boa:2.20,ht:72.25,bmi:22.90,ras:8.40,ppg:0.00,fin:0.00},
-{n:"Travis Hunter",yr:"2025",dc:2,f:null,dom:26.00,boa:2.62,ht:103.75,bmi:9.12,ras:12.70,ppg:null,fin:1.06},
-{n:"Tetairoa McMillan",yr:"2025",dc:8,f:4.56,dom:33.00,boa:3.02,ht:107.62,bmi:10.00,ras:16.00,ppg:null,fin:1.22},
-{n:"Emeka Egbuka",yr:"2025",dc:19,f:4.54,dom:18.00,boa:2.81,ht:104.38,bmi:9.62,ras:14.00,ppg:null,fin:2.04},
-{n:"Matthew Golden",yr:"2025",dc:23,f:4.29,dom:18.00,boa:1.82,ht:101.62,bmi:9.50,ras:14.70,ppg:null,fin:2.06},
-{n:"Jayden Higgins",yr:"2025",dc:34,f:4.47,dom:32.00,boa:2.58,ht:109.25,bmi:9.12,ras:14.60,ppg:null,fin:2.28},
-{n:"Luther Burden",yr:"2025",dc:39,f:4.41,dom:27.00,boa:3.20,ht:103.25,bmi:8.50,ras:11.80,ppg:null,fin:3.19},
-{n:"Tre Harris",yr:"2025",dc:55,f:4.54,dom:20.00,boa:2.49,ht:106.25,bmi:9.62,ras:16.10,ppg:null,fin:4.02},
-{n:"Jack Bech",yr:"2025",dc:58,f:null,dom:12.00,boa:2.12,ht:104.75,bmi:9.00,ras:14.10,ppg:null,fin:4.03},
-{n:"Kyle Williams",yr:"2025",dc:69,f:4.40,dom:28.00,boa:2.99,ht:100.75,bmi:8.75,ras:14.50,ppg:null,fin:4.12},
-{n:"Isaac TeSlaa",yr:"2025",dc:70,f:4.43,dom:15.00,boa:1.32,ht:106.75,bmi:10.00,ras:14.20,ppg:null,fin:4.14},
-{n:"Pat Bryant",yr:"2025",dc:74,f:4.61,dom:19.00,boa:2.77,ht:105.38,bmi:9.50,ras:15.40,ppg:null,fin:4.15},
-{n:"Jaylin Noel",yr:"2025",dc:79,f:4.39,dom:21.00,boa:2.53,ht:99.75,bmi:8.75,ras:11.60,ppg:null,fin:4.24},
-{n:"Savion Williams",yr:"2025",dc:87,f:4.48,dom:9.00,boa:1.25,ht:108.38,bmi:10.25,ras:12.10,ppg:null,fin:5.09},
-{n:"Tai Felton",yr:"2025",dc:102,f:4.37,dom:17.00,boa:2.28,ht:103.12,bmi:9.00,ras:12.90,ppg:null,fin:5.12},
-{n:"Chimere Dike",yr:"2025",dc:97,f:4.34,dom:18.00,boa:2.31,ht:104.75,bmi:9.12,ras:16.30,ppg:null,fin:5.14},
-{n:"Dont\u2019e Thornton Jr.",yr:"2025",dc:102,f:4.30,dom:11.00,boa:1.77,ht:108.75,bmi:9.62,ras:21.90,ppg:null,fin:6.03},
-{n:"Arian Smith",yr:"2025",dc:104,f:4.36,dom:0.07,boa:1.59,ht:103.38,bmi:9.00,ras:19.70,ppg:null,fin:6.08},
-{n:"Jaylin Lane",yr:"2025",dc:122,f:4.34,dom:17.00,boa:1.84,ht:101.50,bmi:9.88,ras:12.50,ppg:null,fin:6.12},
-{n:"Jalen Royals",yr:"2025",dc:127,f:4.42,dom:30.00,boa:2.48,ht:102.12,bmi:9.50,ras:15.40,ppg:null,fin:6.17},
-{n:"Elic Ayomanor",yr:"2025",dc:130,f:4.44,dom:38.00,boa:2.37,ht:106.12,bmi:10.00,ras:14.70,ppg:null,fin:7.07},
-{n:"Jordan Watkins",yr:"2025",dc:132,f:4.37,dom:15.00,boa:2.09,ht:100.62,bmi:9.12,ras:14.50,ppg:null,fin:7.12},
-{n:"KeAndre Lambert-Smith",yr:"2025",dc:150,f:4.37,dom:17.00,boa:2.66,ht:105.38,bmi:9.12,ras:15.40,ppg:null,fin:7.17},
-{n:"Tory Horton",yr:"2025",dc:158,f:4.41,dom:24.00,boa:3.51,ht:105.12,bmi:9.00,ras:13.60,ppg:null,fin:7.20},
-{n:"LaJohntay Wester",yr:"2025",dc:187,f:4.46,dom:26.00,boa:2.83,ht:99.38,bmi:8.62,ras:11.10,ppg:null,fin:7.29},
-{n:"Jimmy Horn",yr:"2025",dc:192,f:4.46,dom:16.00,boa:1.69,ht:98.50,bmi:8.75,ras:12.10,ppg:null,fin:null},
-{n:"Tez Johnson",yr:"2025",dc:211,f:4.51,dom:21.00,boa:2.30,ht:99.25,bmi:9.00,ras:12.60,ppg:null,fin:null},
-{n:"Ricky White III",yr:"2025",dc:214,f:4.61,dom:31.00,boa:3.67,ht:104.88,bmi:9.25,ras:14.80,ppg:null,fin:null},
-{n:"Kaden Prather",yr:"2025",dc:216,f:4.46,dom:15.00,boa:1.27,ht:107.38,bmi:9.25,ras:12.10,ppg:null,fin:null},
-{n:"Konata Mumpfield",yr:"2025",dc:218,f:4.59,dom:23.00,boa:2.13,ht:100.75,bmi:8.50,ras:12.30,ppg:null,fin:null},
-{n:"Dominic Lovett",yr:"2025",dc:220,f:4.40,dom:16.00,boa:2.16,ht:101.38,bmi:9.25,ras:11.40,ppg:null,fin:null},
-{n:"Junior Bergen",yr:"2025",dc:228,f:4.53,dom:null,boa:null,ht:99.50,bmi:9.00,ras:12.40,ppg:null,fin:null},
-{n:"Andrew Armstrong",yr:"2025",dc:null,f:4.51,dom:29.00,boa:2.75,ht:107.88,bmi:9.62,ras:14.90,ppg:null,fin:null},
-{n:"Antwane Wells Jr.",yr:"2025",dc:null,f:4.58,dom:14.00,boa:2.21,ht:104.25,bmi:8.88,ras:15.70,ppg:null,fin:null},
-{n:"Beaux Collins",yr:"2025",dc:null,f:4.55,dom:16.00,boa:1.10,ht:106.62,bmi:9.50,ras:13.50,ppg:null,fin:null},
-{n:"Bru McCoy",yr:"2025",dc:null,f:null,dom:12.00,boa:1.58,ht:106.62,bmi:10.00,ras:12.30,ppg:null,fin:null},
-{n:"Da\u2019Quan Felton",yr:"2025",dc:null,f:4.50,dom:21.00,boa:1.87,ht:109.00,bmi:9.00,ras:15.30,ppg:null,fin:null},
-{n:"Daniel Jackson",yr:"2025",dc:null,f:4.63,dom:24.00,boa:2.66,ht:101.50,bmi:9.00,ras:12.90,ppg:null,fin:null},
-{n:"Efton Chism lll",yr:"2025",dc:null,f:4.71,dom:null,boa:null,ht:100.50,bmi:9.00,ras:11.00,ppg:null,fin:null},
-{n:"Elijhah Badger",yr:"2025",dc:null,f:4.43,dom:18.00,boa:2.38,ht:105.50,bmi:9.50,ras:13.50,ppg:null,fin:null},
-{n:"Isaiah Bond",yr:"2025",dc:null,f:4.39,dom:13.00,boa:2.06,ht:101.12,bmi:8.50,ras:14.30,ppg:null,fin:null},
-{n:"Isaiah Neyor",yr:"2025",dc:null,f:4.40,dom:23.00,boa:2.96,ht:110.62,bmi:9.50,ras:18.30,ppg:null,fin:null},
-{n:"Ja'Corey Brooks",yr:"2025",dc:null,f:4.65,dom:14.00,boa:2.37,ht:105.75,bmi:9.00,ras:16.20,ppg:null,fin:null},
-{n:"Jackson Meeks",yr:"2025",dc:null,f:4.64,dom:0.06,boa:1.71,ht:105.88,bmi:9.38,ras:13.20,ppg:null,fin:null},
-{n:"Jacolby George",yr:"2025",dc:null,f:4.63,dom:13.00,boa:1.98,ht:102.38,bmi:9.50,ras:14.70,ppg:null,fin:null},
-{n:"Josh Kelly",yr:"2025",dc:null,f:4.70,dom:14.00,boa:1.91,ht:103.50,bmi:10.50,ras:13.70,ppg:null,fin:null},
-{n:"Kobe Hudson",yr:"2025",dc:null,f:4.57,dom:21.00,boa:2.48,ht:103.38,bmi:9.00,ras:16.50,ppg:null,fin:null},
-{n:"Nick Nash",yr:"2025",dc:null,f:4.57,dom:11.00,boa:2.51,ht:105.50,bmi:8.75,ras:13.50,ppg:null,fin:null},
-{n:"Roc Taylor",yr:"2025",dc:null,f:4.49,dom:14.00,boa:2.25,ht:106.12,bmi:9.00,ras:14.60,ppg:null,fin:null},
-{n:"Sam Brown Jr.",yr:"2025",dc:null,f:4.44,dom:10.00,boa:1.04,ht:105.88,bmi:9.38,ras:12.80,ppg:null,fin:null},
-{n:"Theo Wease Jr.",yr:"2025",dc:null,f:4.56,dom:14.00,boa:2.19,ht:107.12,bmi:9.62,ras:15.10,ppg:null,fin:null},
-{n:"Traeshon Holden",yr:"2025",dc:null,f:4.57,dom:11.00,boa:1.56,ht:105.75,bmi:9.88,ras:13.60,ppg:null,fin:null},
-{n:"Will Sheppard",yr:"2025",dc:null,f:4.59,dom:21.00,boa:2.24,ht:106.25,bmi:9.88,ras:13.40,ppg:null,fin:null},
-{n:"Xavier Restrepo",yr:"2025",dc:null,f:4.83,dom:15.00,boa:2.50,ht:99.25,bmi:9.12,ras:14.30,ppg:null,fin:null},
-{n:"Aaron Anderson",yr:"2026",dc:null,f:null,dom:11.00,boa:1.64,ht:null,bmi:9.25,ras:12.60,ppg:null,fin:null},
-{n:"Antonio Williams",yr:"2026",dc:null,f:4.41,dom:17.00,boa:1.71,ht:null,bmi:9.25,ras:11.30,ppg:null,fin:null},
-{n:"Brenen Thompson",yr:"2026",dc:null,f:4.26,dom:12.00,boa:2.70,ht:null,bmi:9.00,ras:18.50,ppg:null,fin:null},
-{n:"Bryce Lance",yr:"2026",dc:null,f:4.34,dom:34.00,boa:4.15,ht:null,bmi:9.25,ras:17.00,ppg:null,fin:null},
-{n:"Caleb Douglas",yr:"2026",dc:null,f:4.39,dom:14.00,boa:1.71,ht:null,bmi:10.12,ras:15.20,ppg:null,fin:null},
-{n:"Carnell Tate",yr:"2026",dc:null,f:4.54,dom:16.00,boa:2.14,ht:null,bmi:10.25,ras:15.50,ppg:null,fin:null},
-{n:"Chase Roberts",yr:"2026",dc:null,f:4.64,dom:22.00,boa:2.12,ht:null,bmi:9.75,ras:15.20,ppg:null,fin:null},
-{n:"Chris Bell",yr:"2026",dc:null,f:null,dom:17.00,boa:2.19,ht:null,bmi:10.00,ras:14.30,ppg:null,fin:null},
-{n:"Chris Brazzell",yr:"2026",dc:null,f:4.37,dom:16.00,boa:2.33,ht:null,bmi:9.00,ras:15.30,ppg:null,fin:null},
-{n:"Chris Hilton Jr",yr:"2026",dc:null,f:4.41,dom:4.00,boa:0.55,ht:null,bmi:9.25,ras:19.00,ppg:null,fin:null},
-{n:"CJ Daniels",yr:"2026",dc:null,f:null,dom:15.00,boa:3.52,ht:null,bmi:9.25,ras:15.10,ppg:null,fin:null},
-{n:"Colbie Young",yr:"2026",dc:null,f:4.49,dom:12.00,boa:1.29,ht:null,bmi:9.50,ras:12.80,ppg:null,fin:null},
-{n:"Cooper Barkate",yr:"2026",dc:null,f:null,dom:26.00,boa:2.19,ht:null,bmi:null,ras:15.30,ppg:null,fin:null},
-{n:"Cyrus Allen",yr:"2026",dc:null,f:null,dom:19.00,boa:1.84,ht:null,bmi:null,ras:16.30,ppg:null,fin:null},
-{n:"Dane Key",yr:"2026",dc:null,f:null,dom:22.00,boa:2.29,ht:null,bmi:null,ras:14.00,ppg:null,fin:null},
-{n:"De'Zhaun Stribling",yr:"2026",dc:null,f:4.36,dom:17.00,boa:1.98,ht:null,bmi:10.00,ras:13.70,ppg:null,fin:null},
-{n:"Deion Burks",yr:"2026",dc:null,f:4.30,dom:13.00,boa:1.60,ht:null,bmi:9.50,ras:10.90,ppg:null,fin:null},
-{n:"Denzel Boston",yr:"2026",dc:null,f:null,dom:15.00,boa:2.38,ht:null,bmi:9.75,ras:13.50,ppg:null,fin:null},
-{n:"Elijah Sarratt",yr:"2026",dc:null,f:null,dom:27.00,boa:2.78,ht:null,bmi:10.00,ras:15.30,ppg:null,fin:null},
-{n:"Emmanuel Henderson",yr:"2026",dc:null,f:4.44,dom:7.00,boa:2.22,ht:null,bmi:8.32,ras:17.00,ppg:null,fin:null},
-{n:"Eric McAlister",yr:"2026",dc:null,f:null,dom:22.00,boa:2.59,ht:null,bmi:9.75,ras:18.30,ppg:null,fin:null},
-{n:"Eric Rivers",yr:"2026",dc:null,f:4.35,dom:19.00,boa:3.51,ht:null,bmi:9.00,ras:15.60,ppg:null,fin:null},
-{n:"Germie Bernard",yr:"2026",dc:null,f:4.48,dom:14.00,boa:2.24,ht:null,bmi:9.88,ras:14.20,ppg:null,fin:null},
-{n:"Griffin Wilde",yr:"2026",dc:null,f:null,dom:35.00,boa:2.33,ht:null,bmi:null,ras:15.00,ppg:null,fin:null},
-{n:"J. Michael Sturdivant",yr:"2026",dc:null,f:4.40,dom:14.00,boa:1.62,ht:null,bmi:9.50,ras:13.90,ppg:null,fin:null},
-{n:"Ja'Kobi Lane",yr:"2026",dc:null,f:4.47,dom:14.00,boa:1.77,ht:null,bmi:10.50,ras:13.80,ppg:null,fin:null},
-{n:"Jeff Caldwell",yr:"2026",dc:null,f:4.31,dom:38.00,boa:3.71,ht:null,bmi:9.75,ras:18.10,ppg:null,fin:null},
-{n:"Jordyn Tyson",yr:"2026",dc:null,f:null,dom:30.00,boa:2.88,ht:null,bmi:9.12,ras:14.30,ppg:null,fin:null},
-{n:"Josh Cameron",yr:"2026",dc:null,f:null,dom:16.00,boa:1.83,ht:null,bmi:10.25,ras:13.10,ppg:null,fin:null},
-{n:"Kaden Wetjen",yr:"2026",dc:null,f:4.59,dom:null,boa:null,ht:null,bmi:8.50,ras:8.20,ppg:null,fin:null},
-{n:"KC Concepcion",yr:"2026",dc:null,f:null,dom:28.00,boa:2.25,ht:null,bmi:9.25,ras:12.00,ppg:null,fin:null},
-{n:"Kendrick Law",yr:"2026",dc:null,f:4.45,dom:8.00,boa:1.47,ht:null,bmi:9.62,ras:10.30,ppg:null,fin:null},
-{n:"Kevin Coleman Jr",yr:"2026",dc:null,f:4.49,dom:21.00,boa:2.30,ht:null,bmi:9.50,ras:12.60,ppg:null,fin:null},
-{n:"Makai Lemon",yr:"2026",dc:null,f:null,dom:17.00,boa:2.75,ht:null,bmi:8.75,ras:14.70,ppg:null,fin:null},
-{n:"Malachi Fields",yr:"2026",dc:null,f:4.61,dom:17.00,boa:2.05,ht:null,bmi:9.00,ras:15.10,ppg:null,fin:null},
-{n:"Malik Benson",yr:"2026",dc:null,f:4.37,dom:12.00,boa:1.65,ht:null,bmi:8.62,ras:14.70,ppg:null,fin:null},
-{n:"Noah Thomas",yr:"2026",dc:null,f:null,dom:13.00,boa:1.59,ht:null,bmi:null,ras:13.90,ppg:null,fin:null},
-{n:"Nyziah Hunter",yr:"2026",dc:null,f:null,dom:21.00,boa:1.63,ht:null,bmi:null,ras:14.40,ppg:null,fin:null},
-{n:"Omar Cooper Jr",yr:"2026",dc:null,f:4.47,dom:14.00,boa:2.48,ht:null,bmi:9.62,ras:13.60,ppg:null,fin:null},
-{n:"Reggie Virgil",yr:"2026",dc:null,f:4.57,dom:13.00,boa:2.05,ht:null,bmi:9.25,ras:15.80,ppg:null,fin:null},
-{n:"Skyler Bell",yr:"2026",dc:null,f:4.40,dom:19.00,boa:2.83,ht:null,bmi:10.00,ras:13.20,ppg:null,fin:null},
-{n:"Ted Hurst",yr:"2026",dc:null,f:4.42,dom:33.00,boa:2.14,ht:null,bmi:9.75,ras:15.40,ppg:null,fin:null},
-{n:"Tyren Montgomery",yr:"2026",dc:null,f:null,dom:38.00,boa:4.62,ht:null,bmi:null,ras:15.80,ppg:null,fin:null},
-{n:"Zachariah Branch",yr:"2026",dc:null,f:4.35,dom:15.00,boa:1.94,ht:null,bmi:9.00,ras:10.20,ppg:null,fin:null},
-{n:"Zavion Thomas",yr:"2026",dc:null,f:4.28,dom:11.00,boa:1.45,ht:null,bmi:9.00,ras:11.50,ppg:null,fin:null}
-],rb:[
-{n:"Edgerrin James",yr:"2000s",dc:4,ss:117.40,f:4.38,w:216.00,bmi:28.50,burst:null,bdr:null,ras:10.00,ppg:null,fin:null},
-{n:"LaDainian Tomlinson",yr:"2000s",dc:5,ss:108.70,f:4.46,w:215.00,bmi:30.80,burst:null,bdr:null,ras:9.79,ppg:null,fin:null},
-{n:"Jamal Lewis",yr:"2000s",dc:5,ss:109.10,f:4.58,w:240.00,bmi:33.50,burst:null,bdr:null,ras:null,ppg:null,fin:null},
-{n:"Ricky Williams",yr:"2000s",dc:5,ss:112.90,f:4.56,w:244.00,bmi:34.00,burst:null,bdr:null,ras:9.73,ppg:null,fin:null},
-{n:"Adrian Peterson",yr:"2000s",dc:7,ss:114.70,f:4.41,w:217.00,bmi:28.60,burst:null,bdr:null,ras:9.64,ppg:null,fin:null},
-{n:"Marshawn Lynch",yr:"2000s",dc:12,ss:103.00,f:4.52,w:215.00,bmi:30.00,burst:null,bdr:null,ras:7.81,ppg:null,fin:null},
-{n:"Steven Jackson",yr:"2000s",dc:24,ss:112.50,f:4.55,w:241.00,bmi:32.20,burst:null,bdr:null,ras:9.53,ppg:null,fin:null},
-{n:"Chris Johnson",yr:"2000s",dc:24,ss:121.90,f:4.24,w:197.00,bmi:27.50,burst:null,bdr:null,ras:9.57,ppg:null,fin:null},
-{n:"Larry Johnson",yr:"2000s",dc:27,ss:116.30,f:4.45,w:228.00,bmi:30.10,burst:null,bdr:null,ras:null,ppg:null,fin:null},
-{n:"Joseph Addai",yr:"2000s",dc:30,ss:113.20,f:4.41,w:214.00,bmi:29.80,burst:null,bdr:null,ras:9.07,ppg:null,fin:null},
-{n:"Tiki Barber",yr:"2000s",dc:36,ss:93.90,f:4.56,w:203.00,bmi:30.00,burst:null,bdr:null,ras:8.70,ppg:null,fin:null},
-{n:"Matt Forte",yr:"2000s",dc:45,ss:110.20,f:4.46,w:218.00,bmi:28.80,burst:null,bdr:null,ras:9.71,ppg:null,fin:null},
-{n:"LeSean McCoy",yr:"2000s",dc:53,ss:99.50,f:4.50,w:204.00,bmi:29.30,burst:null,bdr:null,ras:6.20,ppg:null,fin:null},
-{n:"Travis Henry",yr:"2000s",dc:58,ss:98.70,f:4.61,w:223.00,bmi:32.90,burst:null,bdr:null,ras:7.99,ppg:null,fin:null},
-{n:"Frank Gore",yr:"2000s",dc:65,ss:95.60,f:4.60,w:214.00,bmi:31.60,burst:null,bdr:null,ras:5.67,ppg:null,fin:null},
-{n:"Shonn Greene",yr:"2000s",dc:65,ss:97.10,f:4.65,w:227.00,bmi:31.60,burst:null,bdr:null,ras:5.05,ppg:null,fin:null},
-{n:"Jamaal Charles",yr:"2000s",dc:74,ss:108.10,f:4.38,w:199.00,bmi:27.80,burst:null,bdr:null,ras:8.56,ppg:null,fin:null},
-{n:"Curtis Martin",yr:"2000s",dc:74,ss:108.30,f:4.40,w:203.00,bmi:28.30,burst:null,bdr:null,ras:9.35,ppg:null,fin:null},
-{n:"Ahman Green",yr:"2000s",dc:76,ss:109.60,f:4.44,w:213.00,bmi:29.20,burst:null,bdr:null,ras:9.74,ppg:null,fin:null},
-{n:"Brian Westbrook",yr:"2000s",dc:91,ss:90.90,f:4.58,w:200.00,bmi:30.30,burst:null,bdr:null,ras:7.94,ppg:null,fin:null},
-{n:"Brandon Jacobs",yr:"2000s",dc:110,ss:123.50,f:4.56,w:267.00,bmi:32.50,burst:null,bdr:null,ras:6.86,ppg:null,fin:null},
-{n:"Priest Holmes",yr:"2000s",dc:null,ss:85.10,f:4.73,w:213.00,bmi:31.60,burst:null,bdr:null,ras:5.99,ppg:null,fin:null},
-{n:"Arian Foster",yr:"2000s",dc:null,ss:89.90,f:4.73,w:225.00,bmi:29.40,burst:null,bdr:null,ras:5.14,ppg:null,fin:null},
-{n:"Mark Ingram",yr:"2011",dc:28,ss:94.40,f:4.62,w:215.00,bmi:31.70,burst:110.10,bdr:61.10,ras:2.57,ppg:6.00,fin:13.00},
-{n:"Ryan Williams",yr:"2011",dc:38,ss:91.70,f:4.61,w:207.00,bmi:30.60,burst:129.50,bdr:84.80,ras:6.49,ppg:0.00,fin:0.00},
-{n:"Shane Vereen",yr:"2011",dc:56,ss:99.00,f:4.50,w:203.00,bmi:29.10,burst:115.30,bdr:81.10,ras:6.76,ppg:1.00,fin:22.00},
-{n:"Mikel Leshoure",yr:"2011",dc:57,ss:105.00,f:4.59,w:233.00,bmi:31.60,burst:125.60,bdr:79.40,ras:7.52,ppg:1.00,fin:21.00},
-{n:"Daniel Thomas",yr:"2011",dc:62,ss:98.00,f:4.67,w:233.00,bmi:31.60,burst:119.30,bdr:75.60,ras:8.82,ppg:0.00,fin:0.00},
-{n:"DeMarco Murray",yr:"2011",dc:71,ss:113.70,f:4.41,w:215.00,bmi:29.20,burst:123.70,bdr:81.10,ras:9.18,ppg:7.00,fin:16.00},
-{n:"Stevan Ridley",yr:"2011",dc:73,ss:95.40,f:4.66,w:225.00,bmi:31.40,burst:120.20,bdr:41.30,ras:5.85,ppg:1.00,fin:11.00},
-{n:"Alex Green",yr:"2011",dc:96,ss:105.00,f:4.55,w:225.00,bmi:30.50,burst:112.00,bdr:77.90,ras:8.37,ppg:0.00,fin:0.00},
-{n:"Roy Helu",yr:"2011",dc:104,ss:114.80,f:4.42,w:219.00,bmi:30.50,burst:121.60,bdr:44.70,ras:9.38,ppg:0.00,fin:0.00},
-{n:"Kendall Hunter",yr:"2011",dc:114,ss:94.50,f:4.53,w:199.00,bmi:31.20,burst:120.50,bdr:70.80,ras:7.20,ppg:0.00,fin:0.00},
-{n:"Delone Carter",yr:"2011",dc:118,ss:104.10,f:4.56,w:225.00,bmi:33.20,burst:122.90,bdr:69.10,ras:9.06,ppg:0.00,fin:0.00},
-{n:"Taiwan Jones",yr:"2011",dc:124,ss:106.00,f:4.38,w:195.00,bmi:26.40,burst:133.20,bdr:null,ras:9.30,ppg:0.00,fin:0.00},
-{n:"Bilal Powell",yr:"2011",dc:125,ss:94.40,f:4.56,w:204.00,bmi:29.30,burst:null,bdr:74.40,ras:7.76,ppg:0.00,fin:0.00},
-{n:"Jamie Harper",yr:"2011",dc:129,ss:101.40,f:4.63,w:233.00,bmi:32.50,burst:120.70,bdr:53.90,ras:5.82,ppg:0.00,fin:0.00},
-{n:"Johnny White",yr:"2011",dc:130,ss:89.40,f:4.65,w:209.00,bmi:30.00,burst:110.00,bdr:35.00,ras:2.06,ppg:0.00,fin:0.00},
-{n:"Jacquizz Rodgers",yr:"2011",dc:142,ss:84.60,f:4.64,w:196.00,bmi:31.60,burst:112.60,bdr:99.20,ras:0.41,ppg:0.00,fin:0.00},
-{n:"Dion Lewis",yr:"2011",dc:146,ss:88.50,f:4.57,w:193.00,bmi:30.20,burst:114.70,bdr:70.40,ras:4.19,ppg:1.00,fin:13.00},
-{n:"Evan Royster",yr:"2011",dc:172,ss:90.70,f:4.65,w:212.00,bmi:28.70,burst:114.30,bdr:56.90,ras:3.99,ppg:0.00,fin:0.00},
-{n:"Jordan Todman",yr:"2011",dc:178,ss:105.70,f:4.40,w:198.00,bmi:29.20,burst:127.60,bdr:75.00,ras:8.20,ppg:0.00,fin:0.00},
-{n:"Allen Bradford",yr:"2011",dc:182,ss:107.20,f:4.61,w:242.00,bmi:33.70,burst:103.00,bdr:35.90,ras:6.02,ppg:0.00,fin:0.00},
-{n:"Da'Rel Scott",yr:"2011",dc:210,ss:118.40,f:4.34,w:210.00,bmi:29.30,burst:116.30,bdr:54.40,ras:8.18,ppg:0.00,fin:0.00},
-{n:"Anthony Allen",yr:"2011",dc:214,ss:101.00,f:4.61,w:228.00,bmi:30.20,burst:124.00,bdr:53.10,ras:9.89,ppg:0.00,fin:0.00},
-{n:"Baron Batch",yr:"2011",dc:221,ss:101.00,f:4.50,w:207.00,bmi:30.40,burst:124.70,bdr:55.70,ras:8.80,ppg:0.00,fin:0.00},
-{n:"Jay Finley",yr:"2011",dc:235,ss:98.10,f:4.51,w:203.00,bmi:28.30,burst:125.90,bdr:77.50,ras:6.72,ppg:0.00,fin:0.00},
-{n:"Matt Asiata",yr:"2011",dc:null,ss:87.40,f:4.81,w:234.00,bmi:32.60,burst:103.00,bdr:68.40,ras:1.94,ppg:0.00,fin:0.00},
-{n:"Shaun Draughn",yr:"2011",dc:null,ss:81.90,f:4.73,w:205.00,bmi:27.80,burst:116.80,bdr:62.70,ras:3.22,ppg:0.00,fin:0.00},
-{n:"Trent Richardson",yr:"2012",dc:3,ss:109.20,f:4.53,w:230.00,bmi:34.00,burst:null,bdr:74.70,ras:9.62,ppg:1.00,fin:8.00},
-{n:"Doug Martin",yr:"2012",dc:31,ss:104.10,f:4.55,w:223.00,bmi:32.90,burst:121.20,bdr:54.20,ras:8.27,ppg:2.00,fin:3.00},
-{n:"David Wilson",yr:"2012",dc:32,ss:100.90,f:4.49,w:205.00,bmi:29.40,burst:135.70,bdr:80.40,ras:8.78,ppg:0.00,fin:0.00},
-{n:"Isaiah Pead",yr:"2012",dc:50,ss:98.70,f:4.47,w:197.00,bmi:28.30,burst:114.10,bdr:85.70,ras:6.12,ppg:0.00,fin:0.00},
-{n:"LaMichael James",yr:"2012",dc:61,ss:99.50,f:4.45,w:195.00,bmi:29.60,burst:121.00,bdr:65.50,ras:7.26,ppg:0.00,fin:0.00},
-{n:"Ronnie Hillman",yr:"2012",dc:68,ss:102.00,f:4.45,w:200.00,bmi:29.50,burst:124.90,bdr:67.90,ras:6.82,ppg:0.00,fin:0.00},
-{n:"Bernard Pierce",yr:"2012",dc:85,ss:107.30,f:4.49,w:218.00,bmi:29.60,burst:123.60,bdr:56.70,ras:8.37,ppg:0.00,fin:0.00},
-{n:"Lamar Miller",yr:"2012",dc:98,ss:116.30,f:4.40,w:218.00,bmi:30.40,burst:116.10,bdr:51.70,ras:9.38,ppg:5.00,fin:14.00},
-{n:"Robert Turbin",yr:"2012",dc:107,ss:108.30,f:4.50,w:222.00,bmi:31.90,burst:122.20,bdr:67.80,ras:7.98,ppg:0.00,fin:0.00},
-{n:"Chris Rainey",yr:"2012",dc:152,ss:89.30,f:4.45,w:175.00,bmi:26.60,burst:122.10,bdr:45.30,ras:7.67,ppg:0.00,fin:0.00},
-{n:"Vick Ballard",yr:"2012",dc:163,ss:93.70,f:4.65,w:219.00,bmi:31.40,burst:113.60,bdr:61.60,ras:4.94,ppg:0.00,fin:0.00},
-{n:"Alfred Morris",yr:"2012",dc:163,ss:92.10,f:4.67,w:219.00,bmi:31.40,burst:118.90,bdr:67.60,ras:4.58,ppg:3.00,fin:13.00},
-{n:"Cyrus Gray",yr:"2012",dc:172,ss:99.20,f:4.47,w:198.00,bmi:28.40,burst:112.30,bdr:71.40,ras:5.35,ppg:0.00,fin:0.00},
-{n:"Dan Herron",yr:"2012",dc:181,ss:91.20,f:4.66,w:215.00,bmi:30.80,burst:118.00,bdr:42.50,ras:6.35,ppg:0.00,fin:0.00},
-{n:"Terrance Ganaway",yr:"2012",dc:192,ss:100.50,f:4.67,w:239.00,bmi:33.30,burst:123.00,bdr:76.10,ras:6.07,ppg:0.00,fin:0.00},
-{n:"Michael Smith",yr:"2012",dc:197,ss:111.40,f:4.38,w:205.00,bmi:30.30,burst:131.90,bdr:32.60,ras:8.10,ppg:0.00,fin:0.00},
-{n:"Bryce Brown",yr:"2012",dc:214,ss:105.90,f:4.53,w:223.00,bmi:30.20,burst:116.30,bdr:29.90,ras:9.07,ppg:0.00,fin:0.00},
-{n:"Edwin Baker",yr:"2012",dc:235,ss:95.00,f:4.53,w:200.00,bmi:30.40,burst:115.00,bdr:31.70,ras:2.97,ppg:0.00,fin:0.00},
-{n:"Daryl Richardson",yr:"2012",dc:237,ss:92.80,f:4.51,w:192.00,bmi:27.50,burst:136.40,bdr:null,ras:7.61,ppg:0.00,fin:0.00},
-{n:"Travaris Cadet",yr:"2012",dc:null,ss:86.80,f:4.69,w:210.00,bmi:27.70,burst:116.10,bdr:null,ras:4.50,ppg:0.00,fin:0.00},
-{n:"Jonas Gray",yr:"2012",dc:null,ss:100.50,f:4.60,w:225.00,bmi:32.30,burst:null,bdr:24.40,ras:null,ppg:0.00,fin:0.00},
-{n:"Brandon Bolden",yr:"2012",dc:null,ss:91.20,f:4.66,w:215.00,bmi:30.00,burst:124.10,bdr:69.00,ras:5.86,ppg:0.00,fin:0.00},
-{n:"Lance Dunbar",yr:"2012",dc:null,ss:91.50,f:4.52,w:191.00,bmi:29.00,burst:119.50,bdr:90.70,ras:7.51,ppg:0.00,fin:0.00},
-{n:"Giovani Bernard",yr:"2013",dc:37,ss:95.90,f:4.53,w:202.00,bmi:30.70,burst:118.00,bdr:82.60,ras:7.40,ppg:3.00,fin:23.00},
-{n:"Le'Veon Bell",yr:"2013",dc:48,ss:102.70,f:4.60,w:230.00,bmi:30.30,burst:112.60,bdr:77.40,ras:8.88,ppg:5.00,fin:7.00},
-{n:"Montee Ball",yr:"2013",dc:58,ss:94.80,f:4.61,w:214.00,bmi:30.70,burst:113.40,bdr:72.30,ras:3.86,ppg:0.00,fin:0.00},
-{n:"Eddie Lacy",yr:"2013",dc:61,ss:101.40,f:4.62,w:231.00,bmi:32.20,burst:112.80,bdr:54.20,ras:4.58,ppg:2.00,fin:7.00},
-{n:"Christine Michael",yr:"2013",dc:62,ss:103.60,f:4.54,w:220.00,bmi:31.60,burst:135.60,bdr:32.90,ras:9.79,ppg:0.00,fin:0.00},
-{n:"Knile Davis",yr:"2013",dc:98,ss:124.50,f:4.37,w:227.00,bmi:32.60,burst:117.50,bdr:46.60,ras:9.45,ppg:0.00,fin:0.00},
-{n:"Johnathan Franklin",yr:"2013",dc:124,ss:100.90,f:4.49,w:205.00,bmi:29.40,burst:111.10,bdr:63.70,ras:6.06,ppg:0.00,fin:0.00},
-{n:"Marcus Lattimore",yr:"2013",dc:130,ss:101.30,f:4.57,w:221.00,bmi:30.80,burst:null,bdr:84.20,ras:null,ppg:0.00,fin:0.00},
-{n:"Denard Robinson",yr:"2013",dc:130,ss:103.30,f:4.43,w:199.00,bmi:28.60,burst:123.60,bdr:null,ras:7.02,ppg:0.00,fin:0.00},
-{n:"Stepfan Taylor",yr:"2013",dc:135,ss:83.40,f:4.76,w:214.00,bmi:31.60,burst:106.00,bdr:80.80,ras:0.47,ppg:0.00,fin:0.00},
-{n:"Joseph Randle",yr:"2013",dc:146,ss:91.40,f:4.63,w:210.00,bmi:28.50,burst:121.00,bdr:75.20,ras:6.27,ppg:0.00,fin:0.00},
-{n:"Chris Thompson",yr:"2013",dc:149,ss:96.20,f:4.47,w:192.00,bmi:30.10,burst:118.50,bdr:39.50,ras:null,ppg:1.00,fin:27.00},
-{n:"Zac Stacy",yr:"2013",dc:155,ss:104.50,f:4.55,w:224.00,bmi:34.10,burst:117.10,bdr:57.70,ras:8.16,ppg:1.00,fin:20.00},
-{n:"Mike Gillislee",yr:"2013",dc:159,ss:102.20,f:4.55,w:219.00,bmi:30.50,burst:111.40,bdr:57.20,ras:3.91,ppg:0.00,fin:0.00},
-{n:"Latavius Murray",yr:"2013",dc:173,ss:115.80,f:4.43,w:223.00,bmi:28.60,burst:123.20,bdr:74.50,ras:9.83,ppg:3.00,fin:19.00},
-{n:"Kenjon Barner",yr:"2013",dc:174,ss:93.90,f:4.52,w:196.00,bmi:28.90,burst:121.40,bdr:37.60,ras:6.33,ppg:0.00,fin:0.00},
-{n:"Andre Ellington",yr:"2013",dc:179,ss:92.00,f:4.56,w:199.00,bmi:29.40,burst:118.80,bdr:76.40,ras:5.70,ppg:1.00,fin:19.00},
-{n:"Mike James",yr:"2013",dc:181,ss:105.90,f:4.53,w:223.00,bmi:32.00,burst:117.00,bdr:51.50,ras:7.70,ppg:0.00,fin:0.00},
-{n:"Rex Burkhead",yr:"2013",dc:182,ss:85.50,f:4.73,w:214.00,bmi:30.70,burst:128.80,bdr:74.40,ras:7.43,ppg:1.00,fin:38.00},
-{n:"Spencer Ware",yr:"2013",dc:186,ss:96.30,f:4.67,w:229.00,bmi:32.90,burst:119.90,bdr:45.70,ras:6.30,ppg:1.00,fin:16.00},
-{n:"Theo Riddick",yr:"2013",dc:191,ss:81.70,f:4.71,w:201.00,bmi:28.80,burst:113.40,bdr:65.00,ras:3.31,ppg:1.00,fin:27.00},
-{n:"Kerwynn Williams",yr:"2013",dc:215,ss:96.80,f:4.48,w:195.00,bmi:29.60,burst:118.50,bdr:72.10,ras:4.71,ppg:0.00,fin:0.00},
-{n:"Michael Cox",yr:"2013",dc:238,ss:93.10,f:4.63,w:214.00,bmi:28.20,burst:133.20,bdr:41.40,ras:9.92,ppg:0.00,fin:0.00},
-{n:"C.J. Anderson",yr:"2013",dc:null,ss:100.10,f:4.60,w:224.00,bmi:34.10,burst:113.90,bdr:60.70,ras:5.49,ppg:2.00,fin:14.00},
-{n:"Benny Cunningham",yr:"2013",dc:null,ss:87.60,f:4.69,w:212.00,bmi:30.40,burst:null,bdr:36.80,ras:null,ppg:0.00,fin:0.00},
-{n:"Bishop Sankey",yr:"2014",dc:54,ss:102.80,f:4.49,w:209.00,bmi:30.00,burst:123.40,bdr:98.90,ras:9.72,ppg:0.00,fin:0.00},
-{n:"Jeremy Hill",yr:"2014",dc:55,ss:98.80,f:4.66,w:233.00,bmi:30.70,burst:105.80,bdr:54.70,ras:2.29,ppg:3.00,fin:16.00},
-{n:"Carlos Hyde",yr:"2014",dc:57,ss:101.00,f:4.62,w:230.00,bmi:31.20,burst:115.70,bdr:56.60,ras:4.23,ppg:2.00,fin:12.00},
-{n:"Charles Sims",yr:"2014",dc:69,ss:106.30,f:4.48,w:214.00,bmi:29.00,burst:126.80,bdr:74.60,ras:8.58,ppg:0.00,fin:0.00},
-{n:"Tre Mason",yr:"2014",dc:75,ss:101.00,f:4.50,w:207.00,bmi:30.60,burst:128.50,bdr:57.60,ras:8.94,ppg:1.00,fin:30.00},
-{n:"Terrance West",yr:"2014",dc:94,ss:105.90,f:4.54,w:225.00,bmi:33.20,burst:117.00,bdr:null,ras:3.91,ppg:0.00,fin:0.00},
-{n:"Jerick McKinnon",yr:"2014",dc:96,ss:110.50,f:4.41,w:209.00,bmi:30.90,burst:134.90,bdr:null,ras:9.78,ppg:0.00,fin:0.00},
-{n:"Devonta Freeman",yr:"2014",dc:99,ss:93.60,f:4.58,w:206.00,bmi:31.30,burst:112.60,bdr:58.70,ras:2.34,ppg:4.00,fin:11.00},
-{n:"Andre Williams",yr:"2014",dc:109,ss:106.40,f:4.56,w:230.00,bmi:32.10,burst:129.10,bdr:41.00,ras:9.25,ppg:0.00,fin:0.00},
-{n:"Ka'Deem Carey",yr:"2014",dc:113,ss:84.80,f:4.70,w:207.00,bmi:30.60,burst:112.80,bdr:90.30,ras:2.91,ppg:0.00,fin:0.00},
-{n:"De'Anthony Thomas",yr:"2014",dc:120,ss:84.90,f:4.50,w:174.00,bmi:25.70,burst:116.40,bdr:34.00,ras:3.70,ppg:0.00,fin:0.00},
-{n:"James White",yr:"2014",dc:126,ss:93.50,f:4.57,w:204.00,bmi:30.10,burst:111.40,bdr:68.70,ras:4.94,ppg:2.00,fin:15.00},
-{n:"Alfred Blue",yr:"2014",dc:165,ss:97.10,f:4.63,w:223.00,bmi:28.60,burst:114.90,bdr:12.40,ras:5.04,ppg:0.00,fin:0.00},
-{n:"Lache Seastrunk",yr:"2014",dc:170,ss:97.20,f:4.51,w:201.00,bmi:28.80,burst:137.60,bdr:60.20,ras:7.21,ppg:0.00,fin:0.00},
-{n:"Marion Grice",yr:"2014",dc:185,ss:83.80,f:4.72,w:208.00,bmi:28.20,burst:111.90,bdr:84.40,ras:2.71,ppg:0.00,fin:0.00},
-{n:"Tyler Gaffney",yr:"2014",dc:188,ss:108.30,f:4.49,w:220.00,bmi:29.80,burst:120.10,bdr:73.70,ras:9.28,ppg:0.00,fin:0.00},
-{n:"Storm Johnson",yr:"2014",dc:199,ss:93.40,f:4.60,w:209.00,bmi:28.30,burst:119.40,bdr:68.40,ras:4.44,ppg:0.00,fin:0.00},
-{n:"Isaiah Crowell",yr:"2014",dc:null,ss:102.70,f:4.57,w:224.00,bmi:31.20,burst:123.10,bdr:62.80,ras:6.91,ppg:1.00,fin:14.00},
-{n:"David Fluellen",yr:"2014",dc:null,ss:90.30,f:4.72,w:224.00,bmi:31.20,burst:122.10,bdr:51.40,ras:5.33,ppg:0.00,fin:0.00},
-{n:"Kapri Bibbs",yr:"2014",dc:null,ss:89.10,f:4.67,w:212.00,bmi:31.30,burst:102.30,bdr:25.80,ras:1.75,ppg:0.00,fin:0.00},
-{n:"Senorise Perry",yr:"2014",dc:null,ss:97.10,f:4.43,w:187.00,bmi:25.40,burst:125.90,bdr:41.10,ras:8.89,ppg:0.00,fin:0.00},
-{n:"Charcandrick West",yr:"2014",dc:null,ss:98.60,f:4.51,w:204.00,bmi:29.30,burst:134.70,bdr:null,ras:7.85,ppg:0.00,fin:0.00},
-{n:"Damien Williams",yr:"2014",dc:null,ss:113.20,f:4.45,w:222.00,bmi:31.00,burst:120.90,bdr:58.30,ras:8.03,ppg:1.00,fin:35.00},
-{n:"Todd Gurley",yr:"2015",dc:10,ss:110.70,f:4.50,w:227.00,bmi:29.90,burst:null,bdr:67.50,ras:null,ppg:6.00,fin:11.00},
-{n:"Melvin Gordon",yr:"2015",dc:15,ss:103.00,f:4.52,w:215.00,bmi:28.40,burst:122.50,bdr:61.60,ras:8.74,ppg:6.00,fin:12.00},
-{n:"T.J. Yeldon",yr:"2015",dc:36,ss:100.10,f:4.61,w:226.00,bmi:29.80,burst:119.70,bdr:36.50,ras:7.05,ppg:2.00,fin:26.00},
-{n:"Ameer Abdullah",yr:"2015",dc:54,ss:91.60,f:4.60,w:205.00,bmi:30.30,burst:137.30,bdr:79.80,ras:8.66,ppg:0.00,fin:0.00},
-{n:"Tevin Coleman",yr:"2015",dc:73,ss:105.10,f:4.45,w:206.00,bmi:28.70,burst:null,bdr:68.50,ras:9.72,ppg:3.00,fin:20.00},
-{n:"Duke Johnson",yr:"2015",dc:77,ss:97.40,f:4.54,w:207.00,bmi:30.60,burst:117.50,bdr:71.60,ras:6.98,ppg:1.00,fin:15.00},
-{n:"David Johnson",yr:"2015",dc:86,ss:109.30,f:4.50,w:224.00,bmi:29.60,burst:134.10,bdr:null,ras:9.84,ppg:4.00,fin:10.00},
-{n:"Matt Jones",yr:"2015",dc:95,ss:102.30,f:4.61,w:231.00,bmi:29.70,burst:109.60,bdr:46.50,ras:5.23,ppg:0.00,fin:0.00},
-{n:"Jeremy Langford",yr:"2015",dc:103,ss:109.00,f:4.42,w:208.00,bmi:28.20,burst:117.70,bdr:81.60,ras:7.52,ppg:0.00,fin:0.00},
-{n:"Javorious Allen",yr:"2015",dc:122,ss:105.00,f:4.53,w:221.00,bmi:30.00,burst:120.90,bdr:65.40,ras:8.02,ppg:0.00,fin:0.00},
-{n:"Mike Davis",yr:"2015",dc:123,ss:96.10,f:4.61,w:217.00,bmi:32.00,burst:115.80,bdr:82.20,ras:6.09,ppg:1.00,fin:15.00},
-{n:"David Cobb",yr:"2015",dc:130,ss:87.70,f:4.78,w:229.00,bmi:31.90,burst:126.00,bdr:77.30,ras:4.55,ppg:0.00,fin:0.00},
-{n:"Jay Ajayi",yr:"2015",dc:141,ss:101.30,f:4.57,w:221.00,bmi:30.00,burst:126.80,bdr:82.90,ras:8.63,ppg:1.00,fin:11.00},
-{n:"Karlos Williams",yr:"2015",dc:147,ss:114.20,f:4.48,w:230.00,bmi:30.30,burst:115.50,bdr:46.00,ras:6.41,ppg:1.00,fin:37.00},
-{n:"Cameron Artis-Payne",yr:"2015",dc:166,ss:100.70,f:4.53,w:212.00,bmi:30.40,burst:121.10,bdr:49.20,ras:6.00,ppg:0.00,fin:0.00},
-{n:"Josh Robinson",yr:"2015",dc:189,ss:88.90,f:4.70,w:217.00,bmi:33.00,burst:110.90,bdr:79.70,ras:1.10,ppg:0.00,fin:0.00},
-{n:"Marcus Murphy",yr:"2015",dc:205,ss:85.50,f:4.61,w:193.00,bmi:29.30,burst:103.80,bdr:74.00,ras:0.24,ppg:0.00,fin:0.00},
-{n:"Kenny Hilliard",yr:"2015",dc:210,ss:83.10,f:4.83,w:226.00,bmi:30.60,burst:101.40,bdr:25.80,ras:0.91,ppg:0.00,fin:0.00},
-{n:"Malcolm Brown",yr:"2015",dc:null,ss:98.30,f:4.62,w:224.00,bmi:31.20,burst:117.20,bdr:60.50,ras:6.84,ppg:0.00,fin:0.00},
-{n:"Thomas Rawls",yr:"2015",dc:null,ss:97.70,f:4.58,w:215.00,bmi:31.70,burst:118.40,bdr:32.70,ras:2.08,ppg:0.00,fin:0.00},
-{n:"Zach Zenner",yr:"2015",dc:null,ss:99.60,f:4.60,w:223.00,bmi:31.10,burst:130.20,bdr:null,ras:8.39,ppg:0.00,fin:0.00},
-{n:"Raheem Mostert",yr:"2015",dc:null,ss:87.10,f:4.60,w:195.00,bmi:28.00,burst:134.00,bdr:22.30,ras:9.37,ppg:2.00,fin:25.00},
-{n:"Ezekiel Elliot",yr:"2016",dc:4,ss:112.70,f:4.47,w:225.00,bmi:30.50,burst:114.30,bdr:88.40,ras:8.65,ppg:7.00,fin:8.00},
-{n:"Derrick Henry",yr:"2016",dc:46,ss:116.30,f:4.54,w:247.00,bmi:30.90,burst:127.90,bdr:47.60,ras:8.77,ppg:8.00,fin:7.00},
-{n:"Kenyan Drake",yr:"2016",dc:74,ss:107.10,f:4.45,w:210.00,bmi:27.70,burst:120.20,bdr:46.60,ras:6.98,ppg:3.00,fin:16.00},
-{n:"C.J. Prosise",yr:"2016",dc:91,ss:109.20,f:4.48,w:220.00,bmi:29.80,burst:120.90,bdr:47.40,ras:8.07,ppg:0.00,fin:0.00},
-{n:"Tyler Ervin",yr:"2016",dc:117,ss:101.50,f:4.41,w:192.00,bmi:27.50,burst:131.30,bdr:79.20,ras:7.70,ppg:0.00,fin:0.00},
-{n:"Kenneth Dixon",yr:"2016",dc:132,ss:97.70,f:4.58,w:215.00,bmi:30.80,burst:124.30,bdr:74.30,ras:6.86,ppg:0.00,fin:0.00},
-{n:"Devontae Booker",yr:"2016",dc:134,ss:99.50,f:4.58,w:219.00,bmi:30.50,burst:null,bdr:93.50,ras:null,ppg:0.00,fin:0.00},
-{n:"DeAndre Washington",yr:"2016",dc:132,ss:100.40,f:4.49,w:204.00,bmi:31.00,burst:117.70,bdr:56.30,ras:7.31,ppg:0.00,fin:0.00},
-{n:"Paul Perkins",yr:"2016",dc:138,ss:97.90,f:4.54,w:208.00,bmi:29.80,burst:116.40,bdr:77.90,ras:5.39,ppg:0.00,fin:0.00},
-{n:"Jordan Howard",yr:"2016",dc:139,ss:99.20,f:4.64,w:230.00,bmi:31.20,burst:118.80,bdr:56.70,ras:5.41,ppg:4.00,fin:21.00},
-{n:"Wendell Smallwood",yr:"2016",dc:142,ss:104.20,f:4.47,w:208.00,bmi:29.80,burst:117.00,bdr:58.10,ras:7.09,ppg:0.00,fin:0.00},
-{n:"Jonathan Williams",yr:"2016",dc:146,ss:91.70,f:4.68,w:220.00,bmi:30.70,burst:null,bdr:61.40,ras:6.40,ppg:0.00,fin:0.00},
-{n:"Alex Collins",yr:"2016",dc:162,ss:97.80,f:4.59,w:217.00,bmi:31.10,burst:105.00,bdr:72.90,ras:2.96,ppg:2.00,fin:31.00},
-{n:"Keenan Reynolds",yr:"2016",dc:167,ss:83.40,f:4.62,w:190.00,bmi:28.10,burst:122.90,bdr:null,ras:4.55,ppg:0.00,fin:0.00},
-{n:"Kelvin Taylor",yr:"2016",dc:196,ss:92.50,f:4.60,w:207.00,bmi:29.70,burst:110.90,bdr:52.90,ras:2.66,ppg:0.00,fin:0.00},
-{n:"Darius Jackson",yr:"2016",dc:201,ss:112.20,f:4.45,w:220.00,bmi:29.80,burst:136.20,bdr:46.40,ras:9.85,ppg:0.00,fin:0.00},
-{n:"Dwayne Washington",yr:"2016",dc:207,ss:105.90,f:4.53,w:223.00,bmi:30.20,burst:127.30,bdr:43.60,ras:9.82,ppg:0.00,fin:0.00},
-{n:"Daniel Lasco",yr:"2016",dc:208,ss:105.60,f:4.46,w:209.00,bmi:28.30,burst:138.10,bdr:78.30,ras:9.61,ppg:0.00,fin:0.00},
-{n:"Keith Marshall",yr:"2016",dc:213,ss:126.90,f:4.31,w:219.00,bmi:30.50,burst:null,bdr:14.80,ras:9.35,ppg:0.00,fin:0.00},
-{n:"Zac Brooks",yr:"2016",dc:218,ss:94.20,f:4.54,w:200.00,bmi:26.40,burst:125.70,bdr:31.10,ras:7.94,ppg:0.00,fin:0.00},
-{n:"Tra Carson",yr:"2016",dc:null,ss:93.80,f:4.69,w:227.00,bmi:31.70,burst:120.40,bdr:null,ras:6.25,ppg:0.00,fin:0.00},
-{n:"Peyton Barber",yr:"2016",dc:null,ss:98.40,f:4.64,w:228.00,bmi:32.70,burst:110.80,bdr:28.40,ras:4.34,ppg:0.00,fin:0.00},
-{n:"J.D. Mckissick",yr:"2016",dc:null,ss:83.50,f:4.60,w:187.00,bmi:26.80,burst:123.90,bdr:39.70,ras:4.31,ppg:0.00,fin:0.00},
-{n:"Leonard Fournette",yr:"2017",dc:4,ss:110.20,f:4.51,w:228.00,bmi:30.90,burst:null,bdr:82.60,ras:8.04,ppg:4.00,fin:10.00},
-{n:"Christian McCaffery",yr:"2017",dc:8,ss:100.30,f:4.48,w:202.00,bmi:28.20,burst:124.30,bdr:73.60,ras:8.52,ppg:null,fin:null},
-{n:"Dalvin Cook",yr:"2017",dc:41,ss:103.30,f:4.49,w:210.00,bmi:30.10,burst:109.90,bdr:88.90,ras:4.65,ppg:5.00,fin:13.00},
-{n:"Joe Mixon",yr:"2017",dc:48,ss:111.20,f:4.50,w:228.00,bmi:30.10,burst:118.50,bdr:63.90,ras:9.46,ppg:6.00,fin:9.00},
-{n:"Alvin Kamara",yr:"2017",dc:67,ss:99.00,f:4.56,w:214.00,bmi:30.70,burst:132.70,bdr:55.60,ras:8.08,ppg:null,fin:null},
-{n:"Kareem Hunt",yr:"2017",dc:86,ss:94.80,f:4.62,w:216.00,bmi:31.00,burst:121.60,bdr:60.80,ras:5.15,ppg:4.00,fin:14.00},
-{n:"D'Onta Foreman",yr:"2017",dc:89,ss:112.60,f:4.51,w:233.00,bmi:31.60,burst:116.10,bdr:83.10,ras:7.82,ppg:0.00,fin:0.00},
-{n:"James Conner",yr:"2017",dc:105,ss:99.70,f:4.65,w:233.00,bmi:30.70,burst:105.80,bdr:60.30,ras:4.33,ppg:7.00,fin:17.00},
-{n:"Samaje Perine",yr:"2017",dc:103,ss:99.70,f:4.65,w:233.00,bmi:32.50,burst:114.10,bdr:40.90,ras:4.94,ppg:0.00,fin:0.00},
-{n:"Tarik Cohen",yr:"2017",dc:109,ss:93.80,f:4.42,w:179.00,bmi:28.90,burst:112.60,bdr:null,ras:3.92,ppg:1.00,fin:13.00},
-{n:"Joe Williams",yr:"2017",dc:111,ss:111.00,f:4.41,w:210.00,bmi:29.30,burst:122.00,bdr:52.90,ras:7.78,ppg:0.00,fin:0.00},
-{n:"Donnel Pumphrey",yr:"2017",dc:122,ss:87.40,f:4.48,w:176.00,bmi:26.80,burst:115.50,bdr:67.30,ras:4.01,ppg:0.00,fin:0.00},
-{n:"Jamaal Williams",yr:"2017",dc:124,ss:95.50,f:4.59,w:212.00,bmi:28.70,burst:112.50,bdr:61.20,ras:4.55,ppg:1.00,fin:8.00},
-{n:"Wayne Gallman",yr:"2017",dc:130,ss:96.00,f:4.60,w:215.00,bmi:29.20,burst:110.20,bdr:58.10,ras:6.28,ppg:0.00,fin:0.00},
-{n:"Marlon Mack",yr:"2017",dc:133,ss:103.90,f:4.50,w:213.00,bmi:29.70,burst:122.90,bdr:57.00,ras:8.78,ppg:2.00,fin:21.00},
-{n:"Brian Hill",yr:"2017",dc:140,ss:103.10,f:4.54,w:219.00,bmi:28.90,burst:120.30,bdr:79.30,ras:7.40,ppg:0.00,fin:0.00},
-{n:"Jeremy McNichols",yr:"2017",dc:146,ss:105.30,f:4.49,w:214.00,bmi:31.60,burst:120.90,bdr:88.10,ras:8.39,ppg:0.00,fin:0.00},
-{n:"T.J. Logan",yr:"2017",dc:164,ss:107.50,f:4.37,w:196.00,bmi:28.90,burst:117.50,bdr:59.70,ras:7.56,ppg:0.00,fin:0.00},
-{n:"Aaron Jones",yr:"2017",dc:167,ss:96.20,f:4.56,w:208.00,bmi:30.70,burst:127.30,bdr:75.30,ras:9.21,ppg:7.00,fin:15.00},
-{n:"Elijah McGuire",yr:"2017",dc:164,ss:101.60,f:4.53,w:214.00,bmi:30.70,burst:121.20,bdr:82.00,ras:4.62,ppg:0.00,fin:0.00},
-{n:"De'Angelo Henderson",yr:"2017",dc:179,ss:103.30,f:4.48,w:208.00,bmi:32.60,burst:117.80,bdr:null,ras:5.66,ppg:0.00,fin:0.00},
-{n:"Devante Mays",yr:"2017",dc:212,ss:105.50,f:4.57,w:230.00,bmi:33.00,burst:133.40,bdr:31.50,ras:7.66,ppg:0.00,fin:0.00},
-{n:"Khalfani Muhammad",yr:"2017",dc:215,ss:88.30,f:4.43,w:170.00,bmi:26.60,burst:128.50,bdr:40.30,ras:7.52,ppg:0.00,fin:0.00},
-{n:"Elijah Hood",yr:"2017",dc:216,ss:101.00,f:4.63,w:232.00,bmi:31.50,burst:110.10,bdr:43.00,ras:5.69,ppg:0.00,fin:0.00},
-{n:"Chris Carson",yr:"2017",dc:223,ss:99.10,f:4.58,w:218.00,bmi:29.60,burst:127.90,bdr:53.30,ras:7.91,ppg:3.00,fin:14.00},
-{n:"Matthew Dayes",yr:"2017",dc:226,ss:83.30,f:4.71,w:205.00,bmi:30.30,burst:102.10,bdr:58.50,ras:1.74,ppg:0.00,fin:0.00},
-{n:"Corey Clement",yr:"2017",dc:null,ss:91.70,f:4.68,w:220.00,bmi:31.60,burst:106.00,bdr:35.70,ras:4.84,ppg:0.00,fin:0.00},
-{n:"Dare Ogunbowale",yr:"2017",dc:null,ss:91.10,f:4.65,w:213.00,bmi:29.70,burst:119.50,bdr:57.10,ras:4.47,ppg:0.00,fin:0.00},
-{n:"Austin Ekeler",yr:"2017",dc:null,ss:98.80,f:4.48,w:199.00,bmi:29.40,burst:132.90,bdr:null,ras:null,ppg:6.00,fin:15.00},
-{n:"Saquon Barkley",yr:"2018",dc:2,ss:124.30,f:4.40,w:233.00,bmi:33.60,burst:134.70,bdr:90.50,ras:9.97,ppg:null,fin:null},
-{n:"Rashaad Penny",yr:"2018",dc:27,ss:111.20,f:4.46,w:220.00,bmi:30.70,burst:115.30,bdr:80.00,ras:7.26,ppg:1.00,fin:36.00},
-{n:"Sony Michel",yr:"2018",dc:31,ss:100.70,f:4.54,w:214.00,bmi:29.80,burst:null,bdr:57.20,ras:8.96,ppg:1.00,fin:28.00},
-{n:"Nick Chubb",yr:"2018",dc:35,ss:108.80,f:4.52,w:227.00,bmi:31.70,burst:129.50,bdr:55.30,ras:9.15,ppg:5.00,fin:10.00},
-{n:"Ronald Jones",yr:"2018",dc:38,ss:97.40,f:4.53,w:205.00,bmi:28.60,burst:119.10,bdr:72.20,ras:6.55,ppg:1.00,fin:16.00},
-{n:"Kerryon Johnson",yr:"2018",dc:43,ss:97.70,f:4.57,w:213.00,bmi:28.90,burst:131.00,bdr:58.20,ras:7.10,ppg:1.00,fin:34.00},
-{n:"Derrius Guice",yr:"2018",dc:59,ss:110.20,f:4.49,w:224.00,bmi:31.20,burst:null,bdr:61.80,ras:7.40,ppg:0.00,fin:0.00},
-{n:"Royce Freeman",yr:"2018",dc:71,ss:107.80,f:4.54,w:229.00,bmi:31.10,burst:116.80,bdr:51.00,ras:8.27,ppg:0.00,fin:0.00},
-{n:"Nyheim Hines",yr:"2018",dc:100,ss:107.60,f:4.38,w:198.00,bmi:30.10,burst:119.90,bdr:65.90,ras:5.69,ppg:1.00,fin:20.00},
-{n:"Mark Walton",yr:"2018",dc:108,ss:90.20,f:4.60,w:202.00,bmi:29.00,burst:112.60,bdr:73.60,ras:4.57,ppg:0.00,fin:0.00},
-{n:"Ito Smith",yr:"2018",dc:122,ss:97.50,f:4.50,w:200.00,bmi:29.50,burst:121.60,bdr:86.10,ras:6.26,ppg:0.00,fin:0.00},
-{n:"Kalen Ballage",yr:"2018",dc:127,ss:115.20,f:4.46,w:228.00,bmi:29.30,burst:118.00,bdr:73.10,ras:9.12,ppg:0.00,fin:0.00},
-{n:"Chase Edmonds",yr:"2018",dc:130,ss:95.70,f:4.55,w:205.00,bmi:30.30,burst:118.80,bdr:null,ras:7.91,ppg:1.00,fin:35.00},
-{n:"Jordan Wilkins",yr:"2018",dc:160,ss:98.20,f:4.58,w:216.00,bmi:28.50,burst:119.70,bdr:75.70,ras:7.78,ppg:0.00,fin:0.00},
-{n:"John Kelly",yr:"2018",dc:162,ss:89.30,f:4.69,w:216.00,bmi:31.00,burst:119.50,bdr:62.30,ras:4.45,ppg:0.00,fin:0.00},
-{n:"Boston Scott",yr:"2018",dc:187,ss:99.50,f:4.45,w:195.00,bmi:30.50,burst:126.00,bdr:40.90,ras:8.85,ppg:0.00,fin:0.00},
-{n:"Trenton Cannon",yr:"2018",dc:190,ss:94.40,f:4.45,w:185.00,bmi:26.50,burst:130.00,bdr:null,ras:9.07,ppg:0.00,fin:0.00},
-{n:"David Williams",yr:"2018",dc:200,ss:104.50,f:4.55,w:224.00,bmi:30.40,burst:108.90,bdr:45.20,ras:4.76,ppg:0.00,fin:0.00},
-{n:"Bo Scarbrough",yr:"2018",dc:210,ss:109.20,f:4.52,w:228.00,bmi:30.10,burst:132.50,bdr:23.80,ras:9.25,ppg:0.00,fin:0.00},
-{n:"Justin Jackson",yr:"2018",dc:225,ss:92.50,f:4.52,w:193.00,bmi:26.20,burst:126.50,bdr:81.80,ras:8.84,ppg:0.00,fin:0.00},
-{n:"Josh Adams",yr:"2018",dc:null,ss:98.50,f:4.56,w:213.00,bmi:27.30,burst:118.80,bdr:70.90,ras:9.52,ppg:0.00,fin:0.00},
-{n:"Akrum Wadley",yr:"2018",dc:null,ss:91.30,f:4.54,w:194.00,bmi:27.80,burst:null,bdr:68.80,ras:3.43,ppg:0.00,fin:0.00},
-{n:"Phillip Lindsay",yr:"2018",dc:null,ss:94.70,f:4.44,w:184.00,bmi:28.80,burst:122.40,bdr:97.70,ras:5.77,ppg:2.00,fin:16.00},
-{n:"Jeff Wilson",yr:"2018",dc:null,ss:92.20,f:4.62,w:210.00,bmi:28.50,burst:114.50,bdr:52.30,ras:5.45,ppg:1.00,fin:30.00},
-{n:"Mike Boone",yr:"2018",dc:null,ss:101.40,f:4.49,w:206.00,bmi:29.60,burst:140.90,bdr:47.10,ras:9.11,ppg:0.00,fin:0.00},
-{n:"Gus Edwards",yr:"2018",dc:null,ss:105.00,f:4.57,w:229.00,bmi:30.20,burst:120.20,bdr:38.80,ras:8.62,ppg:1.00,fin:20.00},
-{n:"D'Ernest Johnson",yr:"2018",dc:null,ss:71.70,f:4.86,w:200.00,bmi:27.90,burst:110.40,bdr:68.20,ras:2.77,ppg:0.00,fin:0.00},
-{n:"Dontrell Hilliard",yr:"2018",dc:null,ss:101.20,f:4.47,w:202.00,bmi:28.20,burst:121.20,bdr:71.10,ras:8.06,ppg:0.00,fin:0.00},
-{n:"Godwin Igwebuike",yr:"2018",dc:null,ss:109.60,f:4.44,w:213.00,bmi:29.70,burst:124.40,bdr:null,ras:9.70,ppg:0.00,fin:0.00},
-{n:"Josh Jacobs",yr:"2019",dc:24,ss:90.90,f:4.69,w:220.00,bmi:31.60,burst:115.50,bdr:55.10,ras:5.70,ppg:null,fin:null},
-{n:"Miles Sanders",yr:"2019",dc:53,ss:103.80,f:4.49,w:211.00,bmi:29.40,burst:123.20,bdr:64.90,ras:9.49,ppg:3.00,fin:17.00},
-{n:"Darrell Henderson",yr:"2019",dc:70,ss:102.40,f:4.49,w:208.00,bmi:31.60,burst:117.50,bdr:37.70,ras:7.71,ppg:1.00,fin:27.00},
-{n:"David Montgomery",yr:"2019",dc:73,ss:96.60,f:4.63,w:222.00,bmi:31.90,burst:109.00,bdr:83.50,ras:5.21,ppg:5.00,fin:16.00},
-{n:"Devin Singletary",yr:"2019",dc:74,ss:86.10,f:4.66,w:203.00,bmi:31.80,burst:118.00,bdr:62.00,ras:1.73,ppg:2.00,fin:26.00},
-{n:"Damien Harris",yr:"2019",dc:87,ss:99.00,f:4.57,w:216.00,bmi:31.00,burst:123.40,bdr:45.30,ras:6.40,ppg:1.00,fin:13.00},
-{n:"Alexander Mattison",yr:"2019",dc:102,ss:92.90,f:4.67,w:221.00,bmi:30.80,burst:123.00,bdr:78.80,ras:6.85,ppg:0.00,fin:0.00},
-{n:"Bryce Love",yr:"2019",dc:106,ss:null,f:null,w:200.00,bmi:29.50,burst:null,bdr:54.90,ras:null,ppg:0.00,fin:0.00},
-{n:"Justice Hill",yr:"2019",dc:107,ss:105.70,f:4.40,w:198.00,bmi:28.40,burst:133.00,bdr:66.10,ras:9.34,ppg:0.00,fin:0.00},
-{n:"Benny Snell",yr:"2019",dc:116,ss:95.00,f:4.66,w:224.00,bmi:32.10,burst:109.70,bdr:70.80,ras:3.48,ppg:0.00,fin:0.00},
-{n:"Tony Pollard",yr:"2019",dc:122,ss:100.60,f:4.52,w:210.00,bmi:28.50,burst:120.00,bdr:29.60,ras:7.21,ppg:4.00,fin:17.00},
-{n:"Ryquell Armstead",yr:"2019",dc:130,ss:112.20,f:4.45,w:220.00,bmi:30.70,burst:108.00,bdr:65.40,ras:7.74,ppg:0.00,fin:0.00},
-{n:"Qadree Ollison",yr:"2019",dc:142,ss:103.60,f:4.58,w:228.00,bmi:30.10,burst:107.20,bdr:71.50,ras:4.49,ppg:0.00,fin:0.00},
-{n:"Jordan Scarlett",yr:"2019",dc:144,ss:104.20,f:4.47,w:208.00,bmi:29.00,burst:109.00,bdr:29.10,ras:4.74,ppg:0.00,fin:0.00},
-{n:"Trayveon Williams",yr:"2019",dc:169,ss:99.60,f:4.51,w:206.00,bmi:31.30,burst:116.60,bdr:81.10,ras:4.66,ppg:0.00,fin:0.00},
-{n:"Ty Johnson",yr:"2019",dc:173,ss:107.10,f:4.45,w:210.00,bmi:29.30,burst:120.20,bdr:49.00,ras:9.75,ppg:0.00,fin:0.00},
-{n:"Dexter Williams",yr:"2019",dc:181,ss:97.20,f:4.57,w:212.00,bmi:29.60,burst:126.20,bdr:61.10,ras:8.15,ppg:0.00,fin:0.00},
-{n:"Travis Homer",yr:"2019",dc:191,ss:99.80,f:4.48,w:201.00,bmi:28.80,burst:132.20,bdr:67.40,ras:8.35,ppg:0.00,fin:0.00},
-{n:"Rodney Anderson",yr:"2019",dc:198,ss:null,f:null,w:224.00,bmi:30.40,burst:null,bdr:55.60,ras:null,ppg:0.00,fin:0.00},
-{n:"Darwin Thompson",yr:"2019",dc:201,ss:88.40,f:4.60,w:198.00,bmi:30.10,burst:129.30,bdr:47.50,ras:8.02,ppg:0.00,fin:0.00},
-{n:"Mike Weber",yr:"2019",dc:196,ss:105.70,f:4.47,w:211.00,bmi:30.30,burst:null,bdr:40.20,ras:7.05,ppg:0.00,fin:0.00},
-{n:"Kerrith Whyte",yr:"2019",dc:200,ss:103.20,f:4.42,w:197.00,bmi:28.30,burst:137.40,bdr:61.20,ras:8.59,ppg:0.00,fin:0.00},
-{n:"Myles Gaskin",yr:"2019",dc:207,ss:93.20,f:4.58,w:205.00,bmi:30.30,burst:119.40,bdr:56.00,ras:5.97,ppg:1.00,fin:27.00},
-{n:"Devine Ozigbo",yr:"2019",dc:null,ss:91.00,f:4.70,w:222.00,bmi:31.00,burst:124.90,bdr:44.80,ras:8.11,ppg:0.00,fin:0.00},
-{n:"Wes Hills",yr:"2019",dc:null,ss:90.20,f:4.64,w:209.00,bmi:27.60,burst:null,bdr:null,ras:null,ppg:0.00,fin:0.00},
-{n:"Patrick Laird",yr:"2019",dc:null,ss:90.80,f:4.61,w:205.00,bmi:27.80,burst:117.80,bdr:85.10,ras:8.69,ppg:0.00,fin:0.00},
-{n:"Elijah Holyfield",yr:"2019",dc:null,ss:83.10,f:4.78,w:217.00,bmi:31.10,burst:109.20,bdr:19.60,ras:2.55,ppg:0.00,fin:0.00},
-{n:"Derrick Gore",yr:"2019",dc:null,ss:85.90,f:4.68,w:206.00,bmi:30.40,burst:114.80,bdr:64.10,ras:4.68,ppg:0.00,fin:0.00},
-{n:"Clyde Edwards-Helaire",yr:"2020",dc:32,ss:92.50,f:4.60,w:207.00,bmi:32.40,burst:128.70,bdr:74.50,ras:5.44,ppg:2.00,fin:31.00},
-{n:"D'Andre Swift",yr:"2020",dc:35,ss:105.30,f:4.48,w:212.00,bmi:32.20,burst:120.90,bdr:55.80,ras:7.58,ppg:6.00,fin:19.00},
-{n:"Jonathan Taylor",yr:"2020",dc:41,ss:121.70,f:4.39,w:226.00,bmi:32.40,burst:122.70,bdr:75.50,ras:9.53,ppg:null,fin:null},
-{n:"Cam Akers",yr:"2020",dc:52,ss:108.70,f:4.47,w:217.00,bmi:31.10,burst:121.40,bdr:80.30,ras:8.81,ppg:0.00,fin:0.00},
-{n:"J.K. Dobbins",yr:"2020",dc:55,ss:null,f:null,w:209.00,bmi:30.00,burst:null,bdr:62.80,ras:null,ppg:null,fin:null},
-{n:"A.J. Dillon",yr:"2020",dc:62,ss:117.30,f:4.53,w:247.00,bmi:33.50,burst:135.20,bdr:55.70,ras:9.16,ppg:0.00,fin:0.00},
-{n:"Antonio Gibson",yr:"2020",dc:66,ss:122.80,f:4.39,w:228.00,bmi:30.90,burst:118.50,bdr:null,ras:9.29,ppg:2.00,fin:11.00},
-{n:"Ke'Shawn Vaughn",yr:"2020",dc:76,ss:103.50,f:4.51,w:214.00,bmi:30.70,burst:112.90,bdr:79.10,ras:5.22,ppg:0.00,fin:0.00},
-{n:"Zack Moss",yr:"2020",dc:86,ss:95.40,f:4.65,w:223.00,bmi:32.90,burst:null,bdr:68.90,ras:2.88,ppg:1.00,fin:29.00},
-{n:"Darrynton Evans",yr:"2020",dc:93,ss:107.30,f:4.41,w:203.00,bmi:29.10,burst:125.40,bdr:78.60,ras:9.12,ppg:0.00,fin:0.00},
-{n:"Joshua Kelley",yr:"2020",dc:102,ss:104.30,f:4.49,w:212.00,bmi:29.60,burst:113.20,bdr:46.80,ras:7.63,ppg:0.00,fin:0.00},
-{n:"Lamical Perine",yr:"2020",dc:110,ss:94.80,f:4.62,w:216.00,bmi:30.10,burst:118.50,bdr:73.60,ras:5.31,ppg:0.00,fin:0.00},
-{n:"Anthony McFarland",yr:"2020",dc:114,ss:107.00,f:4.44,w:208.00,bmi:31.60,burst:108.20,bdr:34.90,ras:4.45,ppg:0.00,fin:0.00},
-{n:"Deejay Dallas",yr:"2020",dc:134,ss:98.60,f:4.58,w:217.00,bmi:31.10,burst:116.50,bdr:52.90,ras:5.13,ppg:0.00,fin:0.00},
-{n:"Jason Huntley",yr:"2020",dc:155,ss:95.90,f:4.45,w:188.00,bmi:27.80,burst:132.70,bdr:60.70,ras:8.08,ppg:0.00,fin:0.00},
-{n:"Eno Benjamin",yr:"2020",dc:200,ss:94.90,f:4.57,w:207.00,bmi:30.60,burst:127.30,bdr:95.70,ras:5.79,ppg:0.00,fin:0.00},
-{n:"Raymond Calais",yr:"2020",dc:223,ss:92.80,f:4.42,w:177.00,bmi:26.90,burst:123.80,bdr:19.30,ras:7.60,ppg:0.00,fin:0.00},
-{n:"Malcolm Perry",yr:"2020",dc:224,ss:81.00,f:4.63,w:186.00,bmi:26.70,burst:122.20,bdr:null,ras:1.91,ppg:0.00,fin:0.00},
-{n:"James Robinson",yr:"2020",dc:null,ss:94.50,f:4.64,w:219.00,bmi:32.30,burst:130.50,bdr:null,ras:7.85,ppg:2.00,fin:16.00},
-{n:"Benny LeMay",yr:"2020",dc:null,ss:84.50,f:4.75,w:215.00,bmi:29.20,burst:104.50,bdr:75.50,ras:1.12,ppg:0.00,fin:0.00},
-{n:"Michael Warren",yr:"2020",dc:null,ss:null,f:null,w:226.00,bmi:33.40,burst:null,bdr:63.60,ras:null,ppg:0.00,fin:0.00},
-{n:"J.J. Taylor",yr:"2020",dc:null,ss:81.90,f:4.61,w:185.00,bmi:30.80,burst:117.70,bdr:34.00,ras:4.69,ppg:0.00,fin:0.00},
-{n:"Javon Leake",yr:"2020",dc:null,ss:92.00,f:4.65,w:215.00,bmi:29.20,burst:120.30,bdr:23.50,ras:5.08,ppg:0.00,fin:0.00},
-{n:"Patrick Taylor Jr",yr:"2020",dc:null,ss:99.50,f:4.57,w:217.00,bmi:27.90,burst:119.30,bdr:27.50,ras:7.14,ppg:0.00,fin:0.00},
-{n:"Salvon Ahmed",yr:"2020",dc:null,ss:86.50,f:4.62,w:197.00,bmi:27.50,burst:118.70,bdr:33.10,ras:5.05,ppg:0.00,fin:0.00},
-{n:"Darius Bradwell",yr:"2020",dc:null,ss:null,f:null,w:230.00,bmi:30.30,burst:null,bdr:43.30,ras:null,ppg:0.00,fin:0.00},
-{n:"Darius Anderson",yr:"2020",dc:null,ss:92.10,f:4.61,w:208.00,bmi:29.00,burst:125.20,bdr:27.00,ras:7.69,ppg:0.00,fin:0.00},
-{n:"Adrian Killins Jr",yr:"2020",dc:null,ss:null,f:null,w:164.00,bmi:24.90,burst:null,bdr:39.30,ras:null,ppg:0.00,fin:0.00},
-{n:"Levante Bellamy",yr:"2020",dc:null,ss:93.60,f:4.50,w:192.00,bmi:28.40,burst:129.70,bdr:36.30,ras:6.51,ppg:0.00,fin:0.00},
-{n:"JaMycal Hasty",yr:"2020",dc:null,ss:95.70,f:4.55,w:205.00,bmi:31.20,burst:127.80,bdr:30.50,ras:6.71,ppg:0.00,fin:0.00},
-{n:"Rico Dowdle",yr:"2020",dc:null,ss:100.30,f:4.54,w:213.00,bmi:29.70,burst:128.10,bdr:41.80,ras:8.58,ppg:2.00,fin:19.00},
-{n:"Najee Harris",yr:"2021",dc:24,ss:null,f:null,w:232.00,bmi:31.50,burst:null,bdr:70.10,ras:null,ppg:null,fin:null},
-{n:"Travis Etienne",yr:"2021",dc:25,ss:114.70,f:4.40,w:215.00,bmi:30.80,burst:121.00,bdr:72.90,ras:9.13,ppg:null,fin:null},
-{n:"Javonte Williams",yr:"2021",dc:35,ss:100.70,f:4.53,w:212.00,bmi:31.30,burst:122.70,bdr:55.20,ras:8.79,ppg:null,fin:null},
-{n:"Trey Sermon",yr:"2021",dc:89,ss:92.80,f:4.64,w:215.00,bmi:29.20,burst:125.40,bdr:50.00,ras:9.66,ppg:0.00,fin:0.00},
-{n:"Michael Carter",yr:"2021",dc:98,ss:93.80,f:4.55,w:201.00,bmi:31.60,burst:117.30,bdr:61.00,ras:6.23,ppg:0.00,fin:0.00},
-{n:"Kene Nwangwu",yr:"2021",dc:110,ss:116.20,f:4.36,w:210.00,bmi:28.50,burst:127.10,bdr:10.50,ras:9.89,ppg:0.00,fin:0.00},
-{n:"Rhamondre Stevenson",yr:"2021",dc:111,ss:94.60,f:4.68,w:227.00,bmi:31.70,burst:109.60,bdr:29.70,ras:4.02,ppg:null,fin:null},
-{n:"Chuba Hubbard",yr:"2021",dc:117,ss:99.70,f:4.53,w:210.00,bmi:28.50,burst:121.20,bdr:85.70,ras:8.44,ppg:null,fin:null},
-{n:"Kenneth Gainwell",yr:"2021",dc:134,ss:98.90,f:4.49,w:201.00,bmi:30.60,burst:120.00,bdr:42.50,ras:5.70,ppg:null,fin:null},
-{n:"Elijah Mitchell",yr:"2021",dc:170,ss:109.20,f:4.38,w:201.00,bmi:28.80,burst:127.80,bdr:47.50,ras:9.50,ppg:1.00,fin:25.00},
-{n:"Gary Brightwell",yr:"2021",dc:172,ss:94.90,f:4.63,w:218.00,bmi:31.30,burst:117.70,bdr:44.70,ras:4.62,ppg:0.00,fin:0.00},
-{n:"Larry Rountree",yr:"2021",dc:174,ss:84.30,f:4.73,w:211.00,bmi:29.40,burst:105.00,bdr:43.70,ras:2.08,ppg:0.00,fin:0.00},
-{n:"Chris Evans",yr:"2021",dc:178,ss:97.60,f:4.56,w:211.00,bmi:29.40,burst:132.40,bdr:52.80,ras:9.85,ppg:0.00,fin:0.00},
-{n:"Khalil Herbert",yr:"2021",dc:193,ss:98.90,f:4.54,w:210.00,bmi:31.50,burst:113.60,bdr:71.20,ras:6.18,ppg:0.00,fin:0.00},
-{n:"Jake Funk",yr:"2021",dc:197,ss:96.90,f:4.53,w:204.00,bmi:29.30,burst:125.60,bdr:79.70,ras:9.76,ppg:0.00,fin:0.00},
-{n:"Gerrid Doaks",yr:"2021",dc:209,ss:100.10,f:4.62,w:228.00,bmi:31.80,burst:127.20,bdr:65.20,ras:8.32,ppg:0.00,fin:0.00},
-{n:"Kylin Hill",yr:"2021",dc:221,ss:95.60,f:4.60,w:214.00,bmi:30.70,burst:122.20,bdr:75.20,ras:7.31,ppg:0.00,fin:0.00},
-{n:"Jermar Jefferson",yr:"2021",dc:222,ss:91.20,f:4.61,w:206.00,bmi:29.60,burst:110.20,bdr:72.10,ras:2.28,ppg:0.00,fin:0.00},
-{n:"Spencer Brown",yr:"2021",dc:null,ss:null,f:null,w:208.00,bmi:29.80,burst:null,bdr:53.40,ras:4.89,ppg:0.00,fin:0.00},
-{n:"Deon Jackson",yr:"2021",dc:null,ss:116.30,f:4.40,w:218.00,bmi:30.40,burst:122.70,bdr:68.30,ras:8.94,ppg:0.00,fin:0.00},
-{n:"Stevie Scott",yr:"2021",dc:null,ss:97.10,f:4.64,w:225.00,bmi:30.50,burst:112.20,bdr:64.50,ras:3.49,ppg:0.00,fin:0.00},
-{n:"JaQuan Hardy",yr:"2021",dc:null,ss:95.90,f:4.58,w:211.00,bmi:32.10,burst:115.60,bdr:null,ras:7.46,ppg:0.00,fin:0.00},
-{n:"Trey Ragas",yr:"2021",dc:null,ss:93.30,f:4.65,w:218.00,bmi:31.30,burst:115.50,bdr:44.20,ras:4.93,ppg:0.00,fin:0.00},
-{n:"Josh Johnson",yr:"2021",dc:null,ss:91.00,f:4.63,w:209.00,bmi:30.90,burst:117.90,bdr:62.90,ras:5.09,ppg:0.00,fin:0.00},
-{n:"Javian Hawkins",yr:"2021",dc:null,ss:89.30,f:4.50,w:183.00,bmi:27.00,burst:119.20,bdr:69.60,ras:7.01,ppg:0.00,fin:0.00},
-{n:"Pooka Williams",yr:"2021",dc:null,ss:87.70,f:4.47,w:175.00,bmi:25.80,burst:112.60,bdr:74.30,ras:5.36,ppg:0.00,fin:0.00},
-{n:"Torrance \"C.J.\" Marable",yr:"2021",dc:null,ss:85.60,f:4.62,w:195.00,bmi:30.90,burst:119.20,bdr:67.70,ras:3.20,ppg:0.00,fin:0.00},
-{n:"Rakeem Boyd",yr:"2021",dc:null,ss:85.10,f:4.73,w:213.00,bmi:29.70,burst:104.30,bdr:63.20,ras:2.17,ppg:0.00,fin:0.00},
-{n:"Jaret Patterson",yr:"2021",dc:null,ss:84.90,f:4.63,w:195.00,bmi:31.50,burst:109.50,bdr:60.50,ras:4.46,ppg:0.00,fin:0.00},
-{n:"Caleb Huntley",yr:"2021",dc:null,ss:81.10,f:4.77,w:210.00,bmi:30.90,burst:115.40,bdr:39.00,ras:1.83,ppg:0.00,fin:0.00},
-{n:"Breece Hall",yr:"2022",dc:36,ss:116.90,f:4.39,w:217.00,bmi:30.30,burst:131.00,bdr:83.50,ras:9.96,ppg:null,fin:null},
-{n:"Kenneth Walker",yr:"2022",dc:41,ss:114.70,f:4.38,w:211.00,bmi:31.20,burst:118.80,bdr:53.80,ras:9.26,ppg:null,fin:null},
-{n:"James Cook",yr:"2022",dc:63,ss:104.30,f:4.42,w:199.00,bmi:27.80,burst:118.10,bdr:48.20,ras:8.78,ppg:null,fin:null},
-{n:"Rachaad White",yr:"2022",dc:91,ss:106.30,f:4.48,w:214.00,bmi:29.00,burst:127.10,bdr:76.90,ras:9.88,ppg:null,fin:null},
-{n:"Tyrion Davis-Price",yr:"2022",dc:93,ss:104.80,f:4.48,w:211.00,bmi:28.60,burst:109.50,bdr:70.70,ras:6.70,ppg:0.00,fin:0.00},
-{n:"Brian Robinson Jr",yr:"2022",dc:98,ss:107.30,f:4.53,w:226.00,bmi:29.60,burst:110.50,bdr:48.90,ras:6.61,ppg:null,fin:null},
-{n:"Dameon Pierce",yr:"2022",dc:98,ss:98.20,f:4.59,w:218.00,bmi:31.30,burst:118.20,bdr:58.70,ras:7.14,ppg:1.00,fin:27.00},
-{n:"Zamir White",yr:"2022",dc:113,ss:114.20,f:4.40,w:214.00,bmi:29.00,burst:121.00,bdr:30.70,ras:9.82,ppg:0.00,fin:0.00},
-{n:"Isaiah Spiller",yr:"2022",dc:114,ss:93.60,f:4.64,w:217.00,bmi:29.30,burst:108.00,bdr:52.00,ras:5.73,ppg:0.00,fin:0.00},
-{n:"Pierre Strong",yr:"2022",dc:118,ss:113.50,f:4.37,w:207.00,bmi:28.90,burst:123.20,bdr:null,ras:9.34,ppg:0.00,fin:0.00},
-{n:"Hassan Haskins",yr:"2022",dc:122,ss:null,f:null,w:228.00,bmi:29.40,burst:null,bdr:39.30,ras:null,ppg:0.00,fin:0.00},
-{n:"Tyler Allgeier",yr:"2022",dc:136,ss:100.10,f:4.60,w:224.00,bmi:31.20,burst:116.10,bdr:64.90,ras:7.40,ppg:null,fin:null},
-{n:"Snoop Conner",yr:"2022",dc:139,ss:100.00,f:4.59,w:222.00,bmi:31.90,burst:109.20,bdr:27.70,ras:7.07,ppg:0.00,fin:0.00},
-{n:"Jerome Ford",yr:"2022",dc:141,ss:106.10,f:4.46,w:210.00,bmi:29.80,burst:111.70,bdr:65.20,ras:6.95,ppg:null,fin:null},
-{n:"Kyren Williams",yr:"2022",dc:149,ss:83.00,f:4.65,w:194.00,bmi:28.60,burst:112.40,bdr:73.20,ras:3.50,ppg:null,fin:null},
-{n:"Ty Chandler",yr:"2022",dc:154,ss:110.90,f:4.38,w:204.00,bmi:28.40,burst:113.20,bdr:78.20,ras:6.39,ppg:0.00,fin:0.00},
-{n:"Kevin Harris",yr:"2022",dc:164,ss:97.00,f:4.62,w:221.00,bmi:31.70,burst:128.50,bdr:63.30,ras:7.14,ppg:0.00,fin:0.00},
-{n:"Tyler Badie",yr:"2022",dc:178,ss:100.50,f:4.45,w:197.00,bmi:30.00,burst:117.50,bdr:76.90,ras:6.42,ppg:0.00,fin:0.00},
-{n:"Keaontay Ingram",yr:"2022",dc:183,ss:105.00,f:4.53,w:221.00,bmi:30.00,burst:119.70,bdr:58.10,ras:8.69,ppg:0.00,fin:0.00},
-{n:"Trestan Ebner",yr:"2022",dc:185,ss:107.00,f:4.43,w:206.00,bmi:28.70,burst:108.50,bdr:51.60,ras:4.83,ppg:0.00,fin:0.00},
-{n:"Brittain Brown",yr:"2022",dc:221,ss:86.00,f:4.69,w:208.00,bmi:28.20,burst:119.80,bdr:33.50,ras:4.81,ppg:0.00,fin:0.00},
-{n:"Isiah Pacheco",yr:"2022",dc:222,ss:118.50,f:4.37,w:216.00,bmi:31.00,burst:115.10,bdr:54.40,ras:8.86,ppg:null,fin:null},
-{n:"D'Vonte Price",yr:"2022",dc:null,ss:114.10,f:4.38,w:210.00,bmi:27.70,burst:117.30,bdr:88.30,ras:7.81,ppg:0.00,fin:0.00},
-{n:"Master Teague",yr:"2022",dc:null,ss:113.70,f:4.44,w:221.00,bmi:30.70,burst:122.70,bdr:42.80,ras:9.84,ppg:0.00,fin:0.00},
-{n:"Tyler Goodson",yr:"2022",dc:null,ss:103.20,f:4.42,w:197.00,bmi:29.10,burst:123.60,bdr:61.40,ras:9.55,ppg:0.00,fin:0.00},
-{n:"Bryant Koback",yr:"2022",dc:null,ss:102.80,f:4.49,w:209.00,bmi:29.80,burst:130.90,bdr:79.40,ras:9.71,ppg:0.00,fin:0.00},
-{n:"Zander Horvath",yr:"2022",dc:null,ss:101.00,f:4.61,w:228.00,bmi:29.30,burst:121.90,bdr:null,ras:9.83,ppg:0.00,fin:0.00},
-{n:"Max Bogrhi",yr:"2022",dc:null,ss:99.20,f:4.52,w:207.00,bmi:30.60,burst:57.00,bdr:83.20,ras:7.56,ppg:0.00,fin:0.00},
-{n:"Abram Smith",yr:"2022",dc:null,ss:98.90,f:4.54,w:210.00,bmi:29.30,burst:119.20,bdr:38.20,ras:6.62,ppg:0.00,fin:0.00},
-{n:"Jaylen Warren",yr:"2022",dc:null,ss:96.60,f:4.55,w:207.00,bmi:31.50,burst:113.10,bdr:63.90,ras:4.82,ppg:null,fin:null},
-{n:"Julius Chestnut",yr:"2022",dc:null,ss:95.00,f:4.66,w:224.00,bmi:31.20,burst:114.30,bdr:null,ras:null,ppg:0.00,fin:0.00},
-{n:"Zonovan Knight",yr:"2022",dc:null,ss:95.00,f:4.58,w:209.00,bmi:29.10,burst:109.70,bdr:37.40,ras:5.86,ppg:0.00,fin:0.00},
-{n:"B.J. Baylor",yr:"2022",dc:null,ss:94.30,f:4.55,w:202.00,bmi:29.00,burst:122.40,bdr:53.20,ras:6.08,ppg:0.00,fin:0.00},
-{n:"Kennedy Brooks",yr:"2022",dc:null,ss:94.20,f:4.59,w:209.00,bmi:29.10,burst:112.70,bdr:39.20,ras:6.00,ppg:0.00,fin:0.00},
-{n:"Raheem Blackshear",yr:"2022",dc:null,ss:92.10,f:4.53,w:194.00,bmi:28.50,burst:113.00,bdr:59.00,ras:6.02,ppg:0.00,fin:0.00},
-{n:"Leddie Brown",yr:"2022",dc:null,ss:91.90,f:4.64,w:213.00,bmi:28.90,burst:110.00,bdr:87.50,ras:6.25,ppg:0.00,fin:0.00},
-{n:"Sincere McCormick",yr:"2022",dc:null,ss:91.60,f:4.60,w:205.00,bmi:30.00,burst:115.00,bdr:76.50,ras:3.98,ppg:0.00,fin:0.00},
-{n:"Jerrion Ealy",yr:"2022",dc:null,ss:90.60,f:4.52,w:189.00,bmi:28.70,burst:122.70,bdr:62.80,ras:6.16,ppg:0.00,fin:0.00},
-{n:"Jashaun Corbin",yr:"2022",dc:null,ss:90.20,f:4.60,w:202.00,bmi:28.20,burst:116.80,bdr:41.60,ras:5.39,ppg:0.00,fin:0.00},
-{n:"Zaquandre White",yr:"2022",dc:null,ss:89.70,f:4.63,w:206.00,bmi:27.90,burst:121.70,bdr:40.70,ras:4.15,ppg:0.00,fin:0.00},
-{n:"Ronnie Rivers",yr:"2022",dc:null,ss:87.10,f:4.60,w:195.00,bmi:29.30,burst:121.60,bdr:75.10,ras:5.98,ppg:0.00,fin:0.00},
-{n:"CJ Verdell",yr:"2022",dc:null,ss:83.00,f:4.65,w:194.00,bmi:29.50,burst:109.20,bdr:47.90,ras:2.34,ppg:0.00,fin:0.00},
-{n:"Cam'Ron Harris",yr:"2022",dc:null,ss:null,f:null,w:null,bmi:31.60,burst:null,bdr:50.90,ras:null,ppg:0.00,fin:0.00},
-{n:"Jerry Howard",yr:"2022",dc:null,ss:100.90,f:4.58,w:222.00,bmi:31.00,burst:null,bdr:null,ras:5.28,ppg:0.00,fin:0.00},
-{n:"Jordan Mason",yr:"2022",dc:null,ss:101.40,f:4.58,w:223.00,bmi:31.10,burst:115.60,bdr:48.20,ras:7.15,ppg:null,fin:null},
-{n:"Bijan Robinson",yr:"2023",dc:8,ss:108.70,f:4.46,w:215.00,bmi:30.00,burst:124.90,bdr:68.10,ras:9.84,ppg:null,fin:null},
-{n:"Jahmyr Gibbs",yr:"2023",dc:12,ss:110.10,f:4.36,w:199.00,bmi:29.40,burst:null,bdr:57.80,ras:8.06,ppg:null,fin:null},
-{n:"Zach Charbonnet",yr:"2023",dc:53,ss:101.60,f:4.53,w:214.00,bmi:29.00,burst:123.90,bdr:45.70,ras:8.71,ppg:null,fin:null},
-{n:"Kendre Miller",yr:"2023",dc:72,ss:null,f:null,w:215.00,bmi:30.00,burst:null,bdr:40.70,ras:null,ppg:null,fin:null},
-{n:"Tyjae Spears",yr:"2023",dc:82,ss:98.00,f:4.50,w:201.00,bmi:29.00,burst:128.80,bdr:85.30,ras:7.43,ppg:null,fin:null},
-{n:"De'Von Achane",yr:"2023",dc:85,ss:108.00,f:4.32,w:188.00,bmi:28.40,burst:111.60,bdr:83.30,ras:7.04,ppg:null,fin:null},
-{n:"Tank Bigsby",yr:"2023",dc:89,ss:97.10,f:4.56,w:210.00,bmi:28.60,burst:114.80,bdr:54.20,ras:8.33,ppg:null,fin:null},
-{n:"Roschon Johnson",yr:"2023",dc:109,ss:99.50,f:4.58,w:219.00,bmi:29.70,burst:114.60,bdr:37.20,ras:8.67,ppg:null,fin:null},
-{n:"Israel Abanikanda",yr:"2023",dc:137,ss:105.80,f:4.50,w:217.00,bmi:30.10,burst:133.70,bdr:67.20,ras:9.61,ppg:null,fin:null},
-{n:"Chase Brown",yr:"2023",dc:157,ss:108.50,f:4.43,w:209.00,bmi:30.70,burst:131.50,bdr:86.10,ras:9.80,ppg:null,fin:null},
-{n:"Eric Gray",yr:"2023",dc:166,ss:90.10,f:4.63,w:207.00,bmi:30.40,burst:122.80,bdr:67.90,ras:4.72,ppg:null,fin:null},
-{n:"Evan Hull",yr:"2023",dc:170,ss:104.70,f:4.47,w:209.00,bmi:30.00,burst:124.40,bdr:78.30,ras:9.32,ppg:null,fin:null},
-{n:"Chris Rodriguez Jr",yr:"2023",dc:176,ss:99.50,f:4.57,w:217.00,bmi:29.40,burst:113.10,bdr:43.80,ras:7.68,ppg:null,fin:null},
-{n:"Deuce Vaughn",yr:"2023",dc:195,ss:82.10,f:4.57,w:179.00,bmi:29.80,burst:118.40,bdr:91.40,ras:4.32,ppg:0.00,fin:0.00},
-{n:"Zach Evans",yr:"2023",dc:198,ss:91.80,f:4.58,w:202.00,bmi:28.20,burst:117.50,bdr:40.70,ras:8.72,ppg:0.00,fin:0.00},
-{n:"DeWayne Mcbride",yr:"2023",dc:197,ss:null,f:null,w:209.00,bmi:30.00,burst:null,bdr:44.50,ras:null,ppg:0.00,fin:0.00},
-{n:"Lew Nicholls lll",yr:"2023",dc:210,ss:null,f:null,w:220.00,bmi:31.60,burst:null,bdr:87.60,ras:null,ppg:0.00,fin:0.00},
-{n:"Kenny McIntosh",yr:"2023",dc:212,ss:89.60,f:4.62,w:204.00,bmi:27.70,burst:111.80,bdr:51.60,ras:3.97,ppg:0.00,fin:0.00},
-{n:"Deneric Prince",yr:"2023",dc:null,ss:114.20,f:4.41,w:216.00,bmi:30.00,burst:122.40,bdr:40.00,ras:9.56,ppg:0.00,fin:0.00},
-{n:"Keaton Mitchell",yr:"2023",dc:null,ss:98.20,f:4.37,w:179.00,bmi:27.20,burst:127.60,bdr:64.80,ras:6.17,ppg:null,fin:null},
-{n:"Khalan Laborn",yr:"2023",dc:null,ss:97.70,f:4.52,w:204.00,bmi:30.90,burst:128.00,bdr:51.00,ras:8.42,ppg:0.00,fin:0.00},
-{n:"Camerun Peoples",yr:"2023",dc:null,ss:96.10,f:4.61,w:217.00,bmi:28.60,burst:123.40,bdr:47.30,ras:6.96,ppg:0.00,fin:0.00},
-{n:"Tavion Thomas",yr:"2023",dc:null,ss:93.90,f:4.74,w:237.00,bmi:32.10,burst:110.00,bdr:28.50,ras:4.70,ppg:0.00,fin:0.00},
-{n:"SaRodorick Thompson",yr:"2023",dc:null,ss:87.00,f:4.67,w:207.00,bmi:28.70,burst:115.30,bdr:68.40,ras:4.48,ppg:0.00,fin:0.00},
-{n:"Sean Tucker",yr:"2023",dc:null,ss:null,f:null,w:207.00,bmi:30.60,burst:null,bdr:93.00,ras:null,ppg:0.00,fin:0.00},
-{n:"Mohamed Ibrahim",yr:"2023",dc:null,ss:null,f:null,w:203.00,bmi:30.90,burst:null,bdr:56.20,ras:null,ppg:0.00,fin:0.00},
-{n:"Travis Dye",yr:"2023",dc:null,ss:74.50,f:4.82,w:201.00,bmi:28.80,burst:99.40,bdr:63.90,ras:0.15,ppg:0.00,fin:0.00},
-{n:"Chris Smith",yr:"2023",dc:null,ss:93.80,f:4.51,w:194.00,bmi:29.30,burst:120.20,bdr:51.00,ras:5.46,ppg:0.00,fin:0.00},
-{n:"Tiyon Evans",yr:"2023",dc:null,ss:107.80,f:4.52,w:225.00,bmi:33.10,burst:null,bdr:48.30,ras:6.76,ppg:0.00,fin:0.00},
-{n:"Xazavian Valladay",yr:"2023",dc:null,ss:97.70,f:4.52,w:204.00,bmi:28.40,burst:129.50,bdr:88.60,ras:9.46,ppg:0.00,fin:0.00},
-{n:"Jaleel McLaughlin",yr:"2023",dc:null,ss:91.20,f:4.53,w:192.00,bmi:29.20,burst:110.20,bdr:null,ras:3.90,ppg:null,fin:null},
-{n:"Emari Demercado",yr:"2023",dc:null,ss:103.00,f:4.51,w:213.00,bmi:31.50,burst:113.90,bdr:43.20,ras:8.23,ppg:null,fin:null},
-{n:"Jonathon Brooks",yr:"2024",dc:46,ss:null,f:null,w:216.00,bmi:29.30,burst:null,bdr:45.90,ras:null,ppg:null,fin:null},
-{n:"Trey Benson",yr:"2024",dc:66,ss:116.30,f:4.39,w:216.00,bmi:29.30,burst:118.00,bdr:44.40,ras:9.70,ppg:null,fin:null},
-{n:"Blake Corum",yr:"2024",dc:83,ss:97.40,f:4.53,w:205.00,bmi:32.00,burst:null,bdr:66.80,ras:8.24,ppg:null,fin:null},
-{n:"MarShawn Lloyd",yr:"2024",dc:89,ss:111.20,f:4.46,w:220.00,bmi:33.30,burst:120.20,bdr:47.40,ras:8.57,ppg:null,fin:null},
-{n:"Jaylen Wright",yr:"2024",dc:116,ss:113.60,f:4.38,w:209.00,bmi:30.00,burst:131.60,bdr:28.80,ras:9.81,ppg:null,fin:null},
-{n:"Bucky Irving",yr:"2024",dc:121,ss:89.60,f:4.55,w:192.00,bmi:28.40,burst:107.70,bdr:55.10,ras:2.23,ppg:null,fin:null},
-{n:"Will Shipley",yr:"2024",dc:123,ss:100.50,f:4.50,w:206.00,bmi:28.70,burst:null,bdr:69.10,ras:9.58,ppg:null,fin:null},
-{n:"Ray Davis",yr:"2024",dc:124,ss:101.10,f:4.52,w:211.00,bmi:32.00,burst:119.00,bdr:81.30,ras:4.61,ppg:null,fin:null},
-{n:"Isaac Guerendo",yr:"2024",dc:125,ss:125.70,f:4.33,w:221.00,bmi:30.00,burst:135.10,bdr:29.60,ras:9.90,ppg:null,fin:null},
-{n:"Braelon Allen",yr:"2024",dc:130,ss:null,f:null,w:235.00,bmi:31.00,burst:112.90,bdr:42.50,ras:null,ppg:null,fin:null},
-{n:"Audric Estime",yr:"2024",dc:140,ss:89.80,f:4.71,w:221.00,bmi:30.70,burst:127.10,bdr:37.80,ras:6.50,ppg:null,fin:null},
-{n:"Rasheen Ali",yr:"2024",dc:158,ss:null,f:null,w:206.00,bmi:28.70,burst:null,bdr:82.50,ras:null,ppg:0.00,fin:0.00},
-{n:"Tyrone Tracy Jr.",yr:"2024",dc:159,ss:103.80,f:4.48,w:209.00,bmi:29.10,burst:130.00,bdr:43.80,ras:9.77,ppg:null,fin:null},
-{n:"Keilan Robinson",yr:"2024",dc:160,ss:100.10,f:4.42,w:191.00,bmi:29.00,burst:118.60,bdr:19.10,ras:7.16,ppg:0.00,fin:0.00},
-{n:"Isaiah Davis",yr:"2024",dc:166,ss:100.00,f:4.57,w:218.00,bmi:29.60,burst:118.20,bdr:null,ras:9.01,ppg:null,fin:null},
-{n:"Kimani Vidal",yr:"2024",dc:165,ss:107.70,f:4.46,w:213.00,bmi:33.20,burst:123.80,bdr:64.70,ras:8.81,ppg:null,fin:null},
-{n:"Jase McClellan",yr:"2024",dc:170,ss:null,f:null,w:221.00,bmi:31.70,burst:null,bdr:36.60,ras:null,ppg:0.00,fin:0.00},
-{n:"Jawhar Jordan",yr:"2024",dc:189,ss:89.30,f:4.56,w:193.00,bmi:28.40,burst:null,bdr:60.50,ras:4.60,ppg:0.00,fin:0.00},
-{n:"Dylan Laube",yr:"2024",dc:192,ss:97.00,f:4.54,w:206.00,bmi:30.30,burst:121.90,bdr:null,ras:8.74,ppg:0.00,fin:0.00},
-{n:"Cody Schrader",yr:"2024",dc:null,ss:89.40,f:4.61,w:202.00,bmi:30.70,burst:null,bdr:59.10,ras:3.17,ppg:0.00,fin:0.00},
-{n:"Daijun Edwards",yr:"2024",dc:null,ss:84.80,f:4.70,w:207.00,bmi:30.40,burst:null,bdr:35.20,ras:1.92,ppg:0.00,fin:0.00},
-{n:"Dillon Johnson",yr:"2024",dc:null,ss:90.50,f:4.68,w:217.00,bmi:30.20,burst:112.10,bdr:69.60,ras:5.70,ppg:0.00,fin:0.00},
-{n:"Emani Bailey",yr:"2024",dc:null,ss:89.40,f:4.61,w:202.00,bmi:31.50,burst:115.00,bdr:68.80,ras:2.71,ppg:0.00,fin:0.00},
-{n:"Frank Gore Jr",yr:"2024",dc:null,ss:83.10,f:4.69,w:201.00,bmi:30.60,burst:null,bdr:73.50,ras:0.60,ppg:0.00,fin:0.00},
-{n:"George Holani",yr:"2024",dc:null,ss:99.70,f:4.52,w:208.00,bmi:29.80,burst:129.80,bdr:63.80,ras:8.24,ppg:0.00,fin:0.00},
-{n:"Jaden Shirden",yr:"2024",dc:null,ss:95.40,f:4.45,w:187.00,bmi:28.40,burst:117.20,bdr:null,ras:6.19,ppg:0.00,fin:0.00},
-{n:"Kendall Milton",yr:"2024",dc:null,ss:98.80,f:4.62,w:225.00,bmi:29.60,burst:122.40,bdr:23.20,ras:7.98,ppg:0.00,fin:0.00},
-{n:"Michael Wiley",yr:"2024",dc:null,ss:101.50,f:4.51,w:210.00,bmi:30.00,burst:116.50,bdr:70.10,ras:7.24,ppg:0.00,fin:0.00},
-{n:"Miyan Williams",yr:"2024",dc:null,ss:null,f:null,w:229.00,bmi:34.70,burst:null,bdr:30.60,ras:null,ppg:0.00,fin:0.00},
-{n:"Blake Watson",yr:"2024",dc:null,ss:106.70,f:4.40,w:200.00,bmi:29.50,burst:null,bdr:45.00,ras:8.91,ppg:0.00,fin:0.00},
-{n:"Ashton Jeanty",yr:"2025",dc:6,ss:null,f:null,w:211.00,bmi:31.90,burst:null,bdr:71.20,ras:null,ppg:null,fin:null},
-{n:"Omarion Hampton",yr:"2025",dc:22,ss:111.70,f:4.46,w:221.00,bmi:30.60,burst:129.60,bdr:83.20,ras:9.70,ppg:null,fin:null},
-{n:"Quinshon Judkins",yr:"2025",dc:36,ss:111.70,f:4.48,w:225.00,bmi:31.20,burst:131.50,bdr:66.30,ras:9.90,ppg:null,fin:null},
-{n:"TreVeyon Henderson",yr:"2025",dc:38,ss:104.90,f:4.43,w:202.00,bmi:29.00,burst:129.50,bdr:73.10,ras:8.87,ppg:null,fin:null},
-{n:"RJ Harvey",yr:"2025",dc:60,ss:109.40,f:4.40,w:205.00,bmi:31.20,burst:128.10,bdr:63.40,ras:8.48,ppg:null,fin:null},
-{n:"Kaleb Johnson",yr:"2025",dc:83,ss:102.70,f:4.57,w:224.00,bmi:29.60,burst:null,bdr:70.80,ras:null,ppg:null,fin:null},
-{n:"Bhayshul Tuten",yr:"2025",dc:98,ss:118.30,f:4.32,w:206.00,bmi:30.40,burst:133.90,bdr:85.80,ras:9.56,ppg:null,fin:null},
-{n:"Cameron Skattebo",yr:"2025",dc:99,ss:92.10,f:4.67,w:219.00,bmi:32.10,burst:128.70,bdr:78.50,ras:7.44,ppg:null,fin:null},
-{n:"Trevor Etienne",yr:"2025",dc:108,ss:103.80,f:4.42,w:198.00,bmi:30.00,burst:121.50,bdr:46.60,ras:6.95,ppg:null,fin:null},
-{n:"Jo'quavious Marks",yr:"2025",dc:110,ss:97.40,f:4.54,w:207.00,bmi:29.70,burst:119.00,bdr:56.90,ras:6.66,ppg:null,fin:null},
-{n:"Jarquez Hunter",yr:"2025",dc:111,ss:105.00,f:4.44,w:204.00,bmi:30.10,burst:117.00,bdr:76.60,ras:7.16,ppg:null,fin:null},
-{n:"Dylan Sampson",yr:"2025",dc:120,ss:103.90,f:4.43,w:200.00,bmi:30.40,burst:121.50,bdr:71.40,ras:6.60,ppg:null,fin:null},
-{n:"Jordan James",yr:"2025",dc:137,ss:95.70,f:4.55,w:205.00,bmi:30.20,burst:null,bdr:44.70,ras:4.64,ppg:null,fin:null},
-{n:"Jaydon Blue",yr:"2025",dc:140,ss:106.50,f:4.38,w:196.00,bmi:28.90,burst:111.70,bdr:54.20,ras:6.34,ppg:null,fin:null},
-{n:"D.J. Giddens",yr:"2025",dc:142,ss:110.10,f:4.43,w:212.00,bmi:28.70,burst:132.20,bdr:65.20,ras:9.78,ppg:null,fin:null},
-{n:"Ollie Gordon",yr:"2025",dc:163,ss:100.10,f:4.61,w:226.00,bmi:29.80,burst:118.70,bdr:78.80,ras:6.20,ppg:null,fin:null},
-{n:"Devin Neal",yr:"2025",dc:168,ss:96.80,f:4.58,w:213.00,bmi:29.70,burst:125.80,bdr:56.00,ras:6.65,ppg:null,fin:null},
-{n:"Kalel Mullings",yr:"2025",dc:172,ss:null,f:null,w:226.00,bmi:29.70,burst:null,bdr:37.70,ras:null,ppg:null,fin:null},
-{n:"Tahj Brooks",yr:"2025",dc:177,ss:102.50,f:4.52,w:214.00,bmi:31.50,burst:119.50,bdr:82.10,ras:8.58,ppg:null,fin:null},
-{n:"Damien Martinez",yr:"2025",dc:199,ss:104.90,f:4.51,w:217.00,bmi:30.20,burst:121.50,bdr:47.90,ras:8.17,ppg:null,fin:null},
-{n:"Brashard Smith",yr:"2025",dc:204,ss:104.50,f:4.39,w:194.00,bmi:28.50,burst:113.80,bdr:81.20,ras:7.21,ppg:null,fin:null},
-{n:"Kyle Monangai",yr:"2025",dc:209,ss:94.20,f:4.60,w:211.00,bmi:32.10,burst:117.20,bdr:48.40,ras:4.07,ppg:null,fin:null},
-{n:"LeQuint Allen",yr:"2025",dc:212,ss:null,f:null,w:204.00,bmi:27.70,burst:119.50,bdr:91.10,ras:null,ppg:null,fin:null},
-{n:"Jacory Croskey-Merritt",yr:"2025",dc:221,ss:104.10,f:4.46,w:206.00,bmi:29.60,burst:132.60,bdr:72.80,ras:8.29,ppg:null,fin:null},
-{n:"Corey Kiner",yr:"2025",dc:null,ss:95.80,f:4.57,w:209.00,bmi:31.60,burst:null,bdr:32.50,ras:4.29,ppg:null,fin:null},
-{n:"Donovan Edwards",yr:"2025",dc:null,ss:105.50,f:4.44,w:205.00,bmi:28.60,burst:null,bdr:54.80,ras:9.78,ppg:null,fin:null},
-{n:"Ja\u2019Quinden Jackson",yr:"2025",dc:null,ss:90.00,f:4.75,w:229.00,bmi:30.10,burst:113.90,bdr:43.70,ras:7.25,ppg:null,fin:null},
-{n:"Marcus Yarns",yr:"2025",dc:null,ss:98.40,f:4.45,w:193.00,bmi:27.60,burst:124.80,bdr:null,ras:7.70,ppg:null,fin:null},
-{n:"Montrell Johnson Jr.",yr:"2025",dc:null,ss:112.10,f:4.41,w:212.00,bmi:29.60,burst:121.90,bdr:58.50,ras:9.63,ppg:null,fin:null},
-{n:"Phil Mafah",yr:"2025",dc:null,ss:null,f:null,w:234.00,bmi:31.50,burst:null,bdr:48.10,ras:null,ppg:null,fin:null},
-{n:"Raheim Sanders",yr:"2025",dc:null,ss:109.70,f:4.46,w:217.00,bmi:29.40,burst:null,bdr:63.90,ras:7.08,ppg:null,fin:null},
-{n:"Ulysses Bentley IV",yr:"2025",dc:null,ss:88.20,f:4.62,w:201.00,bmi:29.50,burst:113.80,bdr:68.80,ras:2.85,ppg:null,fin:null},
-{n:"Adam Randall",yr:"2026",dc:null,ss:113.20,f:4.50,w:232.00,bmi:29.00,burst:124.90,bdr:82.50,ras:null,ppg:null,fin:null},
-{n:"Chip Trayanum",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:61.20,ras:null,ppg:null,fin:null},
-{n:"CJ Donaldson",yr:"2026",dc:null,ss:null,f:null,w:230.00,bmi:29.50,burst:null,bdr:50.20,ras:null,ppg:null,fin:null},
-{n:"Daniel Hishaw",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:30.20,ras:null,ppg:null,fin:null},
-{n:"Darius Taylor",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:68.70,ras:null,ppg:null,fin:null},
-{n:"Dean Connors",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:75.80,ras:null,ppg:null,fin:null},
-{n:"Demond Claiborne",yr:"2026",dc:null,ss:103.10,f:4.37,w:188.00,bmi:27.00,burst:null,bdr:68.30,ras:null,ppg:null,fin:null},
-{n:"Desmond Reid",yr:"2026",dc:null,ss:null,f:null,w:174.00,bmi:28.10,burst:null,bdr:71.00,ras:null,ppg:null,fin:null},
-{n:"Eli Heidenreich",yr:"2026",dc:null,ss:101.90,f:4.44,w:198.00,bmi:26.90,burst:120.40,bdr:null,ras:null,ppg:null,fin:null},
-{n:"Emmett Johnson",yr:"2026",dc:null,ss:93.40,f:4.56,w:202.00,bmi:29.00,burst:120.40,bdr:81.10,ras:null,ppg:null,fin:null},
-{n:"J'Mari Taylor",yr:"2026",dc:null,ss:null,f:null,w:199.00,bmi:28.60,burst:116.20,bdr:79.10,ras:null,ppg:null,fin:null},
-{n:"Jadarian Price",yr:"2026",dc:null,ss:99.90,f:4.49,w:203.00,bmi:29.00,burst:121.50,bdr:30.60,ras:null,ppg:null,fin:null},
-{n:"Jam Miller",yr:"2026",dc:null,ss:109.50,f:4.42,w:209.00,bmi:29.10,burst:109.40,bdr:57.30,ras:null,ppg:null,fin:null},
-{n:"Jamal Haynes",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:78.90,ras:null,ppg:null,fin:null},
-{n:"Jaydn Ott",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:86.80,ras:null,ppg:null,fin:null},
-{n:"Jeremiah Cobb",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:63.30,ras:null,ppg:null,fin:null},
-{n:"Jeremiyah Love",yr:"2026",dc:null,ss:117.30,f:4.36,w:212.00,bmi:28.70,burst:null,bdr:66.70,ras:null,ppg:null,fin:null},
-{n:"Jonah Coleman",yr:"2026",dc:null,ss:null,f:null,w:220.00,bmi:33.40,burst:null,bdr:74.30,ras:null,ppg:null,fin:null},
-{n:"Kaelon Black",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:47.70,ras:null,ppg:null,fin:null},
-{n:"Kaytron Allen",yr:"2026",dc:null,ss:null,f:null,w:216.00,bmi:30.10,burst:null,bdr:43.50,ras:null,ppg:null,fin:null},
-{n:"Kevon King",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:48.30,ras:null,ppg:null,fin:null},
-{n:"Le'Veon Moss",yr:"2026",dc:null,ss:null,f:null,w:203.00,bmi:28.30,burst:null,bdr:49.30,ras:null,ppg:null,fin:null},
-{n:"Mark Fletcher",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:39.60,ras:null,ppg:null,fin:null},
-{n:"Mike Washington Jr",yr:"2026",dc:null,ss:126.90,f:4.33,w:223.00,bmi:29.40,burst:130.30,bdr:79.60,ras:null,ppg:null,fin:null},
-{n:"Nicholas Singleton",yr:"2026",dc:null,ss:null,f:null,w:219.00,bmi:29.70,burst:null,bdr:62.20,ras:null,ppg:null,fin:null},
-{n:"Noah Whittington",yr:"2026",dc:null,ss:null,f:null,w:205.00,bmi:31.20,burst:null,bdr:38.10,ras:null,ppg:null,fin:null},
-{n:"Rahsul Faison",yr:"2026",dc:null,ss:null,f:null,w:208.00,bmi:29.80,burst:null,bdr:55.30,ras:null,ppg:null,fin:null},
-{n:"Robert Henry Jr",yr:"2026",dc:null,ss:93.90,f:4.52,w:196.00,bmi:28.90,burst:124.90,bdr:58.90,ras:null,ppg:null,fin:null},
-{n:"Roman Hemby",yr:"2026",dc:null,ss:null,f:null,w:207.00,bmi:28.10,burst:null,bdr:73.60,ras:null,ppg:null,fin:null},
-{n:"Seth McGowan",yr:"2026",dc:null,ss:109.70,f:4.49,w:223.00,bmi:30.20,burst:137.80,bdr:47.40,ras:null,ppg:null,fin:null},
-{n:"Terion Stewart",yr:"2026",dc:null,ss:null,f:null,w:null,bmi:null,burst:null,bdr:53.90,ras:null,ppg:null,fin:null}
-]};
-// ============================================================
-// COMP ENGINE
-// ============================================================
-let _WR_NORM = null, _RB_NORM = null;
-
-function _normStats(players, keys) {
-  const s = {};
-  for (const k of keys) {
-    const vals = players.map(p => p[k]).filter(v => v !== null && v !== undefined && !isNaN(v));
-    if (!vals.length) { s[k] = {mean:0, std:1}; continue; }
-    const mean = vals.reduce((a,b)=>a+b,0) / vals.length;
-    const std = Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length) || 1;
-    s[k] = {mean, std};
-  }
-  return s;
-}
-
-function getWRNorm() {
-  if (!_WR_NORM) _WR_NORM = _normStats(PROSPECT_DB.wr.filter(p=>p.yr!=='2026'), ['dc','f','dom','boa','ht','bmi','ras']);
-  return _WR_NORM;
-}
-function getRBNorm() {
-  if (!_RB_NORM) _RB_NORM = _normStats(PROSPECT_DB.rb.filter(p=>p.yr!=='2026'), ['dc','ss','f','w','bmi','burst','bdr','ras']);
-  return _RB_NORM;
-}
-
-// Weights: most predictive metrics get highest weight
-const WR_W = {dom:0.30, f:0.20, dc:0.20, ras:0.15, boa:0.10, ht:0.05};
-const RB_W = {ss:0.25, bdr:0.25, dc:0.20, f:0.15, burst:0.10, ras:0.05};
-
-function similarity(prospect, hist, weights, norm) {
-  let tw = 0, td = 0;
-  for (const [k, w] of Object.entries(weights)) {
-    const pv = prospect[k], hv = hist[k];
-    if (pv == null || isNaN(pv) || hv == null || isNaN(hv)) continue;
-    const n = norm[k];
-    const d = ((pv - n.mean)/n.std) - ((hv - n.mean)/n.std);
-    td += w * d * d; tw += w;
-  }
-  if (tw < 0.15) return 0;
-  return Math.round(Math.max(0, 100 * Math.exp(-td/tw * 0.7)));
-}
-
-function findHistoricalComps(prospect) {
-  const isWR = prospect.pos === 'WR';
-  const db = isWR ? PROSPECT_DB.wr : PROSPECT_DB.rb;
-  const w = isWR ? WR_W : RB_W;
-  const norm = isWR ? getWRNorm() : getRBNorm();
-  return db
-    .filter(p => p.yr !== '2026' && p.n !== prospect.n)
-    .map(p => ({...p, sim: similarity(prospect, p, w, norm)}))
-    .filter(p => p.sim > 20)
-    .sort((a,b) => b.sim - a.sim)
-    .slice(0, 5);
-}
-
-function buildProspect2026(ktcPlayer) {
-  const cn = n => (n||'').toLowerCase().replace(/[^a-z]/g,'');
-  const ck = cn(ktcPlayer.name);
-  let match = PROSPECT_DB.wr.find(p => p.yr==='2026' && cn(p.n)===ck);
-  if (match) return {...match, pos:'WR'};
-  match = PROSPECT_DB.rb.find(p => p.yr==='2026' && cn(p.n)===ck);
-  if (match) return {...match, pos:'RB'};
-  // Fuzzy
-  const all = [
-    ...PROSPECT_DB.wr.filter(p=>p.yr==='2026').map(p=>({...p,pos:'WR'})),
-    ...PROSPECT_DB.rb.filter(p=>p.yr==='2026').map(p=>({...p,pos:'RB'}))
-  ];
-  return all.find(p => {
-    const cp = cn(p.n);
-    return cp.startsWith(ck.slice(0,7)) || ck.startsWith(cp.slice(0,7));
-  }) || null;
-}
-
-function dcLabel(dc) {
-  if (!dc) return 'Later/UDFA';
-  const rd = Math.floor(dc/32)+1, pk = Math.round(dc%32)||32;
-  return `Rd ${rd}.${String(pk).padStart(2,'0')}`;
-}
-
-function compCardHTML(comp) {
-  const ppg = comp.ppg, fin = comp.fin;
-  let outcomeLabel, outcomeCls, outcomeColor;
-  if (ppg === null || ppg === undefined) {
-    outcomeLabel = '⏳ Career active'; outcomeCls = 'pending'; outcomeColor = 'var(--text-muted)';
-  } else if (ppg >= 7) {
-    outcomeLabel = '🏆 Elite'; outcomeCls = 'hit'; outcomeColor = 'var(--accent)';
-  } else if (ppg >= 4) {
-    outcomeLabel = '✅ Hit'; outcomeCls = 'hit'; outcomeColor = 'var(--green)';
-  } else if (ppg >= 1) {
-    outcomeLabel = '⚠️ Fringe'; outcomeCls = 'pending'; outcomeColor = 'var(--yellow)';
-  } else {
-    outcomeLabel = '❌ Bust'; outcomeCls = 'miss'; outcomeColor = 'var(--red)';
-  }
-  const simColor = comp.sim >= 70 ? 'var(--green)' : comp.sim >= 50 ? 'var(--accent)' : 'var(--yellow)';
-  return `<div class="comp-card ${outcomeCls}" style="min-width:155px;max-width:200px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
-      <div>
-        <div style="font-weight:600;font-size:13px;margin-bottom:1px">${comp.n}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted)">${comp.yr==='2000s'?'2000s':comp.yr} · ${dcLabel(comp.dc)}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;margin-left:8px">
-        <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:${simColor};line-height:1">${comp.sim}%</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text-muted)">MATCH</div>
-      </div>
-    </div>
-    <div style="font-size:11px;color:${outcomeColor};margin-bottom:4px">${outcomeLabel}</div>
-    ${ppg !== null && ppg !== undefined ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim)">${ppg} PPG seasons${fin !== null && fin !== undefined ? ' · Avg #'+fin : ''}</div>` : ''}
-    <div style="height:3px;background:${simColor};opacity:0.4;border-radius:2px;margin-top:6px;width:${comp.sim}%"></div>
-  </div>`;
-}
-
-function metricVal(val, thresholds) {
-  if (val === null || val === undefined) return '<span class="muted">N/A</span>';
-  if (!thresholds) return `<span class="mono">${val}</span>`;
-  const cls = val >= thresholds[0] ? 'mv-elite' : val >= thresholds[1] ? 'mv-good' : val >= thresholds[2] ? 'mv-avg' : 'mv-poor';
-  return `<span class="${cls}">${val}</span>`;
-}
-
-function metricsHTML(prospect) {
-  const isWR = prospect.pos === 'WR';
-  const rows = [];
-  const row = (label, val, thresh) => {
-    if (val === null || val === undefined) return;
-    rows.push(`<div class="metric-row"><span style="color:var(--text-muted)">${label}</span>${metricVal(val, thresh)}</div>`);
-  };
-  if (isWR) {
-    row('Dominator %', prospect.dom, [35,25,18]);
-    row('40 Time', prospect.f, null); // lower is better — handled manually
-    if (prospect.f !== null && prospect.f !== undefined) {
-      // Override: for 40 time lower=better
-      rows.pop();
-      const cls = prospect.f <= 4.38 ? 'mv-elite' : prospect.f <= 4.45 ? 'mv-good' : prospect.f <= 4.55 ? 'mv-avg' : 'mv-poor';
-      rows.push(`<div class="metric-row"><span style="color:var(--text-muted)">40 Time</span><span class="${cls}">${prospect.f}s</span></div>`);
-    }
-    row('RAS', prospect.ras, [9,7,5]);
-    row('Breakout Age', prospect.boa !== null ? prospect.boa?.toFixed(1) : null, null);
-    if (prospect.ht) row('Height', (Math.floor(prospect.ht/12)+"'"+(prospect.ht%12).toFixed(0)+'"'), null);
-    row('BMI', prospect.bmi, null);
-  } else {
-    row('Speed Score', prospect.ss, [115,108,100]);
-    if (prospect.f !== null && prospect.f !== undefined) {
-      const cls = prospect.f <= 4.40 ? 'mv-elite' : prospect.f <= 4.48 ? 'mv-good' : prospect.f <= 4.55 ? 'mv-avg' : 'mv-poor';
-      rows.push(`<div class="metric-row"><span style="color:var(--text-muted)">40 Time</span><span class="${cls}">${prospect.f}s</span></div>`);
-    }
-    row('Burst Score', prospect.burst, [130,120,110]);
-    row('BDR %', prospect.bdr, [75,60,45]);
-    row('Weight', prospect.w !== null ? prospect.w+'lbs' : null, null);
-    row('RAS', prospect.ras, [9,7,5]);
-  }
-  if (prospect.dc) row('Draft Capital', dcLabel(prospect.dc), null);
-  return rows.length ? rows.join('') : '<div class="muted mono" style="font-size:11px;padding:6px">Combine data pending</div>';
-}
-
-function renderDNAPanel(ktcRookie, prospect, comps) {
-  const hits = comps.filter(c => c.ppg !== null && c.ppg >= 4);
-  const withOutcomes = comps.filter(c => c.ppg !== null);
-  const hitRate = withOutcomes.length ? Math.round(hits.length/withOutcomes.length*100) : null;
-  const hrColor = hitRate === null ? 'var(--text-muted)' : hitRate >= 60 ? 'var(--green)' : hitRate >= 40 ? 'var(--yellow)' : 'var(--red)';
-
-  return `<div style="padding:20px;background:var(--surface);border-top:1px solid var(--border)">
-    <div style="font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;margin-bottom:14px;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">🧬 Historical DNA — ${ktcRookie.name}</div>
-    <div style="display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start">
-      <div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:8px">COMBINE PROFILE</div>
-        ${prospect ? metricsHTML(prospect) : '<div class="muted mono" style="font-size:11px">Not in database yet</div>'}
-      </div>
-      <div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:8px">HISTORICAL COMPS</div>
-        ${!comps.length
-          ? '<div class="mono muted" style="font-size:11px">Not enough data for comps yet — combine results still coming in</div>'
-          : `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">${comps.slice(0,4).map(c=>compCardHTML(c)).join('')}</div>
-             <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);line-height:1.8">
-               Top comp: <span style="color:var(--accent)">${comps[0].n} (${comps[0].yr})</span> at ${comps[0].sim}% similarity
-               ${hitRate !== null ? `<br>Comp hit rate: <span style="color:${hrColor}">${hitRate}%</span> (${hits.length}/${withOutcomes.length} became contributors)` : ''}
-               ${comps.filter(c=>c.ppg===null).length ? `<br><span style="color:var(--text-muted)">${comps.filter(c=>c.ppg===null).length} comp(s) still active — outcomes TBD</span>` : ''}
-             </div>`
-        }
-      </div>
-    </div>
-  </div>`;
-}
-
-function toggleDNARow(rowId) {
-  const el = document.getElementById(rowId);
-  if (!el) return;
-  const isOpen = el.style.display !== 'none';
-  document.querySelectorAll('[id^="dna-"]').forEach(e => e.style.display = 'none');
-  if (!isOpen) el.style.display = 'table-row';
-}
-
 
 // Init
 window.addEventListener('load', () => {
