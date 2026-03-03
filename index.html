@@ -1008,6 +1008,13 @@
         <div id="cwVerdict" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 12px;border-radius:6px;background:var(--surface3)"></div>
       </div>
 
+      <!-- POSITIONAL CONTEXT PANEL -->
+      <div id="positionalPanel" style="display:none;margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;color:var(--accent);margin-bottom:12px">📊 Roster Fit Analysis</div>
+        <div id="positionalRows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+        <div id="positionalVerdict" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 12px;border-radius:6px;background:var(--surface3)"></div>
+      </div>
+
       <div style="display:flex;gap:8px;margin-top:12px">
         <button class="sync-btn" onclick="analyzeTrade()" style="flex:1">ANALYZE TRADE</button>
         <button class="sync-btn" onclick="clearTrade()" style="background:var(--surface3);color:var(--text);flex:0.3">CLEAR</button>
@@ -2361,6 +2368,114 @@ function renderContentionWindow(a, b) {
   document.getElementById('cwVerdict').innerHTML = `<span style="color:${verdictColor}">${verdictText}</span>`;
 }
 
+function renderPositionalContext(a, b) {
+  const panel = document.getElementById('positionalPanel');
+  if (!a.length && !b.length) { panel.style.display = 'none'; return; }
+
+  const playerAssets = [...a, ...b].filter(x => x.type !== 'pick');
+  if (!playerAssets.length) { panel.style.display = 'none'; return; }
+
+  panel.style.display = 'block';
+
+  const teamNeeds = calcPositionalNeeds();
+  const myNeeds = teamNeeds[CONFIG.MY_TEAM_NAME];
+  const POSITIONS = ['QB','RB','WR','TE'];
+
+  const buyingPos = [...new Set(a.filter(x => x.type !== 'pick').map(x => x.pos))];
+  const sellingPos = [...new Set(b.filter(x => x.type !== 'pick').map(x => x.pos))];
+  const relevantPos = [...new Set([...buyingPos, ...sellingPos])];
+
+  const posRanked = POSITIONS.slice().sort((a,b) => myNeeds[a].vorpGap - myNeeds[b].vorpGap);
+
+  const rows = relevantPos.map(pos => {
+    const need = myNeeds[pos];
+    const gap = Math.round(need.vorpGap);
+    const rank = posRanked.indexOf(pos) + 1;
+    const isBuying = buyingPos.includes(pos);
+    const isSelling = sellingPos.includes(pos);
+
+    const barPct = Math.min(100, Math.abs(gap) / 3000 * 100).toFixed(0);
+    const isWeak = gap < -200;
+    const isStrong = gap > 200;
+
+    const gapColor = gap < -1000 ? 'var(--red)'
+                   : gap < -200  ? 'var(--orange)'
+                   : gap > 500   ? 'var(--green)'
+                   : 'var(--text-dim)';
+
+    const action = isBuying && isSelling ? 'BUYING & SELLING'
+                 : isBuying ? 'BUYING'
+                 : 'SELLING';
+    const actionColor = isBuying && isWeak ? 'var(--green)'
+                      : isBuying && isStrong ? 'var(--yellow)'
+                      : isSelling && isWeak ? 'var(--red)'
+                      : isSelling && isStrong ? 'var(--green)'
+                      : 'var(--text-dim)';
+
+    let fitSignal = '';
+    if (isBuying && isWeak)    fitSignal = '✅ Buying your need';
+    if (isBuying && isStrong)  fitSignal = '⚠️ Already strong here';
+    if (isSelling && isStrong) fitSignal = '✅ Selling surplus';
+    if (isSelling && isWeak)   fitSignal = '🛑 Selling your need';
+
+    return `<div style="background:var(--surface3);border-radius:8px;padding:10px 12px;border-left:3px solid ${actionColor}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px">
+          ${posPill(pos)}
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:${actionColor};letter-spacing:1px">${action}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted)">#${rank} of 4 positions</span>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${actionColor}">${fitSignal}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+          <div style="width:${barPct}%;height:100%;background:${gapColor};border-radius:2px"></div>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:${gapColor};white-space:nowrap">
+          ${gap > 0 ? '+' : ''}${gap} vs league avg
+        </span>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);margin-top:4px">
+        Starter VORP: ${fmt(Math.round(need.starterVorp))} · League avg: ${fmt(Math.round(need.leagueAvg))}
+        ${need.agingStarters.length ? ` · ⚠️ ${need.agingStarters.length} aging starter${need.agingStarters.length > 1 ? 's' : ''}` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('positionalRows').innerHTML = rows;
+
+  let buyScore = 0, sellScore = 0;
+  for (const pos of buyingPos) {
+    const gap = myNeeds[pos].vorpGap;
+    buyScore += gap < -200 ? 2 : gap < 200 ? 1 : -1;
+  }
+  for (const pos of sellingPos) {
+    const gap = myNeeds[pos].vorpGap;
+    sellScore += gap > 200 ? 2 : gap > -200 ? 1 : -1;
+  }
+  const fitScore = buyScore + sellScore;
+
+  let verdictText, verdictColor;
+  if (fitScore >= 3) {
+    verdictText = '✅ STRONG FIT — Buying need, selling surplus. Works for your roster regardless of value.';
+    verdictColor = 'var(--green)';
+  } else if (fitScore >= 1) {
+    verdictText = '✅ DECENT FIT — Roster construction improves. Make sure the value is close.';
+    verdictColor = 'var(--accent)';
+  } else if (fitScore === 0) {
+    verdictText = '⚖️ NEUTRAL FIT — Neither clearly helps nor hurts your roster construction.';
+    verdictColor = 'var(--text-dim)';
+  } else if (fitScore >= -1) {
+    verdictText = '⚠️ WEAK FIT — Buying strength or selling need. Needs to be a value win.';
+    verdictColor = 'var(--yellow)';
+  } else {
+    verdictText = '🛑 BAD FIT — Selling a weak position or buying into a strength. Value would need to be overwhelming.';
+    verdictColor = 'var(--red)';
+  }
+
+  document.getElementById('positionalVerdict').innerHTML = `<span style="color:${verdictColor}">${verdictText}</span>`;
+}
+
 function analyzeTrade() {
   const a = STATE.tradeAssets.a;
   const b = STATE.tradeAssets.b;
@@ -2427,6 +2542,8 @@ function analyzeTrade() {
 
   // Contention window analysis
   renderContentionWindow(a, b);
+  // Positional fit analysis
+  renderPositionalContext(a, b);
 }
 
 function clearTrade() {
@@ -2434,6 +2551,7 @@ function clearTrade() {
   renderTradeAssets();
   document.getElementById('tradeVerdict').style.display = 'none';
   document.getElementById('contentionPanel').style.display = 'none';
+  document.getElementById('positionalPanel').style.display = 'none';
   document.getElementById('tradeTotal_a').textContent = '0';
   document.getElementById('tradeTotal_b').textContent = '0';
 }
