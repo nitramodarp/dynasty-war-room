@@ -2495,45 +2495,99 @@ const OWNER_PROFILES = {
   'Mowens54': { activity: 'HIGH', style: 'Chronic Churner', buys: ['proven RB'], sells: ['QB surplus'], notes: 'Most active trader across all leagues. Always needs RBs. Has Burrow+Nix surplus.' },
 };
 
+// How many lineup starters each position fills in SF TE+ format
+const STARTER_SLOTS = { QB: 2, RB: 3, WR: 3, TE: 1 };
+
 function calcPositionalNeeds() {
-  // For each team, calculate surplus/deficit by position
-  // Based on lineup: 1QB + 1SF(QB) = need 2 QBs, 2RB+3FLEX = need ~3.5 RBs, 2WR+3FLEX = need ~3.5 WRs, 1TE = need 1-2 TEs
-  const STARTER_NEEDS = { QB: 2, RB: 3.5, WR: 3.5, TE: 1.5 };
-  const BENCH_BUFFER = { QB: 1, RB: 2, WR: 2, TE: 1 };
-  
-  const teamNeeds = {};
-  for (const teamName of Object.values(CONFIG.OWNER_MAP)) {
+  const allTeams = Object.values(CONFIG.OWNER_MAP);
+  const POSITIONS = ['QB','RB','WR','TE'];
+
+  // Step 1: compute raw starter VORP for every team at every position
+  const rawData = {};
+  for (const teamName of allTeams) {
     const players = STATE.allRosters[teamName] || [];
-    const byPos = { QB: [], RB: [], WR: [], TE: [] };
-    for (const p of players) {
-      if (byPos[p.pos]) byPos[p.pos].push(p);
+    const byPos = { QB:[], RB:[], WR:[], TE:[] };
+    for (const p of players) { if (byPos[p.pos]) byPos[p.pos].push(p); }
+    rawData[teamName] = {};
+    for (const pos of POSITIONS) {
+      const sorted = byPos[pos].slice().sort((a,b) => b.value - a.value);
+      const n = STARTER_SLOTS[pos];
+      const starters = sorted.slice(0, n);
+      const depth    = sorted.slice(n);
+      rawData[teamName][pos] = { starters, depth, sorted };
     }
-    
+  }
+
+  // Step 2: compute league-average starter VORP per position (normalization baseline)
+  const leagueAvg = {};
+  for (const pos of POSITIONS) {
+    const vorps = allTeams.map(t => {
+      return rawData[t][pos].starters.reduce((s,p) => s + p.vorp, 0);
+    });
+    leagueAvg[pos] = vorps.reduce((a,b) => a+b, 0) / allTeams.length;
+  }
+
+  // Step 3: build full need profile per team
+  const teamNeeds = {};
+  for (const teamName of allTeams) {
     const needs = {};
-    for (const pos of ['QB','RB','WR','TE']) {
-      const starters = STARTER_NEEDS[pos];
-      const buffer = BENCH_BUFFER[pos];
-      const ideal = starters + buffer;
-      const have = byPos[pos].length;
-      const topValue = byPos[pos].slice(0, Math.ceil(starters)).reduce((s,p) => s+p.value, 0);
-      const avgStarterValue = topValue / Math.ceil(starters) || 0;
-      const baseline = STATE.vorpBaselines[pos] || 0;
-      const starterVORP = byPos[pos].slice(0, Math.ceil(starters)).reduce((s,p) => s+p.vorp, 0);
-      
+    for (const pos of POSITIONS) {
+      const { starters, depth, sorted } = rawData[teamName][pos];
+      const starterVorp = starters.reduce((s,p) => s + p.vorp, 0);
+      const depthVorp   = depth.reduce((s,p) => s + p.vorp, 0);
+
+      // How far below league average are their starters? Negative = need.
+      const vorpGap = starterVorp - leagueAvg[pos];
+
+      // Future need: how many starters are aging or sell archetypes?
+      const agingStarters = starters.filter(p => {
+        const a = getArchetype(p.pos, p.age);
+        return a && (a.cls === 'sell' || a.cls === 'aging');
+      });
+      // Each aging starter = penalty. Two aging starters = crisis.
+      const futureNeedPenalty = agingStarters.length * 800;
+
+      // Combined need score — higher = more desperate
+      // vorpGap is already negative when they're weak, so negate it
+      const needScore = Math.max(0, -vorpGap) + futureNeedPenalty;
+
+      // Tradeable players: depth players with real value, OR aging starters worth moving
+      const tradeablePlayers = [
+        ...depth.filter(p => p.value >= 1500),
+        ...starters.filter(p => {
+          const a = getArchetype(p.pos, p.age);
+          return a && (a.cls === 'sell' || a.cls === 'aging') && p.value >= 1500;
+        })
+      ].filter((p, i, arr) => arr.findIndex(x => x.name === p.name) === i); // dedupe
+
+      // Surplus score = actual moveable capital value
+      const surplusScore = tradeablePlayers.reduce((s,p) => s + p.value, 0);
+
       needs[pos] = {
-        count: have,
-        ideal,
-        surplus: have - ideal,
-        starterVORP,
-        avgStarterValue,
-        topPlayers: byPos[pos].slice(0, 3),
-        needScore: starterVORP < 0 ? Math.abs(starterVORP) : 0, // Higher = more desperate
-        surplusScore: have > ideal ? (have - ideal) * avgStarterValue / 1000 : 0
+        count: sorted.length,
+        starters,
+        depth,
+        starterVorp,
+        vorpGap,
+        leagueAvg: leagueAvg[pos],
+        futureNeedPenalty,
+        agingStarters,
+        needScore,
+        surplusScore,
+        tradeablePlayers,
+        // legacy compat
+        topPlayers: sorted.slice(0, 3),
+        avgStarterValue: starters.reduce((s,p) => s+p.value,0) / (starters.length||1),
       };
     }
     teamNeeds[teamName] = needs;
   }
   return teamNeeds;
+}
+
+function calcPositionalNeedsSimple() {
+  // Alias used by renderLeagueIntel — returns same structure but simplified
+  return calcPositionalNeeds();
 }
 
 var DISMISSED_TRADES = new Set();
@@ -2598,6 +2652,10 @@ function renderTradeCard(s, i) {
       '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--text-muted);margin-bottom:4px;letter-spacing:0.5px">WHY IT WORKS</div>' +
       '<div style="font-size:12px;color:var(--text-dim);margin-bottom:3px">✅ For you: ' + s.whyYouAccept + '</div>' +
       '<div style="font-size:12px;color:var(--text-dim);margin-bottom:3px">✅ For them: ' + s.whyTheyAccept + '</div>' +
+      (s.myVorpGain !== undefined ? '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">' +
+        '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(76,255,145,0.1);color:var(--green)">You: ' + (s.myVorpGain > 0 ? '+' : '') + s.myVorpGain + ' VORP</span>' +
+        '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(76,169,255,0.1);color:var(--blue)">Them: ' + (s.theirVorpGain > 0 ? '+' : '') + s.theirVorpGain + ' VORP</span>' +
+      '</div>' : '') +
       (s.profile && s.profile.notes?'<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:4px">💬 ' + s.profile.notes + '</div>':'') +
     '</div>' +
   '</div>';
@@ -2626,163 +2684,129 @@ function runTradeFinder() {
 
 function findTrades() {
   const teamNeeds = calcPositionalNeeds();
-  const myNeeds = teamNeeds[CONFIG.MY_TEAM_NAME];
+  const myNeeds   = teamNeeds[CONFIG.MY_TEAM_NAME];
+  const POSITIONS = ['QB','RB','WR','TE'];
   const suggestions = [];
   var idCounter = 0;
 
-  const mySurplus = ['QB','RB','WR','TE'].filter(function(pos) {
-    return myNeeds[pos].surplus > 0 || myNeeds[pos].starterVORP > 1500;
-  });
+  // My weakest positions by vorpGap (most negative = biggest need)
+  const myNeedRanked = POSITIONS.slice().sort((a,b) => myNeeds[a].vorpGap - myNeeds[b].vorpGap);
 
-  var myDeficits = ['QB','RB','WR','TE'].filter(function(pos) {
-    return myNeeds[pos].needScore > 200 || myNeeds[pos].starterVORP < 500 || myNeeds[pos].count < 2;
-  });
+  // Players I can realistically move: tradeable at any position, not protected
+  const myTradeables = POSITIONS.flatMap(pos =>
+    myNeeds[pos].tradeablePlayers.filter(p => CONFIG.PROTECTED.indexOf(p.name) < 0)
+  );
 
-  if (myDeficits.length === 0) {
-    var sorted = ['QB','RB','WR','TE'].slice().sort(function(a,b) { return myNeeds[a].starterVORP - myNeeds[b].starterVORP; });
-    myDeficits.push(sorted[0], sorted[1]);
-  }
+  const allTeams = Object.values(CONFIG.OWNER_MAP);
 
-  var allTeams = Object.values(CONFIG.OWNER_MAP);
-  for (var t = 0; t < allTeams.length; t++) {
-    var teamName = allTeams[t];
+  for (const teamName of allTeams) {
     if (teamName === CONFIG.MY_TEAM_NAME) continue;
-    var theirNeeds = teamNeeds[teamName];
-    var profile = OWNER_PROFILES[teamName];
+    const theirNeeds = teamNeeds[teamName];
+    const profile    = OWNER_PROFILES[teamName];
 
-    var theyHaveSurplus = ['QB','RB','WR','TE'].filter(function(pos) {
-      return myDeficits.indexOf(pos) >= 0 &&
-        (theirNeeds[pos].surplus > 0 || theirNeeds[pos].starterVORP > 1000 || theirNeeds[pos].count >= 4);
-    });
+    // Their weakest positions
+    const theirNeedRanked = POSITIONS.slice().sort((a,b) => theirNeeds[a].vorpGap - theirNeeds[b].vorpGap);
 
-    var theyNeed = ['QB','RB','WR','TE'].filter(function(pos) {
-      return mySurplus.indexOf(pos) >= 0 &&
-        (theirNeeds[pos].needScore > 200 || theirNeeds[pos].count < 3 || theirNeeds[pos].starterVORP < 500);
-    });
+    // Players they can realistically move
+    const theirTradeables = POSITIONS.flatMap(pos =>
+      theirNeeds[pos].tradeablePlayers
+    );
 
-    // Standard positional swap deals
-    if (theyHaveSurplus.length && theyNeed.length) {
-      for (var gi = 0; gi < theyHaveSurplus.length; gi++) {
-        var iGetPos = theyHaveSurplus[gi];
-        for (var gj = 0; gj < theyNeed.length; gj++) {
-          var iGivePos = theyNeed[gj];
-          if (iGetPos === iGivePos) continue;
+    // --- 1-for-1 player swaps ---
+    for (const theyGive of theirTradeables) {
+      for (const iGive of myTradeables) {
+        if (theyGive.pos === iGive.pos && theyGive.name === iGive.name) continue;
 
-          var theirPlayers = (STATE.allRosters[teamName] || []).filter(function(p) { return p.pos === iGetPos; }).sort(function(a,b) { return b.value - a.value; });
-          var myPlayers = (STATE.myRoster || [])
-            .filter(function(p) { 
-              if (p.pos !== iGivePos) return false;
-              if (CONFIG.PROTECTED.indexOf(p.name) >= 0) return false;
-              return true;
-            })
-            .sort(function(a,b) {
-              var aArch = getArchetype(a.pos, a.age);
-              var bArch = getArchetype(b.pos, b.age);
-              var aSell = (aArch && (aArch.cls === 'sell' || aArch.cls === 'aging')) ? 1 : 0;
-              var bSell = (bArch && (bArch.cls === 'sell' || bArch.cls === 'aging')) ? 1 : 0;
-              if (aSell !== bSell) return bSell - aSell;
-              return b.value - a.value;
-            });
+        // Value balance check — don't propose wildly lopsided trades
+        const rawDiff = theyGive.value - iGive.value;
+        if (rawDiff < -2000) continue; // I give too much
+        if (rawDiff > 4000) continue;  // They'd never do it
+        const valueDiff = Math.abs(rawDiff);
 
-          // Try their 2nd and 3rd best players
-          for (var pi = 1; pi <= 2; pi++) {
-            var theyGive = theirPlayers[pi];
-            if (!theyGive) continue;
+        // VORP impact: how much does receiving theyGive improve my weakest spot?
+        const myVorpGain = (() => {
+          const pos = theyGive.pos;
+          const myGap = myNeeds[pos].vorpGap;
+          // Gain = their player's VORP contribution to my room
+          // If I'm already strong here, gain is discounted
+          const rawGain = theyGive.vorp - (myNeeds[pos].starters[myNeeds[pos].starters.length - 1]?.vorp || 0);
+          return myGap < 0 ? rawGain * 1.2 : rawGain * 0.7; // amplify if I need it
+        })();
 
-            // Try multiple of my sell candidates
-            for (var mi = 0; mi < Math.min(myPlayers.length, 3); mi++) {
-              var iGivePlayer = myPlayers[mi];
-              if (!iGivePlayer) continue;
-              if (theyGive.value < 1000 || iGivePlayer.value < 1000) continue;
+        // VORP impact: how much does receiving iGive improve their weakest spot?
+        const theirVorpGain = (() => {
+          const pos = iGive.pos;
+          const theirGap = theirNeeds[pos].vorpGap;
+          const rawGain = iGive.vorp - (theirNeeds[pos].starters[theirNeeds[pos].starters.length - 1]?.vorp || 0);
+          return theirGap < 0 ? rawGain * 1.2 : rawGain * 0.7;
+        })();
 
-              var rawDiff = theyGive.value - iGivePlayer.value;
-              if (rawDiff < -1500) continue;
-              var valueDiff = Math.abs(rawDiff);
-              if (valueDiff > 3000) continue;
+        // Both sides need to benefit meaningfully
+        if (myVorpGain < -500 && theirVorpGain < -500) continue;
 
-              var mutualBenefit = (theirNeeds[iGivePos].needScore + myNeeds[iGetPos].needScore) / 2;
-              var activityBonus = profile && profile.activity === 'HIGH' ? 500 : profile && profile.activity === 'MEDIUM' ? 200 : 0;
-              var score = mutualBenefit - (valueDiff * 0.3) + activityBonus + 200;
-
-              suggestions.push({
-                id: 'trade-' + (idCounter++),
-                team: teamName,
-                iGet: theyGive,
-                iGive: iGivePlayer,
-                iGetPos: iGetPos,
-                iGivePos: iGivePos,
-                score: score,
-                valueDiff: valueDiff,
-                profile: profile,
-                type: 'standard',
-                whyTheyAccept: teamName + ' needs ' + iGivePos + ' (' + theirNeeds[iGivePos].count + ' on roster, VORP ' + Math.round(theirNeeds[iGivePos].starterVORP) + ')',
-                whyYouAccept: 'You need ' + iGetPos + ' (your starter VORP ' + Math.round(myNeeds[iGetPos].starterVORP) + ')'
-              });
-            }
-          }
+        // Profile alignment bonus — calibrated as tiebreaker, not dominant
+        let profileBonus = 0;
+        if (profile) {
+          const theyGetPos = iGive.pos;
+          const theyGivePos = theyGive.pos;
+          const theyGetArch = getArchetype(iGive.pos, iGive.age);
+          const theyGiveArch = getArchetype(theyGive.pos, theyGive.age);
+          // Check if this matches their known buying/selling patterns
+          if (profile.buys && profile.buys.some(b => theyGetPos.toLowerCase().includes(b) || b.includes(theyGetPos.toLowerCase()))) profileBonus += 300;
+          if (profile.sells && profile.sells.some(s => theyGivePos.toLowerCase().includes(s) || s.includes(theyGivePos.toLowerCase()))) profileBonus += 200;
+          if (profile.activity === 'HIGH') profileBonus += 150;
+          else if (profile.activity === 'LOW') profileBonus -= 200;
         }
-      }
-    }
 
-    // Age-swap deals — same position, trade aging player for younger one
-    var poses = ['QB','RB','WR','TE'];
-    for (var p = 0; p < poses.length; p++) {
-      var pos = poses[p];
-      var myAgingAtPos = (STATE.myRoster || []).filter(function(pl) {
-        if (pl.pos !== pos) return false;
-        if (CONFIG.PROTECTED.indexOf(pl.name) >= 0) return false;
-        var arch = getArchetype(pl.pos, pl.age);
-        return arch && (arch.cls === 'sell' || arch.cls === 'aging');
-      }).sort(function(a,b) { return b.value - a.value; });
+        // Final score — VORP-driven, profile as tiebreaker
+        const score = (myVorpGain * 0.45) + (theirVorpGain * 0.45) + profileBonus - (valueDiff * 0.05);
 
-      var theirYoungAtPos = (STATE.allRosters[teamName] || []).filter(function(pl) {
-        if (pl.pos !== pos) return false;
-        var arch = getArchetype(pl.pos, pl.age);
-        return arch && (arch.cls === 'young' || arch.cls === 'peak');
-      }).sort(function(a,b) { return b.value - a.value; });
+        // Build specific why-it-works text
+        const myPosRank = myNeedRanked.indexOf(theyGive.pos) + 1;
+        const theirPosRank = theirNeedRanked.indexOf(iGive.pos) + 1;
+        const myGapStr = myNeeds[theyGive.pos].vorpGap < 0
+          ? `${Math.round(myNeeds[theyGive.pos].vorpGap)} VORP gap vs league avg`
+          : `already ${Math.round(myNeeds[theyGive.pos].vorpGap)} above league avg`;
+        const theirGapStr = theirNeeds[iGive.pos].vorpGap < 0
+          ? `${Math.round(theirNeeds[iGive.pos].vorpGap)} VORP gap vs league avg`
+          : `already ${Math.round(theirNeeds[iGive.pos].vorpGap)} above avg`;
 
-      for (var ai = 0; ai < Math.min(myAgingAtPos.length, 2); ai++) {
-        for (var yi = 1; yi <= 2; yi++) {
-          var myAging = myAgingAtPos[ai];
-          var theirYoung = theirYoungAtPos[yi];
-          if (!myAging || !theirYoung) continue;
-          if (myAging.value < 1500 || theirYoung.value < 1500) continue;
+        const myArch = getArchetype(iGive.pos, iGive.age);
+        const theirArch = getArchetype(theyGive.pos, theyGive.age);
+        const isAgeSwap = myArch && theirArch &&
+          (myArch.cls === 'aging' || myArch.cls === 'sell') &&
+          (theirArch.cls === 'young' || theirArch.cls === 'peak');
 
-          var swapDiff = theirYoung.value - myAging.value;
-          if (swapDiff < -500 || swapDiff > 2500) continue; // They give a younger player, slight value edge ok
-
-          var swapScore = 300 + (profile && profile.activity === 'HIGH' ? 400 : 100) - Math.abs(swapDiff) * 0.2;
-
-          suggestions.push({
-            id: 'trade-' + (idCounter++),
-            team: teamName,
-            iGet: theirYoung,
-            iGive: myAging,
-            iGetPos: pos,
-            iGivePos: pos,
-            score: swapScore,
-            valueDiff: Math.abs(swapDiff),
-            profile: profile,
-            type: 'age-swap',
-            whyTheyAccept: teamName + ' gets proven ' + pos + ' (' + myAging.name + ', age ' + myAging.age + ')',
-            whyYouAccept: 'Age upgrade — ' + theirYoung.name + ' (' + theirYoung.age + ') for ' + myAging.name + ' (' + myAging.age + ')'
-          });
-        }
+        suggestions.push({
+          id: 'trade-' + (idCounter++),
+          team: teamName,
+          iGet: theyGive,
+          iGive: iGive,
+          iGetPos: theyGive.pos,
+          iGivePos: iGive.pos,
+          score,
+          valueDiff,
+          myVorpGain: Math.round(myVorpGain),
+          theirVorpGain: Math.round(theirVorpGain),
+          profile,
+          type: isAgeSwap ? 'age-swap' : 'standard',
+          whyYouAccept: `Your ${theyGive.pos} room is #${myPosRank} weakest (${myGapStr}). ${theyGive.name} adds real starter-level VORP.`,
+          whyTheyAccept: `${teamName}'s ${iGive.pos} room is #${theirPosRank} weakest (${theirGapStr}). ${iGive.name} slots in as a starter.`,
+        });
       }
     }
   }
 
-  // Deduplicate — remove same team+player combos
-  var seen = new Set();
-  var deduped = suggestions.filter(function(s) {
-    var key = s.team + '|' + s.iGet.name + '|' + s.iGive.name;
+  // Deduplicate same team + player pair
+  const seen = new Set();
+  const deduped = suggestions.filter(s => {
+    const key = `${s.team}|${s.iGet.name}|${s.iGive.name}`;
     if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
+    seen.add(key); return true;
   });
 
-  deduped.sort(function(a,b) { return b.score - a.score; });
-  return deduped;
+  deduped.sort((a,b) => b.score - a.score);
+  return deduped.slice(0, 20); // cap at 20
 }
 // ============================================================
 // LEAGUE INTEL
@@ -2812,7 +2836,7 @@ function renderLeagueIntel() {
             <span style="font-size:12px;font-weight:${t.name === CONFIG.MY_TEAM_NAME ? '600' : '400'}">${t.name}</span>
             <div style="display:flex;gap:8px;align-items:center">
               <span class="mono" style="font-size:10px;color:var(--text-muted)">${t.count} players</span>
-              <span class="mono" style="font-size:11px;color:var(--red)">${fmt(t.starterVORP)} VORP</span>
+              <span class="mono" style="font-size:11px;color:var(--red)">${fmt(Math.round(t.vorpGap))} vs avg</span>
             </div>
           </div>
         `).join('')}
@@ -2842,8 +2866,8 @@ function renderLeagueIntel() {
           <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface2);border-radius:6px;margin-bottom:4px">
             <span style="font-size:12px">${t.name}</span>
             <div style="display:flex;gap:8px;align-items:center">
-              <span class="mono" style="font-size:10px;color:var(--text-muted)">${t.count} players</span>
-              <span class="mono" style="font-size:11px;color:var(--green)">+${t.surplus.toFixed(1)} over ideal</span>
+              <span class="mono" style="font-size:10px;color:var(--text-muted)">${t.tradeablePlayers ? t.tradeablePlayers.length : t.count} moveable</span>
+              <span class="mono" style="font-size:11px;color:var(--green)">${fmtK(t.surplusScore)} surplus value</span>
             </div>
           </div>
         `).join('')}
@@ -2861,7 +2885,7 @@ function renderLeagueIntel() {
     
     // Find their biggest need and surplus
     const needs = teamNeeds[teamName];
-    const biggestNeed = ['QB','RB','WR','TE'].sort((a,b) => needs[b].needScore - needs[a].needScore)[0];
+    const biggestNeed = ['QB','RB','WR','TE'].sort((a,b) => needs[a].vorpGap - needs[b].vorpGap)[0];
     const biggestSurplus = ['QB','RB','WR','TE'].sort((a,b) => needs[b].surplusScore - needs[a].surplusScore)[0];
 
     return `
