@@ -2498,6 +2498,34 @@ const OWNER_PROFILES = {
 // How many lineup starters each position fills in SF TE+ format
 const STARTER_SLOTS = { QB: 2, RB: 3, WR: 3, TE: 1 };
 
+// Build pick inventory for any team from STATE.pickMap
+function getTeamPicks(teamName) {
+  const currentYear = new Date().getFullYear();
+  const picks = [];
+  for (const key in STATE.pickMap) {
+    if (STATE.pickMap[key] !== teamName) continue;
+    const [season, round, rosterId] = key.split('_');
+    const yr = parseInt(season);
+    const rd = parseInt(round);
+    if (rd > 4) continue; // ignore 5th round picks
+    const orig = STATE.rosterIdMap?.[parseInt(rosterId)] || `Roster${rosterId}`;
+    const value = getPickValue(yr, rd, orig);
+    if (!value || value < 800) continue;
+    const label = getPickLabel(yr, rd, orig);
+    // Capital tier: 2027-2028 = target, 2026 = current, 2029+ = distant
+    const capitalTier = yr === 2027 || yr === 2028 ? 'target'
+                      : yr === currentYear ? 'current'
+                      : yr >= 2029 ? 'distant' : 'near';
+    picks.push({
+      type: 'pick', pos: 'PICK', name: label, label,
+      value, year: yr, round: rd, orig, capitalTier,
+      age: null, vorp: 0,
+      sleeperId: key // unique key
+    });
+  }
+  return picks.sort((a,b) => a.year - b.year || a.round - b.round);
+}
+
 function calcPositionalNeeds() {
   const allTeams = Object.values(CONFIG.OWNER_MAP);
   const POSITIONS = ['QB','RB','WR','TE'];
@@ -2602,61 +2630,81 @@ function dismissTrade(id) {
   }
 }
 
+function renderAssetBlock(asset) {
+  if (asset.type === 'pick') {
+    var tierColor = asset.capitalTier === 'target' ? 'var(--gold)' : asset.capitalTier === 'near' ? 'var(--accent)' : 'var(--text-dim)';
+    var tierLabel = asset.capitalTier === 'target' ? '🎯 TARGET CAPITAL' : asset.capitalTier === 'near' ? 'NEAR FUTURE' : 'CURRENT';
+    return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px">' +
+      '<span class="badge badge-aging">PICK</span>' +
+      '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(asset.value) + '</span>' +
+      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:' + tierColor + '">' + tierLabel + '</span>' +
+    '</div>';
+  }
+  var arch = getArchetype(asset.pos, asset.age);
+  return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px">' +
+    posPill(asset.pos) +
+    '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(asset.value) + '</span>' +
+    (asset.age ? '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + asset.age + '</span>' : '') +
+    (arch ? '<span class="badge badge-' + arch.cls + '" style="font-size:8px">' + arch.label.split(' ')[0] + '</span>' : '') +
+  '</div>';
+}
+
 function renderTradeCard(s, i) {
-  var archA = getArchetype(s.iGet.pos, s.iGet.age);
-  var archB = getArchetype(s.iGive.pos, s.iGive.age);
-  var valueDiff = s.iGet.value - s.iGive.value;
+  var totalGet = (s.iGetList || [s.iGet]).reduce(function(sum, a) { return sum + a.value; }, 0);
+  var totalGive = (s.iGiveList || [s.iGive]).reduce(function(sum, a) { return sum + a.value; }, 0);
+  var valueDiff = totalGet - totalGive;
   var diffColor = valueDiff > 200 ? 'var(--green)' : valueDiff < -200 ? 'var(--red)' : 'var(--yellow)';
   var activityColor = s.profile && s.profile.activity === 'HIGH' ? 'var(--green)' : s.profile && s.profile.activity === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)';
   var isTop = i === 0;
+  var isPickAcq = s.type === 'pick-acquisition';
+  var isPackage = s.isPackage;
 
-  return '<div id="trade-card-' + s.id + '" style="background:var(--surface2);border:1px solid ' + (isTop?'var(--accent)':'var(--border)') + ';border-radius:12px;padding:16px;margin-bottom:12px;position:relative">' +
-    // Dismiss button
+  var typeTag = '';
+  if (isPickAcq) typeTag = '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(255,215,0,0.15);color:var(--gold)">🎯 Capital Acquisition</span>';
+  else if (isPackage) typeTag = '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(180,76,255,0.15);color:var(--purple)">📦 Package Trade</span>';
+  else if (s.type === 'age-swap') typeTag = '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(255,165,0,0.15);color:var(--gold)">⏳ Age Swap</span>';
+
+  // Render each side — support multiple assets (package)
+  function renderSide(assetList, label, borderColor) {
+    return '<div style="background:var(--surface3);border-radius:8px;padding:12px;border-left:3px solid ' + borderColor + '">' +
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:' + borderColor + ';letter-spacing:1px;margin-bottom:6px">' + label + ' · ' + fmt(assetList.reduce(function(s,a){return s+a.value;},0)) + '</div>' +
+      assetList.map(function(asset) {
+        return '<div style="margin-bottom:' + (assetList.length > 1 ? '8px' : '0') + '">' +
+          '<div style="font-weight:600;font-size:13px">' + asset.name + '</div>' +
+          renderAssetBlock(asset) +
+        '</div>';
+      }).join('<div style="height:1px;background:var(--border);margin:6px 0"></div>') +
+    '</div>';
+  }
+
+  return '<div id="trade-card-' + s.id + '" style="background:var(--surface2);border:1px solid ' + (isTop ? 'var(--accent)' : isPickAcq ? 'var(--gold)' : 'var(--border)') + ';border-radius:12px;padding:16px;margin-bottom:12px;position:relative">' +
     '<button onclick="dismissTrade(\'' + s.id + '\')" style="position:absolute;top:12px;right:12px;background:var(--surface3);border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:\'IBM Plex Mono\',monospace">✕ dismiss</button>' +
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;padding-right:80px">' +
-      (isTop?'<span style="font-family:\'Bebas Neue\',cursive;font-size:14px;color:var(--gold)">⭐ TOP PICK</span>':'<span class="mono muted" style="font-size:11px">#'+(i+1)+'</span>') +
+      (isTop ? '<span style="font-family:\'Bebas Neue\',cursive;font-size:14px;color:var(--gold)">⭐ TOP PICK</span>' : '<span class="mono muted" style="font-size:11px">#' + (i + 1) + '</span>') +
       '<span style="font-weight:600;font-size:14px">' + s.team + '</span>' +
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:' + activityColor + '">● ' + (s.profile?s.profile.activity:'?') + ' ACTIVITY</span>' +
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--text-dim)">' + (s.profile?s.profile.style:'') + '</span>' +
+      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:' + activityColor + '">● ' + (s.profile ? s.profile.activity : '?') + ' ACTIVITY</span>' +
+      typeTag +
     '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:12px">' +
-      '<div style="background:var(--surface3);border-radius:8px;padding:12px;border-left:3px solid var(--green)">' +
-        '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:6px">YOU RECEIVE</div>' +
-        '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGet.name + '</div>' +
-        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
-          posPill(s.iGet.pos) +
-          '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGet.value) + '</span>' +
-          '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGet.age + '</span>' +
-          (archA?'<span class="badge badge-'+archA.cls+'" style="font-size:8px">'+archA.label.split(' ')[0]+'</span>':'') +
-        '</div>' +
-      '</div>' +
-      '<div style="text-align:center;font-size:20px;color:var(--text-muted)">⇄</div>' +
-      '<div style="background:var(--surface3);border-radius:8px;padding:12px;border-left:3px solid var(--accent2)">' +
-        '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--accent2);letter-spacing:1px;margin-bottom:6px">YOU GIVE</div>' +
-        '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGive.name + '</div>' +
-        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
-          posPill(s.iGive.pos) +
-          '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGive.value) + '</span>' +
-          '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGive.age + '</span>' +
-          (archB?'<span class="badge badge-'+archB.cls+'" style="font-size:8px">'+archB.label.split(' ')[0]+'</span>':'') +
-        '</div>' +
-      '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;margin-bottom:12px">' +
+      renderSide(s.iGetList || [s.iGet], 'YOU RECEIVE', 'var(--green)') +
+      '<div style="text-align:center;font-size:20px;color:var(--text-muted);padding-top:12px">⇄</div>' +
+      renderSide(s.iGiveList || [s.iGive], 'YOU GIVE', 'var(--accent2)') +
     '</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">' +
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:3px 8px;border-radius:4px;background:' + (valueDiff>200?'rgba(76,255,145,0.15)':valueDiff<-200?'rgba(255,68,68,0.15)':'rgba(255,215,0,0.15)') + ';color:' + diffColor + '">' +
-        (valueDiff>0?'+':'') + fmt(valueDiff) + ' value ' + (valueDiff>200?'(you win)':valueDiff<-200?'(they win)':'(fair)') +
+      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:3px 8px;border-radius:4px;background:' + (valueDiff > 200 ? 'rgba(76,255,145,0.15)' : valueDiff < -200 ? 'rgba(255,68,68,0.15)' : 'rgba(255,215,0,0.15)') + ';color:' + diffColor + '">' +
+        (valueDiff > 0 ? '+' : '') + fmt(valueDiff) + ' value ' + (valueDiff > 200 ? '(you win)' : valueDiff < -200 ? '(they win)' : '(fair)') +
       '</span>' +
-      (s.type === 'age-swap' ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,165,0,0.15);color:var(--gold)">Age upgrade swap</span>' : '') +
+      (s.capBonus > 0 ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,215,0,0.1);color:var(--gold)">+' + s.capBonus + ' capital score</span>' : '') +
     '</div>' +
     '<div style="border-top:1px solid var(--border);padding-top:10px">' +
       '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--text-muted);margin-bottom:4px;letter-spacing:0.5px">WHY IT WORKS</div>' +
       '<div style="font-size:12px;color:var(--text-dim);margin-bottom:3px">✅ For you: ' + s.whyYouAccept + '</div>' +
       '<div style="font-size:12px;color:var(--text-dim);margin-bottom:3px">✅ For them: ' + s.whyTheyAccept + '</div>' +
-      (s.myVorpGain !== undefined ? '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">' +
-        '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(76,255,145,0.1);color:var(--green)">You: ' + (s.myVorpGain > 0 ? '+' : '') + s.myVorpGain + ' VORP</span>' +
-        '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(76,169,255,0.1);color:var(--blue)">Them: ' + (s.theirVorpGain > 0 ? '+' : '') + s.theirVorpGain + ' VORP</span>' +
-      '</div>' : '') +
-      (s.profile && s.profile.notes?'<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:4px">💬 ' + s.profile.notes + '</div>':'') +
+      '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">' +
+        (s.iGet.type !== 'pick' ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(76,255,145,0.1);color:var(--green)">Your VORP: ' + (s.myVorpGain > 0 ? '+' : '') + s.myVorpGain + '</span>' : '') +
+        (s.iGive.type !== 'pick' ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(76,169,255,0.1);color:var(--blue)">Their VORP: ' + (s.theirVorpGain > 0 ? '+' : '') + s.theirVorpGain + '</span>' : '') +
+      '</div>' +
+      (s.profile && s.profile.notes ? '<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:6px">💬 ' + s.profile.notes + '</div>' : '') +
     '</div>' +
   '</div>';
 }
@@ -2689,13 +2737,112 @@ function findTrades() {
   const suggestions = [];
   var idCounter = 0;
 
-  // My weakest positions by vorpGap (most negative = biggest need)
+  // My weakest positions by vorpGap
   const myNeedRanked = POSITIONS.slice().sort((a,b) => myNeeds[a].vorpGap - myNeeds[b].vorpGap);
 
-  // Players I can realistically move: tradeable at any position, not protected
-  const myTradeables = POSITIONS.flatMap(pos =>
+  // My tradeable players (not protected, moveable)
+  const myTradeablePlayers = POSITIONS.flatMap(pos =>
     myNeeds[pos].tradeablePlayers.filter(p => CONFIG.PROTECTED.indexOf(p.name) < 0)
   );
+
+  // My tradeable picks — prefer to keep 2027-2028, willing to move 2026 and 2029+
+  const myTradeablePicks = getTeamPicks(CONFIG.MY_TEAM_NAME)
+    .filter(p => p.capitalTier === 'current' || p.capitalTier === 'distant');
+
+  // Capital acquisition bonus — core strategic objective
+  function capitalBonus(asset) {
+    if (asset.type !== 'pick') return 0;
+    if (asset.capitalTier === 'target') return 1200;  // 2027-2028 picks = strong bonus
+    if (asset.capitalTier === 'near')   return 400;   // early future picks
+    if (asset.capitalTier === 'current') return 100;  // current year
+    return 0;
+  }
+
+  // Score a single (iGet, iGive) pair — works for players or picks on either side
+  function scorePair(iGet, iGive, teamName, theirNeeds, label) {
+    const rawDiff = iGet.value - iGive.value;
+    if (rawDiff < -2500) return null; // I give way too much
+    if (rawDiff > 4500)  return null; // They'd never do it
+    const valueDiff = Math.abs(rawDiff);
+
+    // VORP gain for me (only meaningful if iGet is a player)
+    let myVorpGain = 0;
+    if (iGet.type !== 'pick') {
+      const pos = iGet.pos;
+      const myGap = myNeeds[pos].vorpGap;
+      const myLastStarter = myNeeds[pos].starters[myNeeds[pos].starters.length - 1];
+      const rawGain = iGet.vorp - (myLastStarter?.vorp || 0);
+      myVorpGain = myGap < 0 ? rawGain * 1.2 : rawGain * 0.6;
+    }
+
+    // VORP gain for them (only meaningful if iGive is a player)
+    let theirVorpGain = 0;
+    if (iGive.type !== 'pick') {
+      const pos = iGive.pos;
+      const theirGap = theirNeeds[pos].vorpGap;
+      const theirLastStarter = theirNeeds[pos].starters[theirNeeds[pos].starters.length - 1];
+      const rawGain = iGive.vorp - (theirLastStarter?.vorp || 0);
+      theirVorpGain = theirGap < 0 ? rawGain * 1.2 : rawGain * 0.6;
+    }
+
+    // If both sides are picks — skip (not useful)
+    if (iGet.type === 'pick' && iGive.type === 'pick') return null;
+
+    // Strategic capital bonus for what I'm receiving
+    const capBonus = capitalBonus(iGet);
+
+    // Profile alignment
+    const profile = OWNER_PROFILES[teamName];
+    let profileBonus = 0;
+    if (profile) {
+      if (profile.activity === 'HIGH') profileBonus += 150;
+      else if (profile.activity === 'LOW') profileBonus -= 200;
+    }
+
+    // Require at least one side to benefit meaningfully
+    const myBenefit  = myVorpGain + capBonus;
+    const theirBenefit = theirVorpGain;
+    if (myBenefit < -300 && theirBenefit < -300) return null;
+
+    const score = (myBenefit * 0.45) + (theirBenefit * 0.35) + profileBonus - (valueDiff * 0.05);
+
+    // Build why-it-works text
+    const myNeedStr = iGet.type === 'pick'
+      ? `adds ${iGet.year} ${iGet.round === 1 ? '1st' : iGet.round === 2 ? '2nd' : iGet.round + 'th'} — your target capital window`
+      : (() => {
+          const pos = iGet.pos;
+          const rank = myNeedRanked.indexOf(pos) + 1;
+          const gap = Math.round(myNeeds[pos].vorpGap);
+          return `your ${pos} is #${rank} weakest (${gap > 0 ? '+' : ''}${gap} vs league avg)`;
+        })();
+
+    const theirNeedStr = iGive.type === 'pick'
+      ? `they move a pick to upgrade their ${label} room`
+      : (() => {
+          const pos = iGive.pos;
+          const theirNeedRanked = POSITIONS.slice().sort((a,b) => theirNeeds[a].vorpGap - theirNeeds[b].vorpGap);
+          const rank = theirNeedRanked.indexOf(pos) + 1;
+          const gap = Math.round(theirNeeds[pos].vorpGap);
+          return `their ${pos} is #${rank} weakest (${gap > 0 ? '+' : ''}${gap} vs league avg)`;
+        })();
+
+    const myArch  = iGive.type !== 'pick' ? getArchetype(iGive.pos, iGive.age) : null;
+    const theirArch = iGet.type !== 'pick' ? getArchetype(iGet.pos, iGet.age) : null;
+    const isAgeSwap = myArch && theirArch &&
+      (myArch.cls === 'aging' || myArch.cls === 'sell') &&
+      (theirArch.cls === 'young' || theirArch.cls === 'peak');
+
+    return {
+      score, valueDiff,
+      myVorpGain: Math.round(myVorpGain),
+      theirVorpGain: Math.round(theirVorpGain),
+      capBonus,
+      isAgeSwap,
+      whyYouAccept: `${myNeedStr}`,
+      whyTheyAccept: `${theirNeedStr}`,
+      profile,
+    };
+  }
 
   const allTeams = Object.values(CONFIG.OWNER_MAP);
 
@@ -2704,109 +2851,116 @@ function findTrades() {
     const theirNeeds = teamNeeds[teamName];
     const profile    = OWNER_PROFILES[teamName];
 
-    // Their weakest positions
-    const theirNeedRanked = POSITIONS.slice().sort((a,b) => theirNeeds[a].vorpGap - theirNeeds[b].vorpGap);
-
-    // Players they can realistically move
-    const theirTradeables = POSITIONS.flatMap(pos =>
+    const theirTradeablePlayers = POSITIONS.flatMap(pos =>
       theirNeeds[pos].tradeablePlayers
     );
+    const theirTradeablePicks = getTeamPicks(teamName);
 
-    // --- 1-for-1 player swaps ---
-    for (const theyGive of theirTradeables) {
-      for (const iGive of myTradeables) {
-        if (theyGive.pos === iGive.pos && theyGive.name === iGive.name) continue;
+    // Build iGet and iGive candidate lists
+    const iGetCandidates = [
+      ...theirTradeablePlayers,
+      ...theirTradeablePicks,
+    ];
+    const iGiveCandidates = [
+      ...myTradeablePlayers,
+      ...myTradeablePicks,
+    ];
 
-        // Value balance check — don't propose wildly lopsided trades
-        const rawDiff = theyGive.value - iGive.value;
-        if (rawDiff < -2000) continue; // I give too much
-        if (rawDiff > 4000) continue;  // They'd never do it
-        const valueDiff = Math.abs(rawDiff);
+    // --- 1-for-1 trades ---
+    for (const iGet of iGetCandidates) {
+      for (const iGive of iGiveCandidates) {
+        if (iGet.name === iGive.name) continue;
 
-        // VORP impact: how much does receiving theyGive improve my weakest spot?
-        const myVorpGain = (() => {
-          const pos = theyGive.pos;
-          const myGap = myNeeds[pos].vorpGap;
-          // Gain = their player's VORP contribution to my room
-          // If I'm already strong here, gain is discounted
-          const rawGain = theyGive.vorp - (myNeeds[pos].starters[myNeeds[pos].starters.length - 1]?.vorp || 0);
-          return myGap < 0 ? rawGain * 1.2 : rawGain * 0.7; // amplify if I need it
-        })();
-
-        // VORP impact: how much does receiving iGive improve their weakest spot?
-        const theirVorpGain = (() => {
-          const pos = iGive.pos;
-          const theirGap = theirNeeds[pos].vorpGap;
-          const rawGain = iGive.vorp - (theirNeeds[pos].starters[theirNeeds[pos].starters.length - 1]?.vorp || 0);
-          return theirGap < 0 ? rawGain * 1.2 : rawGain * 0.7;
-        })();
-
-        // Both sides need to benefit meaningfully
-        if (myVorpGain < -500 && theirVorpGain < -500) continue;
-
-        // Profile alignment bonus — calibrated as tiebreaker, not dominant
-        let profileBonus = 0;
-        if (profile) {
-          const theyGetPos = iGive.pos;
-          const theyGivePos = theyGive.pos;
-          const theyGetArch = getArchetype(iGive.pos, iGive.age);
-          const theyGiveArch = getArchetype(theyGive.pos, theyGive.age);
-          // Check if this matches their known buying/selling patterns
-          if (profile.buys && profile.buys.some(b => theyGetPos.toLowerCase().includes(b) || b.includes(theyGetPos.toLowerCase()))) profileBonus += 300;
-          if (profile.sells && profile.sells.some(s => theyGivePos.toLowerCase().includes(s) || s.includes(theyGivePos.toLowerCase()))) profileBonus += 200;
-          if (profile.activity === 'HIGH') profileBonus += 150;
-          else if (profile.activity === 'LOW') profileBonus -= 200;
-        }
-
-        // Final score — VORP-driven, profile as tiebreaker
-        const score = (myVorpGain * 0.45) + (theirVorpGain * 0.45) + profileBonus - (valueDiff * 0.05);
-
-        // Build specific why-it-works text
-        const myPosRank = myNeedRanked.indexOf(theyGive.pos) + 1;
-        const theirPosRank = theirNeedRanked.indexOf(iGive.pos) + 1;
-        const myGapStr = myNeeds[theyGive.pos].vorpGap < 0
-          ? `${Math.round(myNeeds[theyGive.pos].vorpGap)} VORP gap vs league avg`
-          : `already ${Math.round(myNeeds[theyGive.pos].vorpGap)} above league avg`;
-        const theirGapStr = theirNeeds[iGive.pos].vorpGap < 0
-          ? `${Math.round(theirNeeds[iGive.pos].vorpGap)} VORP gap vs league avg`
-          : `already ${Math.round(theirNeeds[iGive.pos].vorpGap)} above avg`;
-
-        const myArch = getArchetype(iGive.pos, iGive.age);
-        const theirArch = getArchetype(theyGive.pos, theyGive.age);
-        const isAgeSwap = myArch && theirArch &&
-          (myArch.cls === 'aging' || myArch.cls === 'sell') &&
-          (theirArch.cls === 'young' || theirArch.cls === 'peak');
+        const result = scorePair(iGet, iGive, teamName, theirNeeds, iGet.pos);
+        if (!result) continue;
 
         suggestions.push({
           id: 'trade-' + (idCounter++),
           team: teamName,
-          iGet: theyGive,
-          iGive: iGive,
-          iGetPos: theyGive.pos,
-          iGivePos: iGive.pos,
-          score,
-          valueDiff,
-          myVorpGain: Math.round(myVorpGain),
-          theirVorpGain: Math.round(theirVorpGain),
-          profile,
-          type: isAgeSwap ? 'age-swap' : 'standard',
-          whyYouAccept: `Your ${theyGive.pos} room is #${myPosRank} weakest (${myGapStr}). ${theyGive.name} adds real starter-level VORP.`,
-          whyTheyAccept: `${teamName}'s ${iGive.pos} room is #${theirPosRank} weakest (${theirGapStr}). ${iGive.name} slots in as a starter.`,
+          iGet, iGive,
+          iGetList: [iGet], iGiveList: [iGive],
+          isPackage: false,
+          type: result.isAgeSwap ? 'age-swap' : iGet.type === 'pick' ? 'pick-acquisition' : 'standard',
+          ...result,
+        });
+      }
+    }
+
+    // --- Package trades: player + pick for player ---
+    // iGet = their player, iGive = my player + one of my picks
+    for (const iGet of theirTradeablePlayers) {
+      for (const iGive of myTradeablePlayers) {
+        if (iGet.name === iGive.name) continue;
+        // Only do package if raw player swap gives them too much
+        const rawSwapDiff = iGet.value - iGive.value;
+        if (rawSwapDiff <= 1000) continue; // straight swap is fine or I give too much
+
+        // Sweeten with my pick
+        for (const myPick of myTradeablePicks) {
+          const combinedGive = iGive.value + myPick.value;
+          const finalDiff = iGet.value - combinedGive;
+          if (finalDiff < -1500 || finalDiff > 3000) continue;
+
+          const baseResult = scorePair(iGet, iGive, teamName, theirNeeds, iGet.pos);
+          if (!baseResult) continue;
+
+          // Package score adjustment — giving more so discount their vorp gain
+          const packageScore = baseResult.score - (myPick.value * 0.03);
+
+          suggestions.push({
+            id: 'trade-' + (idCounter++),
+            team: teamName,
+            iGet, iGive,
+            iGetList: [iGet],
+            iGiveList: [iGive, myPick],
+            isPackage: true,
+            type: 'package',
+            score: packageScore,
+            valueDiff: Math.abs(finalDiff),
+            myVorpGain: baseResult.myVorpGain,
+            theirVorpGain: baseResult.theirVorpGain,
+            capBonus: 0,
+            profile,
+            whyYouAccept: baseResult.whyYouAccept,
+            whyTheyAccept: `${baseResult.whyTheyAccept} — you add ${myPick.label} to make it work`,
+          });
+        }
+      }
+    }
+
+    // --- Pick acquisition: my player for their pick (2027-2028 target) ---
+    for (const iGet of theirTradeablePicks) {
+      if (iGet.capitalTier !== 'target') continue; // only 2027-2028
+      for (const iGive of myTradeablePlayers) {
+        const result = scorePair(iGet, iGive, teamName, theirNeeds, iGive.pos);
+        if (!result) continue;
+        // Require reasonable value balance for pick acquisitions
+        if (iGive.value < iGet.value * 0.6) continue;
+        if (iGive.value > iGet.value * 1.6) continue;
+
+        suggestions.push({
+          id: 'trade-' + (idCounter++),
+          team: teamName,
+          iGet, iGive,
+          iGetList: [iGet], iGiveList: [iGive],
+          isPackage: false,
+          type: 'pick-acquisition',
+          ...result,
         });
       }
     }
   }
 
-  // Deduplicate same team + player pair
+  // Deduplicate
   const seen = new Set();
   const deduped = suggestions.filter(s => {
-    const key = `${s.team}|${s.iGet.name}|${s.iGive.name}`;
+    const key = `${s.team}|${s.iGet.name}|${s.iGive.name}|${s.iGiveList?.map(x=>x.name).join('+')}`;
     if (seen.has(key)) return false;
     seen.add(key); return true;
   });
 
   deduped.sort((a,b) => b.score - a.score);
-  return deduped.slice(0, 20); // cap at 20
+  return deduped.slice(0, 25);
 }
 // ============================================================
 // LEAGUE INTEL
