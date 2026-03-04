@@ -1253,6 +1253,13 @@ function getRosterHealthFlag(player) {
   if (!pos || !age) return null;
 
   if (pos === 'TE') {
+    // Young TEs (under 25): trust age/upside, just need 3k+ KTC
+    if (age < 25) {
+      if (value >= 3000)
+        return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Young TE (age ' + age + ') with 3k+ value — developmental hold' };
+      return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Young TE (age ' + age + ') but low KTC — monitor development' };
+    }
+    // Veteran TEs (25+): full threshold required
     const teThreshold = getTop6TEVorp();
     if (value >= 4000 && vorp >= teThreshold)
       return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Top-6 VORP + 4k+ value' };
