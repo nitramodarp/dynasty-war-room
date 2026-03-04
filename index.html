@@ -810,11 +810,12 @@
               <th>Value</th>
               <th>VORP</th>
               <th>Archetype</th>
+              <th>Health</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody id="rosterOverviewBody">
-            <tr><td colspan="8" class="text-center muted" style="padding:24px">Loading roster...</td></tr>
+            <tr><td colspan="9" class="text-center muted" style="padding:24px">Loading roster...</td></tr>
           </tbody>
         </table>
       </div>
@@ -844,11 +845,12 @@
               <th onclick="sortTable('fullRosterTable', 4)">Value ↓</th>
               <th onclick="sortTable('fullRosterTable', 5)">VORP</th>
               <th>Archetype</th>
+              <th>Health</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody id="fullRosterBody">
-            <tr><td colspan="8" class="text-center muted" style="padding:24px">Loading...</td></tr>
+            <tr><td colspan="9" class="text-center muted" style="padding:24px">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1112,7 +1114,6 @@ const CONFIG = {
   // TE VORP multiplier: amplifies TE surplus to reflect 0.5 TEP scoring bump
   // KTC SF TE+ partially prices this in, but VORP gap vs. starter is still understated
   TE_PREMIUM_MULT: 1.15,
-
   // Core assets never to be suggested in Trade Finder
   PROTECTED: [
     'Patrick Mahomes', 'Jalen Hurts', 'Marvin Harrison Jr.', 'Marvin Harrison',
@@ -1176,7 +1177,7 @@ function getInjuryFlag(sleeperPlayerData) {
   if (s === 'IR' || s === 'PUP')  return { label: sleeperPlayerData.injury_notes || 'IR', haircut: 0.35 };
   if (s === 'OUT')                 return { label: sleeperPlayerData.injury_notes || 'Out', haircut: 0.20 };
   if (s === 'DOUBTFUL')            return { label: 'Doubtful', haircut: 0.10 };
-  return null; // Questionable / active = no flag
+  return null;
 }
 
 // ============================================================
@@ -1251,6 +1252,67 @@ function getSellUrgency(pos, age) {
     }
   }
   return { months: 0, label: 'SELL NOW', color: 'var(--red)' };
+}
+
+// Returns VORP of the 6th-best TE across all rostered players
+function getTop6TEVorp() {
+  const allTEVorps = [];
+  for (const players of Object.values(STATE.allRosters || {})) {
+    for (const p of players) {
+      if (p.pos === 'TE') allTEVorps.push(p.vorp);
+    }
+  }
+  allTEVorps.sort((a, b) => b - a);
+  return allTEVorps[5] ?? 0;
+}
+
+// Returns { flag, color, icon, reason } based on age/pos/value/VORP rules
+function getRosterHealthFlag(player) {
+  const { pos, age, value, vorp } = player;
+  if (!pos || !age) return null;
+
+  if (pos === 'TE') {
+    if (age < 25) {
+      if (value >= 3000) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Young TE (age ' + age + ') with 3k+ value — developmental hold' };
+      return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Young TE (age ' + age + ') but low KTC — monitor development' };
+    }
+    const teThreshold = getTop6TEVorp();
+    if (value >= 4000 && vorp >= teThreshold) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Top-6 VORP + 4k+ value' };
+    if (value >= 4000 || vorp >= teThreshold) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one of two TE thresholds' };
+    if (value >= 3000) return { flag: 'SELL', color: 'var(--orange)', icon: '🔶', reason: 'Veteran TE — tradeable value but below starter threshold' };
+    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Veteran TE — sub-3k, no meaningful trade market' };
+  }
+
+  if (pos === 'QB') {
+    const arch = getArchetype(pos, age);
+    if (arch?.cls === 'sell') return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Archetype: Sell bracket (age ' + age + ')' };
+    if (value >= 3000 && vorp > 0) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Above 3k + positive VORP' };
+    if (value >= 3000 || vorp > 0) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one QB threshold' };
+    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Below 3k and negative VORP' };
+  }
+
+  if (age < 24) {
+    if (value >= 3000) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Under 24 — trajectory hold (3k+)' };
+    if (value >= 1500) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Under 24 — developing, below 3k' };
+    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Under 24 — sub-1.5k, roster clog' };
+  }
+  if (age < 28) {
+    if (value >= 3000 && vorp > 0) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: '3k+ value + positive VORP' };
+    if (value >= 3000 || vorp > 0) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one of two thresholds' };
+    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Below 3k and negative VORP' };
+  }
+  if (age >= 30 && value < 1500) return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Age 30+ — sub-1.5k KTC, no realistic trade market' };
+  if (vorp > 0) return { flag: 'SELL', color: 'var(--orange)', icon: '🔶', reason: 'Age 28+ — still producing but window closing' };
+  return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Age 28+ — negative VORP, sell urgently' };
+}
+
+function healthBadge(player) {
+  const h = getRosterHealthFlag(player);
+  if (!h) return '';
+  const bg = h.color.replace('var(--', '').replace(')', '');
+  const bgMap = { green: 'rgba(76,255,145,0.15)', yellow: 'rgba(255,215,0,0.15)', red: 'rgba(255,68,68,0.15)', orange: 'rgba(255,140,66,0.15)' };
+  const bgColor = bgMap[bg] || 'rgba(100,100,100,0.15)';
+  return `<span title="${h.reason}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:${bgColor};color:${h.color};font-weight:600;letter-spacing:0.5px">${h.icon} ${h.flag}</span>`;
 }
 
 function archetypeBadge(pos, age) {
@@ -1362,9 +1424,8 @@ async function fetchRosters() {
   for (const r of rosters) {
     const name = CONFIG.OWNER_MAP[r.owner_id];
     if (name) {
-      // Combine players + taxi + reserve, deduplicated — Sleeper can return the same
-      // player ID across multiple arrays (e.g. reserve players appear in both players + reserve)
-      const allIds = [...new Set([...(r.players || []), ...(r.taxi || []), ...(r.reserve || [])])];
+      // Combine players + taxi, deduplicated (Sleeper includes taxi players in r.players already)
+      const allIds = [...new Set([...(r.players || []), ...(r.taxi || [])])];
       rosterMap[r.owner_id] = allIds;
       rosterIdMap[r.roster_id] = name;
       if (name === CONFIG.MY_TEAM_NAME) {
@@ -1543,12 +1604,11 @@ function buildAllRosters() {
       if (!sleeperData) continue;
       const ktc = resolvePlayer(sleeperData.name);
       if (!ktc) { if (ownerName === CONFIG.MY_TEAM_NAME) unmatched.push(sleeperData.name); continue; }
-      // TE premium: amplify VORP to reflect 0.5 TEP format value vs. raw KTC baseline
+      // TE premium: amplify VORP to reflect 0.5 TEP format advantage over raw KTC baseline
       const rawVorp = ktc.value - (STATE.vorpBaselines[ktc.pos] || 0);
       const teMult = ktc.pos === 'TE' ? CONFIG.TE_PREMIUM_MULT : 1;
       const vorp = rawVorp * teMult;
-      // Injury-adjusted effective value (for contention window + visual display)
-      // Derived live from Sleeper's injury_status — clears automatically when player is activated
+      // Injury-adjusted effective value — derived live from Sleeper, zero maintenance
       const injuryFlag = getInjuryFlag(sleeperData);
       const effectiveValue = injuryFlag ? Math.round(ktc.value * (1 - injuryFlag.haircut)) : ktc.value;
       players.push({
@@ -1769,11 +1829,18 @@ function renderDashboard() {
   }).join('');
   document.getElementById('posBreakdown').innerHTML = posHtml;
 
-  // Action items
+  // Action items — use health flags for precise recommendations
   const actions = [];
   for (const p of STATE.myRoster) {
-    const a = getArchetype(p.pos, p.age);
-    if (a?.cls === 'sell') actions.push({ type: 'sell', msg: `🔴 Sell ${p.name} (${p.pos}, age ${p.age}) — ${a.label}`, color: 'var(--red)' });
+    const h = getRosterHealthFlag(p);
+    if (!h) continue;
+    if (h.flag === 'SELL') {
+      actions.push({ type: 'sell', msg: `${h.icon} <strong>SELL</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
+    } else if (h.flag === 'CUT') {
+      actions.push({ type: 'cut', msg: `${h.icon} <strong>CUT/DROP</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
+    } else if (h.flag === 'MONITOR') {
+      actions.push({ type: 'monitor', msg: `${h.icon} <strong>MONITOR</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
+    }
   }
   if (STATE.myPicks?.length < 4) actions.push({ type: 'picks', msg: `⚠️ Low pick capital — only ${STATE.myPicks?.length || 0} picks`, color: 'var(--yellow)' });
   const teVORP = STATE.myRoster.filter(p=>p.pos==='TE').reduce((s,p)=>s+p.vorp,0);
@@ -1813,6 +1880,7 @@ function renderRosterTable(tbodyId, players, full) {
       <td class="mono" style="font-size:12px">${valueDisplay}</td>
       <td class="mono" style="font-size:12px;${vorpStyle}">${p.vorp > 0 ? '+' : ''}${fmt(p.vorp)}</td>
       <td>${a ? `<span class="badge badge-${a.cls}">${a.label}</span>` : '—'}</td>
+      <td>${healthBadge(p)}</td>
       <td>${taxi ? '<span class="badge badge-taxi">Taxi</span>' : ''}</td>
     </tr>`;
   }).join('');
@@ -1892,8 +1960,8 @@ function calcContentionWindow(players) {
   const starters = [...qbs, ...skill];
   if (!starters.length) return { label: 'Unknown', color: 'var(--text-muted)', years: null };
 
-  // In Superflex, QBs are disproportionately valuable — weight their contribution 1.5x
-  // in the contention window calc. Use injury-adjusted effectiveValue for realism.
+  // In Superflex, QBs are disproportionately valuable — weight 1.5x in window calc
+  // Use effectiveValue (injury-adjusted) for realism
   const QB_WINDOW_MULT = 1.5;
   const weightedStarters = starters.map(p => ({
     ...p,
@@ -1902,15 +1970,15 @@ function calcContentionWindow(players) {
   const totalVal = weightedStarters.reduce((s,p) => s + p.windowVal, 0);
   const weightedAge = weightedStarters.reduce((s,p) => s + (p.age * p.windowVal), 0) / (totalVal || 1);
 
-  // Count archetypes among starters (QBs count 1.5x toward peak/young totals)
+  // Count archetypes — QBs count 1.5x toward window totals
   let youngCount = 0, peakCount = 0, agingCount = 0, sellCount = 0;
   for (const p of starters) {
     const cls = getArchetype(p.pos, p.age)?.cls;
-    const weight = p.pos === 'QB' ? 1.5 : 1;
-    if (cls === 'young')  youngCount  += weight;
-    if (cls === 'peak')   peakCount   += weight;
-    if (cls === 'aging')  agingCount  += weight;
-    if (cls === 'sell')   sellCount   += weight;
+    const w = p.pos === 'QB' ? 1.5 : 1;
+    if (cls === 'young')  youngCount  += w;
+    if (cls === 'peak')   peakCount   += w;
+    if (cls === 'aging')  agingCount  += w;
+    if (cls === 'sell')   sellCount   += w;
   }
 
   if (weightedAge < 24.5 || youngCount >= 7) {
@@ -2221,21 +2289,21 @@ function analyzeTrade() {
     detail.innerHTML = `You receive ${fmt(rawA)} · You give ${fmt(rawB)}<br>They win by ${fmt(Math.abs(diff))} (${pct.toFixed(0)}%)<br>Stud-adjusted: ${aPct}% vs ${bPct}%`;
   }
 
-  // Injury warning: flag if any asset in the trade has an active injury status
-  const allAssets = [...a, ...b];
-  const injuredInTrade = allAssets.filter(asset => {
-    // Check live Sleeper injury status for this player by name
-    const sleeperEntry = Object.values(STATE.sleeperPlayers).find(p => p.name === asset.name);
-    return sleeperEntry ? getInjuryFlag(sleeperEntry) : false;
-  });
-  if (injuredInTrade.length) {
-    const warnings = injuredInTrade.map(asset => {
-      const sleeperEntry = Object.values(STATE.sleeperPlayers).find(p => p.name === asset.name);
-      const inj = getInjuryFlag(sleeperEntry);
-      const haircut = Math.round(inj.haircut * 100);
-      return `🏥 <strong>${asset.name}</strong> (${inj.label}) — KTC value is full price; effective planning value is ~${haircut}% lower`;
-    }).join('<br>');
-    detail.innerHTML += `<div style="margin-top:10px;padding:8px 10px;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);border-radius:6px;font-size:11px;color:var(--red)">${warnings}</div>`;
+  // Health context: flag SELL/CUT assets and warn on giving away HOLDs
+  const healthLines = [];
+  for (const asset of [...a, ...b]) {
+    if (asset.pos === 'PICK') continue;
+    const h = getRosterHealthFlag(asset);
+    if (!h) continue;
+    const side = a.includes(asset) ? 'IN' : 'OUT';
+    if (h.flag === 'SELL' || h.flag === 'CUT') {
+      healthLines.push(`<span style="color:${h.color}">${h.icon} ${asset.label || asset.name} [${side}]: ${h.flag} — ${h.reason}</span>`);
+    } else if (h.flag === 'HOLD' && side === 'OUT') {
+      healthLines.push(`<span style="color:var(--yellow)">⚠️ ${asset.label || asset.name} [OUT]: Giving away a HOLD — confirm intentional</span>`);
+    }
+  }
+  if (healthLines.length) {
+    detail.innerHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;line-height:1.8">${healthLines.join('<br>')}</div>`;
   }
 }
 
@@ -2511,7 +2579,9 @@ function findTrades() {
 
               var mutualBenefit = (theirNeeds[iGivePos].needScore + myNeeds[iGetPos].needScore) / 2;
               var activityBonus = profile && profile.activity === 'HIGH' ? 500 : profile && profile.activity === 'MEDIUM' ? 200 : 0;
-              var score = mutualBenefit - (valueDiff * 0.3) + activityBonus + 200;
+              var iGiveHealth = getRosterHealthFlag(iGivePlayer);
+              var healthBonus = iGiveHealth && (iGiveHealth.flag === 'SELL' || iGiveHealth.flag === 'CUT') ? 600 : 0;
+              var score = mutualBenefit - (valueDiff * 0.3) + activityBonus + healthBonus + 200;
 
               suggestions.push({
                 id: 'trade-' + (idCounter++),
