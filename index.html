@@ -1362,8 +1362,9 @@ async function fetchRosters() {
   for (const r of rosters) {
     const name = CONFIG.OWNER_MAP[r.owner_id];
     if (name) {
-      // Combine players + taxi — picks live in taxi in dynasty leagues
-      const allIds = [...(r.players || []), ...(r.taxi || [])];
+      // Combine players + taxi + reserve, deduplicated — Sleeper can return the same
+      // player ID across multiple arrays (e.g. reserve players appear in both players + reserve)
+      const allIds = [...new Set([...(r.players || []), ...(r.taxi || []), ...(r.reserve || [])])];
       rosterMap[r.owner_id] = allIds;
       rosterIdMap[r.roster_id] = name;
       if (name === CONFIG.MY_TEAM_NAME) {
