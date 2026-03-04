@@ -7,18 +7,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #12121a;
-    --surface2: #1a1a26;
-    --surface3: #22223a;
-    --border: #2a2a40;
+    --bg: #07070f;
+    --surface: #0e0e1c;
+    --surface2: #161628;
+    --surface3: #1e1e38;
+    --border: #2e2e4a;
     --accent: #00d4ff;
     --accent2: #ff6b35;
     --accent3: #7fff6b;
     --gold: #ffd700;
-    --text: #e8e8f0;
-    --text-dim: #8888aa;
-    --text-muted: #555570;
+    --text: #eaeaf4;
+    --text-dim: #9090b0;
+    --text-muted: #60607a;
     --red: #ff4444;
     --orange: #ff8c42;
     --yellow: #ffd700;
@@ -37,6 +37,8 @@
 
   body {
     background: var(--bg);
+    background-image: radial-gradient(ellipse 90% 50% at 15% 0%, #0e0e24 0%, transparent 70%),
+                      radial-gradient(ellipse 60% 40% at 85% 100%, #0a0a20 0%, transparent 60%);
     color: var(--text);
     font-family: 'IBM Plex Sans', sans-serif;
     min-height: 100vh;
@@ -189,11 +191,12 @@
 
   /* CARDS */
   .card {
-    background: var(--surface);
+    background: linear-gradient(160deg, #111122 0%, var(--surface) 40%);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
   }
 
   .card-title {
@@ -205,6 +208,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    text-shadow: 0 0 24px rgba(0,212,255,0.35);
   }
 
   /* GRID LAYOUTS */
@@ -214,11 +218,12 @@
 
   /* STAT CARDS */
   .stat-card {
-    background: var(--surface2);
+    background: linear-gradient(160deg, #131326 0%, var(--surface2) 60%);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 16px;
     text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
   }
 
   .stat-value {
@@ -226,6 +231,7 @@
     font-size: 36px;
     letter-spacing: 2px;
     line-height: 1;
+    text-shadow: 0 0 20px currentColor;
   }
 
   .stat-label {
@@ -315,7 +321,7 @@
 
   /* POWER RANKINGS */
   .team-rank-card {
-    background: var(--surface2);
+    background: linear-gradient(135deg, #131326 0%, var(--surface2) 60%);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 16px;
@@ -325,10 +331,11 @@
     margin-bottom: 8px;
     transition: all 0.2s;
     cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
   }
 
-  .team-rank-card:hover { border-color: var(--accent); transform: translateX(4px); }
-  .team-rank-card.my-team { border-color: var(--accent); background: rgba(0,212,255,0.05); }
+  .team-rank-card:hover { border-color: var(--accent); transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,212,255,0.1); }
+  .team-rank-card.my-team { border-color: var(--accent); background: linear-gradient(135deg, rgba(0,212,255,0.06) 0%, #131326 60%); box-shadow: 0 2px 20px rgba(0,212,255,0.12); }
 
   .rank-num {
     font-family: 'Bebas Neue', cursive;
@@ -339,7 +346,7 @@
     line-height: 1;
   }
 
-  .rank-num.top3 { color: var(--gold); }
+  .rank-num.top3 { color: var(--gold); text-shadow: 0 0 16px rgba(255,215,0,0.5); }
 
   .team-info { flex: 1; }
   .team-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
