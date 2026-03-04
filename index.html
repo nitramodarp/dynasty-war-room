@@ -2004,6 +2004,11 @@ function renderPowerRankings() {
     const arch = team.archetype;
     const expandId = 'roster-expand-' + team.name.replace(/[^a-z0-9]/gi, '');
     const window = calcContentionWindow(STATE.allRosters[team.name] || []);
+    const teamQBs = (STATE.allRosters[team.name] || []).filter(p => p.pos === 'QB').sort((a,b) => b.value - a.value);
+    const qb1 = teamQBs[0];
+    const qbAnchor = qb1
+      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted)">QB anchor: ${qb1.name} (${qb1.age}, <span style="color:${getArchetype('QB',qb1.age)?.cls === 'peak' ? 'var(--green)' : getArchetype('QB',qb1.age)?.cls === 'young' ? 'var(--blue)' : 'var(--yellow)'}">${getArchetype('QB',qb1.age)?.label.split(' ')[0] || '?'}</span>) — ×1.5 SF weight</span>`
+      : `<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--red)">⚠ No QB found</span>`;
     return `
       <div class="team-rank-card ${isMe ? 'my-team' : ''}" onclick="toggleTeamRoster('${team.name}')" style="cursor:pointer;flex-direction:column;align-items:stretch;padding:0">
         <div style="display:flex;align-items:center;gap:16px;padding:16px">
@@ -2014,6 +2019,7 @@ function renderPowerRankings() {
               <div class="team-archetype" style="color:${arch.color}">${arch.label}</div>
               <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,0.3);border:1px solid ${window.color};color:${window.color}">🏆 ${window.label}</span>
             </div>
+            <div style="margin-top:4px">${qbAnchor}</div>
           </div>
           <div class="team-stats">
             <div class="team-stat">
