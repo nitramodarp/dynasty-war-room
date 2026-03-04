@@ -1265,7 +1265,9 @@ function getRosterHealthFlag(player) {
       return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Top-6 VORP + 4k+ value' };
     if (value >= 4000 || vorp >= teThreshold)
       return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one of two TE thresholds' };
-    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Below 4k and outside top-6 TE VORP' };
+    if (value >= 3000)
+      return { flag: 'SELL', color: 'var(--orange)', icon: '🔶', reason: 'Veteran TE — tradeable value but below starter threshold' };
+    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Veteran TE — sub-3k, no meaningful trade market' };
   }
 
   if (pos === 'QB') {
@@ -1295,6 +1297,8 @@ function getRosterHealthFlag(player) {
     return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Below 3k and negative VORP' };
   }
   // 28+ — KTC declining is the sell signal regardless of VORP
+  if (age >= 30 && value < 1500)
+    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Age 30+ — sub-1.5k KTC, no realistic trade market' };
   if (vorp > 0)
     return { flag: 'SELL', color: 'var(--orange)', icon: '🔶', reason: 'Age 28+ — still producing but window closing' };
   return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Age 28+ — negative VORP, sell urgently' };
