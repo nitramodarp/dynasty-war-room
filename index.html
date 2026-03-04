@@ -2083,15 +2083,21 @@ function renderDraftPicks() {
 }
 
 function renderWaivers() {
-  const owned = STATE.ownedPlayerIds;
+  // Pre-build set of owned KTC names using resolvePlayer to handle Sleeper/KTC name mismatches
+  // (e.g. Sleeper "Marvin Harrison" vs KTC "Marvin Harrison Jr.")
+  const ownedKtcNames = new Set();
+  for (const id of STATE.ownedPlayerIds) {
+    const s = STATE.sleeperPlayers[id];
+    if (!s) continue;
+    const resolved = resolvePlayer(s.name);
+    if (resolved) ownedKtcNames.add(cleanName(resolved.name));
+    else ownedKtcNames.add(cleanName(s.name));
+  }
+
   const filter = STATE.waiverFilter;
   const waivers = STATE.ktcPlayers
     .filter(p => {
-      const isOwned = [...owned].some(id => {
-        const s = STATE.sleeperPlayers[id];
-        return s && cleanName(s.name) === cleanName(p.name);
-      });
-      if (isOwned) return false;
+      if (ownedKtcNames.has(cleanName(p.name))) return false;
       if (filter !== 'ALL' && p.pos !== filter) return false;
       if (p.value < 500) return false;
       return true;
