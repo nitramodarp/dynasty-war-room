@@ -1866,6 +1866,7 @@ function renderRosterTable(tbodyId, players, full) {
     const taxi = isOnTaxi(p);
     const urgency = getSellUrgency(p.pos, p.age);
     const vorpStyle = `color:${vorpColor(p.vorp)}`;
+    const tepTag = p.pos === 'TE' ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
     const injBadge = p.injuryFlag
       ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);margin-left:4px;vertical-align:middle">🏥 ${p.injuryFlag.label}</span>`
       : '';
@@ -1878,7 +1879,7 @@ function renderRosterTable(tbodyId, players, full) {
       <td class="mono dim" style="font-size:11px">${p.team||'—'}</td>
       <td class="mono" style="font-size:12px">${p.age||'—'}</td>
       <td class="mono" style="font-size:12px">${valueDisplay}</td>
-      <td class="mono" style="font-size:12px;${vorpStyle}">${p.vorp > 0 ? '+' : ''}${fmt(p.vorp)}</td>
+      <td class="mono" style="font-size:12px;${vorpStyle}">${p.vorp > 0 ? '+' : ''}${fmt(p.vorp)}${tepTag}</td>
       <td>${a ? `<span class="badge badge-${a.cls}">${a.label}</span>` : '—'}</td>
       <td>${healthBadge(p)}</td>
       <td>${taxi ? '<span class="badge badge-taxi">Taxi</span>' : ''}</td>
@@ -2144,14 +2145,16 @@ function renderWaivers() {
   const tbody = document.getElementById('waiversBody');
   tbody.innerHTML = waivers.map(p => {
     const a = getArchetype(p.pos, p.age);
-    const vorp = p.value - (STATE.vorpBaselines[p.pos] || 0);
+    const rawVorp = p.value - (STATE.vorpBaselines[p.pos] || 0);
+    const vorp = rawVorp * (p.pos === 'TE' ? CONFIG.TE_PREMIUM_MULT : 1);
+    const tepTag = p.pos === 'TE' ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
     return `<tr>
       <td>${posPill(p.pos)}</td>
       <td>${p.name}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}</td>
       <td class="mono dim" style="font-size:11px">${p.team||'—'}</td>
       <td class="mono" style="font-size:12px">${p.age||'—'}</td>
       <td class="mono" style="color:var(--accent);font-size:12px">${fmt(p.value)}</td>
-      <td class="mono" style="font-size:12px;color:${vorpColor(vorp)}">${vorp>0?'+':''}${fmt(vorp)}</td>
+      <td class="mono" style="font-size:12px;color:${vorpColor(vorp)}">${vorp>0?'+':''}${fmt(vorp)}${tepTag}</td>
       <td>${a ? `<span class="badge badge-${a.cls}">${a.label}</span>` : '—'}</td>
     </tr>`;
   }).join('');
