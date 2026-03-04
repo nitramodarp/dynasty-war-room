@@ -295,37 +295,6 @@
   .badge-sell { background: rgba(255,68,68,0.15); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
   .badge-taxi { background: rgba(180,76,255,0.15); color: var(--purple); border: 1px solid rgba(180,76,255,0.3); }
 
-  /* VORP BAR */
-  .vorp-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .vorp-track {
-    flex: 1;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: visible;
-    position: relative;
-    min-width: 60px;
-  }
-
-  .vorp-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.3s;
-  }
-
-  .vorp-num {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    white-space: nowrap;
-    min-width: 55px;
-    text-align: right;
-  }
-
   /* POS PILL */
   .pos-pill {
     display: inline-block;
@@ -1120,23 +1089,9 @@ const CONFIG = {
     'Kyle Monangai', 'AJ Barner', 'Terrance Ferguson', 'Kyle Williams',
     'Trevor Etienne', 'Damien Martinez'
   ],
-  // Name corrections: Sleeper name -> KTC name
+  // Name corrections: Sleeper name -> KTC name (only where cleanName() can't resolve)
   NAME_CORRECTIONS: {
     'Marvin Harrison': 'Marvin Harrison Jr.',
-    'Kenneth Walker III': 'Kenneth Walker',
-    'Brian Robinson Jr.': 'Brian Robinson',
-    'Odell Beckham Jr.': 'Odell Beckham',
-    'Travis Etienne Jr.': 'Travis Etienne',
-    'Michael Pittman Jr.': 'Michael Pittman',
-    'Amon-Ra St. Brown': 'Amon-Ra St. Brown',
-    'DJ Moore': 'D.J. Moore',
-    'D.J. Moore': 'DJ Moore',
-    'DK Metcalf': 'D.K. Metcalf',
-    'D.K. Metcalf': 'DK Metcalf',
-    'AJ Brown': 'A.J. Brown',
-    'A.J. Brown': 'AJ Brown',
-    'AJ Barner': 'A.J. Barner',
-    'Jaxon Smith-Njigba': 'Jaxon Smith-Njigba',
     'Gabriel Davis': 'Gabe Davis',
     'Gabe Davis': 'Gabriel Davis',
     'Scotty Miller': 'Scott Miller',
@@ -1196,6 +1151,7 @@ let STATE = {
   tradeAssets: { a: [], b: [] },
   waiverFilter: 'ALL',
   rosterFilter: 'ALL',
+  rookieFilter: 'ALL',
   draftSlotMap: {},     // {year: {rosterId: slot}}
 };
 
@@ -1315,12 +1271,6 @@ function healthBadge(player) {
   return `<span title="${h.reason}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:${bgColor};color:${h.color};font-weight:600;letter-spacing:0.5px">${h.icon} ${h.flag}</span>`;
 }
 
-function archetypeBadge(pos, age) {
-  const a = getArchetype(pos, age);
-  if (!a) return '';
-  return `<span class="badge badge-${a.cls}">${a.label}</span>`;
-}
-
 function vorpColor(v) {
   if (v > 2000) return 'var(--green)';
   if (v > 500) return 'var(--blue)';
@@ -1428,10 +1378,6 @@ async function fetchRosters() {
       const allIds = [...new Set([...(r.players || []), ...(r.taxi || [])])];
       rosterMap[r.owner_id] = allIds;
       rosterIdMap[r.roster_id] = name;
-      if (name === CONFIG.MY_TEAM_NAME) {
-        console.log('My taxi IDs:', r.taxi);
-        console.log('My player IDs sample:', (r.players||[]).slice(0,5));
-      }
     }
   }
   STATE.rosters = rosterMap;
@@ -1588,9 +1534,6 @@ function buildAllRosters() {
       // Dynasty pick IDs look like "2026_1_12_1" = season_round_rosterId_slot
       const pickMatch = pid.match(/^(\d{4})_(\d+)_(\d+)_(\d+)$/);
       if (pickMatch) {
-        if (name === CONFIG.MY_TEAM_NAME) {
-        console.log('RAW PICK ID:', pid, '→ parts:', pickMatch[1], pickMatch[2], pickMatch[3], pickMatch[4]);
-      }
         rosterPicksFromPlayers[ownerName].push({
           season: pickMatch[1],
           round: parseInt(pickMatch[2]),
@@ -1851,10 +1794,10 @@ function renderDashboard() {
     : '<div class="mono muted" style="font-size:12px;padding:12px">No urgent actions — roster looks healthy</div>';
 
   // Roster overview table
-  renderRosterTable('rosterOverviewBody', STATE.myRoster, false);
+  renderRosterTable('rosterOverviewBody', STATE.myRoster);
 }
 
-function renderRosterTable(tbodyId, players, full) {
+function renderRosterTable(tbodyId, players) {
   const sorted = [...players].sort((a,b) => {
     const posOrder = {QB:0,RB:1,WR:2,TE:3};
     return (posOrder[a.pos]||9) - (posOrder[b.pos]||9) || b.value - a.value;
@@ -1888,7 +1831,7 @@ function renderRosterTable(tbodyId, players, full) {
 }
 
 function renderFullRoster() {
-  renderRosterTable('fullRosterBody', STATE.myRoster, true);
+  renderRosterTable('fullRosterBody', STATE.myRoster);
 }
 
 function filterRoster(filter, btn) {
@@ -1899,7 +1842,7 @@ function filterRoster(filter, btn) {
   if (filter === 'TAXI') players = players.filter(p => isOnTaxi(p));
   else if (filter === 'SELL') players = players.filter(p => getArchetype(p.pos, p.age)?.cls === 'sell');
   else if (filter !== 'ALL') players = players.filter(p => p.pos === filter);
-  renderRosterTable('fullRosterBody', players, true);
+  renderRosterTable('fullRosterBody', players);
 }
 
 function toggleTeamRoster(teamName) {
@@ -2339,7 +2282,6 @@ function showTab(tabId) {
   if (tabId === 'draft-picks') renderDraftPicks();
   if (tabId === 'waivers') renderWaivers();
   if (tabId === 'trade-analyzer') populatePickDropdowns();
-  if (tabId === 'trade-finder') {} // triggered manually
   if (tabId === 'rookie-board') renderRookieBoard();
   if (tabId === 'league-intel') renderLeagueIntel();
 }
@@ -2916,8 +2858,6 @@ function estimatePickNumber(pick) {
   const pos = getPickPosition(pick.orig);
   return (pick.round - 1) * 12 + pos;
 }
-
-STATE.rookieFilter = 'ALL';
 
 function renderRookieBoard() {
   let rookies = STATE.ktcPlayers
