@@ -1011,6 +1011,21 @@
       <div class="card-title">⭐ Best Rookie Fits For Your Roster</div>
       <div id="rookieFits" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding-top:4px">Loading...</div>
     </div>
+    <!-- Anatomy Prospect Scorer -->
+    <div class="card" style="margin-bottom:16px;border:1px solid rgba(255,215,0,0.3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">🔬 Anatomy Prospect Scorer</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted)">Thresholds from 2011–2021 cohort · WR hit rate 50-57% on 3+ hits · RB 44-63%</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="filter-btn active" id="psYear2025" onclick="switchProspectYear('2025',this)">2025 Class</button>
+        <button class="filter-btn" id="psYear2026" onclick="switchProspectYear('2026',this)">2026 Class</button>
+        <button class="filter-btn active" id="psWR" onclick="toggleProspectPos('WR',this)">WR</button>
+        <button class="filter-btn active" id="psRB" onclick="toggleProspectPos('RB',this)">RB</button>
+      </div>
+      <div id="prospectScorerContent">Loading...</div>
+    </div>
+
     <!-- Your Pick Projections -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">🎯 Your Pick Projections</div>
@@ -1123,6 +1138,70 @@ const CONFIG = {
     '2029 Early 3rd': 1800, '2029 Mid 3rd': 1600, '2029 Late 3rd': 1400,
     '2029 Early 4th': 1200, '2029 Mid 4th': 1000, '2029 Late 4th': 800,
   }
+};
+
+
+// ============================================================
+// PROSPECT PROFILES — Anatomy of Top WR & RB spreadsheet data
+// Thresholds from 2018 tab Row 1 explainer row + empirical hit rates:
+// WR: R1-3 DC, 40≤4.59, 10yd≤1.56, WDOM≥25, BOA 18-21, Early Declare, RAS≥8 → combo hit rate 50-57%
+// RB: R1-2 DC, SpeedScore≥100, Burst≥121, CompBDR≥50, ColYPA≥6.0 → combo hit rate 44-63%
+// ============================================================
+const PROSPECT_PROFILES = {
+  WR_THRESHOLDS: { dc_max: 3.99, speed: 4.59, split: 1.56, wdom: 25, boa_min: 18, boa_max: 21, ras: 8.0, yptpa: 3.0 },
+  RB_THRESHOLDS: { dc_max: 2.99, speed_score: 100, burst: 121, comp_bdr: 50, col_ypa: 6.0 },
+  // 2025 Draft Class WRs
+  WR_2025: [
+    { name:'Jayden Higgins',    dc:2.02, t40:4.47, split:1.54, wdom:32, boy:2, ras:9.63, yptpa:null, early:'Y', hits:4, note:'Highest threshold score in class — production+speed+RAS+DC all green' },
+    { name:'Emeka Egbuka',      dc:1.19, t40:4.54, split:1.50, wdom:18, boy:2, ras:9.72, yptpa:null, early:'Y', hits:3, note:'Elite RAS, R1 DC, clean 10yd split — WDOM only miss' },
+    { name:'Tetairoa McMillan', dc:1.08, t40:4.56, split:1.59, wdom:33, boy:1, ras:null, yptpa:null, early:'Y', hits:3, note:'R1.08, elite WDOM — BOY Year 1 is elite signal; split slightly over threshold' },
+    { name:'Tre Harris',        dc:2.23, t40:4.54, split:1.57, wdom:20, boy:3, ras:9.23, yptpa:null, early:'Y', hits:3, note:'Strong RAS, solid DC — WDOM just under 25 threshold' },
+    { name:'Luther Burden',     dc:2.07, t40:4.41, split:1.55, wdom:27, boy:2, ras:null, yptpa:null, early:'N', hits:3, note:'Elite speed, WDOM clears, R2 DC — no early declare, missing RAS' },
+    { name:'Matthew Golden',    dc:1.23, t40:4.29, split:1.47, wdom:18, boy:3, ras:null, yptpa:null, early:'N', hits:2, note:'Blazing 40 and split, R1 DC — WDOM misses; elite speed profile' },
+    { name:'Jaylin Noel',       dc:3.15, t40:4.39, split:1.52, wdom:21, boy:3, ras:9.75, yptpa:null, early:'Y', hits:3, note:'Late R3 DC hurts — speed/split/RAS all elite; WDOM near threshold' },
+    { name:'Kyle Williams',     dc:3.05, t40:4.40, split:1.60, wdom:28, boy:1, ras:6.35, yptpa:null, early:'N', hits:3, note:'BOY Year 1, WDOM clears, R3 DC — RAS miss, split slightly over' },
+    { name:'Elic Ayomanor',     dc:4.34, t40:4.44, split:1.56, wdom:38, boy:2, ras:9.71, yptpa:null, early:'Y', hits:3, note:'Massive WDOM 38, elite RAS — late DC is the only red flag' },
+    { name:'Travis Hunter',     dc:1.02, t40:null, split:null, wdom:26, boy:3, ras:null, yptpa:null, early:'N', hits:2, note:'R1.02, WDOM clears — missing combine data (two-way player); watch DC + production' },
+  ],
+  // 2026 Draft Class WRs (no DC yet — combine data partial)
+  WR_2026: [
+    { name:'Jeff Caldwell',      dc:null, t40:4.31, split:null, wdom:38, boy:2, ras:null, yptpa:null, early:null, hits:2, note:'Elite WDOM 38 + blazing 40 — top 2026 WR prospect on production+speed alone' },
+    { name:'Bryce Lance',        dc:null, t40:4.34, split:null, wdom:34, boy:3, ras:null, yptpa:null, early:null, hits:2, note:'Elite speed + WDOM — BOY Year 3 is late but production is legit' },
+    { name:'Ted Hurst',          dc:null, t40:4.42, split:null, wdom:33, boy:2, ras:null, yptpa:null, early:null, hits:2, note:'Strong WDOM and BOY Year 2 profile — combine data pending' },
+    { name:'Tyren Montgomery',   dc:null, t40:null, split:null, wdom:38, boy:6, ras:null, yptpa:null, early:null, hits:1, note:'Elite WDOM but very late BOY (6th year) — age concern' },
+    { name:'Cooper Barkate',     dc:null, t40:null, split:null, wdom:26, boy:3, ras:null, yptpa:null, early:null, hits:1, note:'WDOM clears threshold — no speed data yet' },
+    { name:'Griffin Wilde',      dc:null, t40:null, split:null, wdom:35, boy:2, ras:null, yptpa:null, early:null, hits:1, note:'Great WDOM, BOY Year 2 — combine data needed before full grade' },
+    { name:'Jordyn Tyson',       dc:null, t40:null, split:null, wdom:30, boy:1, ras:null, yptpa:null, early:null, hits:1, note:'BOY Year 1 with 30 WDOM — could jump to 3+ hits post-combine' },
+    { name:'Brenen Thompson',    dc:null, t40:4.26, split:null, wdom:12, boy:4, ras:null, yptpa:null, early:null, hits:1, note:'Fastest 40 in class (4.26) — but WDOM only 12, very late BOY' },
+    { name:'KC Concepcion',      dc:null, t40:null, split:null, wdom:28, boy:1, ras:null, yptpa:null, early:null, hits:1, note:'BOY Year 1, WDOM clears — needs combine data' },
+    { name:'Elijah Sarratt',     dc:null, t40:null, split:null, wdom:27, boy:2, ras:null, yptpa:null, early:null, hits:1, note:'WDOM clears, BOY Year 2 — watch combine for speed/split' },
+  ],
+  // 2025 Draft Class RBs
+  RB_2025: [
+    { name:'Omarion Hampton',   dc:1.22, speed:111.7, t40:4.46, burst:129.6, comp_bdr:73.1, col_ypa:5.7, hits:4, note:'4/5 thresholds — R1 DC, speed, burst, BDR all elite; ColYPA just misses 6.0' },
+    { name:'Quinshon Judkins',  dc:2.04, speed:111.7, t40:4.48, burst:131.5, comp_bdr:61.65, col_ypa:5.1, hits:4, note:'4/5 thresholds — R2 DC, elite speed and burst, strong BDR; ColYPA misses' },
+    { name:'TreVeyon Henderson',dc:2.06, speed:104.9, t40:4.43, burst:129.5, comp_bdr:65.05, col_ypa:6.4, hits:4, note:'4/5 thresholds — R2 DC, all athleticism clears, ColYPA 6.4 clears too' },
+    { name:'RJ Harvey',         dc:2.28, speed:109.4, t40:4.40, burst:128.1, comp_bdr:52.2,  col_ypa:6.5, hits:4, note:'4/5 thresholds — speed, burst, BDR, ColYPA all clear; DC is late R2' },
+    { name:'Ashton Jeanty',     dc:1.06, speed:null,  t40:null, burst:null,   comp_bdr:64.6,  col_ypa:6.4, hits:2, note:'R1.06 DC + ColYPA — missing combine data (injury); elite production profile' },
+    { name:'Bhayshul Tuten',    dc:4.02, speed:118.3, t40:4.32, burst:133.9, comp_bdr:83.9,  col_ypa:6.0, hits:3, note:'3/5 — athleticism is elite across the board; R4 DC is the only miss' },
+    { name:'Dylan Sampson',     dc:4.24, speed:103.9, t40:4.43, burst:121.5, comp_bdr:59.7,  col_ypa:5.9, hits:3, note:'3/5 — speed, burst, BDR all clear; DC and ColYPA miss' },
+    { name:'DJ Giddens',        dc:5.14, speed:110.1, t40:4.43, burst:132.2, comp_bdr:55.1,  col_ypa:6.0, hits:3, note:'3/5 — excellent athleticism across the board; late R5 DC drags score down' },
+    { name:'Cameron Skattebo',  dc:4.03, speed:92.1,  t40:4.67, burst:128.7, comp_bdr:74.75, col_ypa:5.5, hits:2, note:'Strong BDR — speed and 40 miss thresholds; unique receiving/BDR profile' },
+    { name:'Kaleb Johnson',     dc:3.19, speed:102.7, t40:4.57, burst:null,   comp_bdr:58.9,  col_ypa:5.5, hits:2, note:'Speed barely clears, BDR solid — late split and missing burst data' },
+  ],
+  // 2026 Draft Class RBs (no DC yet)
+  RB_2026: [
+    { name:'Mike Washington Jr', dc:null, speed:126.9, t40:4.33, burst:130.3, comp_bdr:58.3, col_ypa:4.9, hits:3, note:'Speed 126.9 is elite, burst 130.3 clears — ColYPA under 5.0 is concern; DC TBD' },
+    { name:'Adam Randall',       dc:null, speed:113.2, t40:4.50, burst:124.9, comp_bdr:57.75, col_ypa:5.0, hits:3, note:'Strong speed+burst profile, BDR solid — ColYPA just at 5.0, needs R1-2 DC' },
+    { name:'Jeremiyah Love',     dc:null, speed:117.3, t40:4.36, burst:null,   comp_bdr:56.35, col_ypa:6.6, hits:2, note:'Elite ColYPA 6.6 + elite speed — missing burst data; very interesting profile' },
+    { name:'Seth McGowan',       dc:null, speed:109.7, t40:4.49, burst:137.8, comp_bdr:46.2,  col_ypa:5.1, hits:2, note:'Speed and burst both clear — BDR is the weak spot; DC will be key' },
+    { name:'Demond Claiborne',   dc:null, speed:103.1, t40:4.37, burst:null,   comp_bdr:56.15, col_ypa:4.7, hits:2, note:'Speed clears, BDR solid — ColYPA misses; quick 40 is impressive' },
+    { name:'Jamal Haynes',       dc:null, speed:null,  t40:null, burst:null,   comp_bdr:67.95, col_ypa:5.4, hits:1, note:'Elite BDR — no combine data yet; watch for speed score post-combine' },
+    { name:'Eli Heidenreich',    dc:null, speed:101.9, t40:4.44, burst:120.4, comp_bdr:null,   col_ypa:6.8, hits:2, note:'Elite ColYPA, speed clears — burst just under 121; watch DC' },
+    { name:'Darius Taylor',      dc:null, speed:null,  t40:null, burst:null,   comp_bdr:59.35, col_ypa:5.1, hits:1, note:'Strong BDR but missing all athleticism data — needs combine' },
+    { name:'J Mari Taylor',      dc:null, speed:null,  t40:null, burst:116.2,  comp_bdr:69.05, col_ypa:5.1, hits:1, note:'Elite BDR — burst just misses 121; speed/40 TBD' },
+    { name:'Jonah Coleman',      dc:null, speed:null,  t40:null, burst:null,   comp_bdr:61.65, col_ypa:5.5, hits:1, note:'Solid BDR and ColYPA — missing all athleticism data yet' },
+  ]
 };
 
 // ============================================================
@@ -2285,30 +2364,8 @@ function analyzeTrade() {
   if (healthLines.length) {
     detail.innerHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;line-height:1.8">${healthLines.join('<br>')}</div>`;
   }
-}
 
-// Ciely method: split each asset's KTC value into now vs future based on positional age curve
-function splitAssetValue(asset) {
-  if (asset.pos === 'PICK') return { now: asset.value * 0.05, future: asset.value * 0.95 };
-  const arch = getArchetype(asset.pos, asset.age);
-  if (!arch) return { now: asset.value * 0.5, future: asset.value * 0.5 };
-  const splits = {
-    young: [0.15, 0.85],
-    peak:  [0.60, 0.40],
-    aging: [0.85, 0.15],
-    sell:  [0.95, 0.05]
-  };
-  const [n, f] = splits[arch.cls] || [0.5, 0.5];
-  return { now: asset.value * n, future: asset.value * f };
-}
-
-function analyzeTrade() {
-
-if (healthLines.length) {
-    detail.innerHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;line-height:1.8">${healthLines.join('<br>')}</div>`;
-  }
-
-  // Ciely current/future value split + contention window alignment
+  // ── Ciely method: current vs future value split + contention window ──────
   const sumSplit = function(assets) {
     return assets.reduce(function(acc, x) {
       const s = splitAssetValue(x);
@@ -2332,19 +2389,19 @@ if (healthLines.length) {
   if (windowYears >= 1.5) {
     windowNote = receivingFuture
       ? '<span style="color:var(--green)">&#x2705; Future-heavy return aligns with your ' + myWindow.label + ' window</span>'
-      : '<span style="color:var(--yellow)">&#x26A0;&#xFE0F; Your window is ' + myWindow.label + ' — future assets preferred over now value</span>';
+      : '<span style="color:var(--yellow)">&#x26A0;&#xFE0F; Your window is ' + myWindow.label + ' \u2014 future assets preferred over now value</span>';
   } else if (windowYears >= 0.5) {
     windowNote = receivingFuture
       ? '<span style="color:var(--green)">&#x2705; Future value fits your ' + myWindow.label + '</span>'
-      : '<span style="color:var(--accent)">&#x2139;&#xFE0F; Now-heavy return — works if targeting near-term wins (' + myWindow.label + ')</span>';
+      : '<span style="color:var(--accent)">&#x2139;&#xFE0F; Now-heavy return \u2014 works if targeting near-term wins (' + myWindow.label + ')</span>';
   } else if (windowYears >= -0.5) {
     windowNote = !receivingFuture
       ? '<span style="color:var(--green)">&#x2705; Present-weighted return matches your PRIME WINDOW</span>'
-      : '<span style="color:var(--yellow)">&#x26A0;&#xFE0F; In PRIME WINDOW — future assets may not peak in time</span>';
+      : '<span style="color:var(--yellow)">&#x26A0;&#xFE0F; In PRIME WINDOW \u2014 future assets may not peak in time</span>';
   } else {
     windowNote = !receivingFuture
-      ? '<span style="color:var(--yellow)">&#x26A0;&#xFE0F; Window closing — now value is correct priority</span>'
-      : '<span style="color:var(--red)">&#x1F6D1; Window closing — avoid trading for long-term futures</span>';
+      ? '<span style="color:var(--yellow)">&#x26A0;&#xFE0F; Window closing \u2014 now value is correct priority</span>'
+      : '<span style="color:var(--red)">&#x1F6D1; Window closing \u2014 avoid trading for long-term futures</span>';
   }
 
   function mkBar(pct, color) {
@@ -2353,12 +2410,13 @@ if (healthLines.length) {
   }
 
   detail.innerHTML += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-family:\'IBM Plex Mono\',monospace;font-size:11px;line-height:2">'
-    + '<div style="color:var(--text-muted);font-size:9px;letter-spacing:1px;margin-bottom:2px">&#x1F4CA; VALUE TIMING</div>'
+    + '<div style="color:var(--text-muted);font-size:9px;letter-spacing:1px;margin-bottom:2px">&#x1F4CA; VALUE TIMING (Ciely Method)</div>'
     + '<div><span style="color:var(--accent2)">IN &nbsp;</span><span style="color:var(--text-dim)">Now ' + inNowPct + '%</span>' + mkBar(inNowPct,'var(--accent2)') + '<span style="color:var(--text-muted)">Future ' + inFutPct + '%</span>' + mkBar(inFutPct,'var(--blue)') + '</div>'
     + '<div><span style="color:var(--accent)">OUT </span><span style="color:var(--text-dim)">Now ' + outNowPct + '%</span>' + mkBar(outNowPct,'var(--accent)') + '<span style="color:var(--text-muted)">Future ' + outFutPct + '%</span>' + mkBar(outFutPct,'var(--blue)') + '</div>'
     + '<div style="margin-top:2px">' + windowNote + '</div>'
     + '</div>';
 }
+
   
 function clearTrade() {
   STATE.tradeAssets = { a: [], b: [] };
@@ -3034,6 +3092,7 @@ function renderRookieBoard() {
 
   // Render full board
   renderRookieBoardTable(rookies);
+  renderProspectScorer();
 }
 
 function renderRookieBoardTable(rookies) {
@@ -3064,6 +3123,174 @@ function renderRookieBoardTable(rookies) {
     </tr>`;
   }).join('');
 }
+
+
+// ============================================================
+// PROSPECT SCORER (Anatomy of Top WR & RB)
+// ============================================================
+
+let prospectYear = '2025';
+let prospectShowWR = true;
+let prospectShowRB = true;
+
+function switchProspectYear(year, btn) {
+  prospectYear = year;
+  document.querySelectorAll('#psYear2025,#psYear2026').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProspectScorer();
+}
+
+function toggleProspectPos(pos, btn) {
+  if (pos === 'WR') prospectShowWR = !prospectShowWR;
+  if (pos === 'RB') prospectShowRB = !prospectShowRB;
+  btn.classList.toggle('active');
+  renderProspectScorer();
+}
+
+function renderProspectScorer() {
+  const container = document.getElementById('prospectScorerContent');
+  if (!container) return;
+
+  const wrData = PROSPECT_PROFILES['WR_' + prospectYear] || [];
+  const rbData = PROSPECT_PROFILES['RB_' + prospectYear] || [];
+  const wrThresh = PROSPECT_PROFILES.WR_THRESHOLDS;
+  const rbThresh = PROSPECT_PROFILES.RB_THRESHOLDS;
+
+  // Cross-reference with KTC for live values
+  function getKtcValue(name) {
+    const p = STATE.ktcPlayers.find(k => cleanName(k.name) === cleanName(name));
+    return p ? p.value : null;
+  }
+
+  function hitDot(pass, label) {
+    const color = pass ? 'var(--green)' : 'var(--red)';
+    return `<span title="${label}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${pass ? 'rgba(76,255,145,0.15)' : 'rgba(255,68,68,0.1)'};border:1px solid ${color};font-size:8px;color:${color};font-family:'IBM Plex Mono',monospace;flex-shrink:0">${pass ? '✓' : '✗'}</span>`;
+  }
+
+  function hitBar(hits, total) {
+    const pct = hits / total;
+    const color = pct >= 0.75 ? 'var(--green)' : pct >= 0.5 ? 'var(--accent)' : pct >= 0.25 ? 'var(--yellow)' : 'var(--red)';
+    const label = pct >= 0.75 ? 'ELITE' : pct >= 0.5 ? 'STRONG' : pct >= 0.25 ? 'AVERAGE' : 'WEAK';
+    return `<div style="display:flex;align-items:center;gap:6px">
+      <div style="width:60px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden">
+        <div style="width:${Math.round(pct*100)}%;height:100%;background:${color};border-radius:3px"></div>
+      </div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${color};font-weight:600">${hits}/${total} ${label}</span>
+    </div>`;
+  }
+
+  let html = '';
+
+  // WR Section
+  if (prospectShowWR && wrData.length) {
+    const isFuture = prospectYear === '2026';
+    html += `<div style="margin-bottom:20px">
+      <div style="font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;color:var(--blue);margin-bottom:8px">
+        WR ${prospectYear} Class
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-left:10px;font-weight:400">
+          THRESHOLDS: R1-3 DC · 40≤4.59 · 10yd≤1.56 · WDOM≥25 · BOA 18-21 · RAS≥8
+        </span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table" style="font-size:12px">
+          <thead><tr>
+            <th>Player</th>
+            <th>KTC</th>
+            <th title="Draft Capital R1-3">DC</th>
+            <th title="40-yard dash ≤4.59">40T</th>
+            <th title="10-yard split ≤1.56">Split</th>
+            <th title="Weighted Dominator Rating ≥25">WDOM</th>
+            <th title="Birth of Age 18-21">BOA</th>
+            <th title="Relative Athletic Score ≥8.0">RAS</th>
+            <th>Score</th>
+            <th>Note</th>
+          </tr></thead>
+          <tbody>`;
+
+    const sorted = [...wrData].sort((a,b) => b.hits - a.hits || (b.dc||99) - (a.dc||99));
+    for (const p of sorted) {
+      const ktcVal = getKtcValue(p.name);
+      const dcPass  = p.dc !== null ? p.dc <= wrThresh.dc_max : null;
+      const t40Pass = p.t40 !== null ? p.t40 <= wrThresh.speed : null;
+      const spPass  = p.split !== null ? p.split <= wrThresh.split : null;
+      const wdPass  = p.wdom !== null ? p.wdom >= wrThresh.wdom : null;
+      const boaPass = p.boy !== null ? p.boy >= 1 && p.boy <= 3 : null; // BOY year 1-3 = BOA 18-21
+      const rasPass = p.ras !== null ? p.ras >= wrThresh.ras : null;
+      const totalChecks = [dcPass,t40Pass,spPass,wdPass,boaPass,rasPass].filter(v => v !== null).length;
+      const na = `<span style="color:var(--text-muted);font-size:9px">—</span>`;
+
+      html += `<tr>
+        <td style="font-weight:500;white-space:nowrap">${p.name}</td>
+        <td class="mono" style="font-size:11px;color:var(--accent)">${ktcVal ? fmt(ktcVal) : '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td>${dcPass === null ? na : hitDot(dcPass, 'DC: ' + (p.dc || 'TBD') + ' (need ≤3.99)')}</td>
+        <td>${t40Pass === null ? na : hitDot(t40Pass, '40T: ' + p.t40 + ' (need ≤4.59)')}</td>
+        <td>${spPass === null ? na : hitDot(spPass, 'Split: ' + p.split + ' (need ≤1.56)')}</td>
+        <td>${wdPass === null ? na : hitDot(wdPass, 'WDOM: ' + p.wdom + ' (need ≥25)')}<span class="mono" style="font-size:10px;color:${p.wdom>=25?'var(--green)':'var(--text-muted)'}"> ${p.wdom||'—'}</span></td>
+        <td>${boaPass === null ? na : hitDot(boaPass, 'BOY: Year ' + p.boy + ' (need Year 1-3)')}<span class="mono" style="font-size:10px;color:var(--text-muted)"> Yr${p.boy||'—'}</span></td>
+        <td>${rasPass === null ? na : hitDot(rasPass, 'RAS: ' + p.ras + ' (need ≥8.0)')}<span class="mono" style="font-size:10px;color:${p.ras>=8?'var(--green)':'var(--text-muted)'}"> ${p.ras||'—'}</span></td>
+        <td style="white-space:nowrap">${hitBar(p.hits, totalChecks || 6)}</td>
+        <td style="font-size:10px;color:var(--text-muted);max-width:220px;white-space:normal">${p.note}</td>
+      </tr>`;
+    }
+    html += `</tbody></table></div></div>`;
+  }
+
+  // RB Section
+  if (prospectShowRB && rbData.length) {
+    html += `<div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;color:var(--green);margin-bottom:8px">
+        RB ${prospectYear} Class
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-left:10px;font-weight:400">
+          THRESHOLDS: R1-2 DC · SpeedScore≥100 · Burst≥121 · CompBDR≥50 · ColYPA≥6.0
+        </span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table" style="font-size:12px">
+          <thead><tr>
+            <th>Player</th>
+            <th>KTC</th>
+            <th title="Draft Capital R1-2">DC</th>
+            <th title="Speed Score ≥100">Spd</th>
+            <th title="40-yard dash">40T</th>
+            <th title="Burst Score ≥121">Burst</th>
+            <th title="Composite BDR ≥50">BDR</th>
+            <th title="College YPA ≥6.0">ColYPA</th>
+            <th>Score</th>
+            <th>Note</th>
+          </tr></thead>
+          <tbody>`;
+
+    const sortedRB = [...rbData].sort((a,b) => b.hits - a.hits);
+    for (const p of sortedRB) {
+      const ktcVal = getKtcValue(p.name);
+      const dcPass    = p.dc !== null ? p.dc <= rbThresh.dc_max : null;
+      const spdPass   = p.speed !== null ? p.speed >= rbThresh.speed_score : null;
+      const burstPass = p.burst !== null ? p.burst >= rbThresh.burst : null;
+      const bdrPass   = p.comp_bdr !== null ? p.comp_bdr >= rbThresh.comp_bdr : null;
+      const ypaPass   = p.col_ypa !== null ? p.col_ypa >= rbThresh.col_ypa : null;
+      const totalChecks = [dcPass,spdPass,burstPass,bdrPass,ypaPass].filter(v => v !== null).length;
+      const na = `<span style="color:var(--text-muted);font-size:9px">—</span>`;
+
+      html += `<tr>
+        <td style="font-weight:500;white-space:nowrap">${p.name}</td>
+        <td class="mono" style="font-size:11px;color:var(--accent)">${ktcVal ? fmt(ktcVal) : '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td>${dcPass === null ? na : hitDot(dcPass, 'DC: ' + (p.dc||'TBD') + ' (need ≤2.99)')}</td>
+        <td>${spdPass === null ? na : hitDot(spdPass, 'Speed: ' + (p.speed?p.speed.toFixed(1):'—') + ' (need ≥100)')}<span class="mono" style="font-size:9px;color:${p.speed>=100?'var(--green)':'var(--text-muted)'}"> ${p.speed?p.speed.toFixed(0):'—'}</span></td>
+        <td class="mono" style="font-size:10px;color:var(--text-muted)">${p.t40||'—'}</td>
+        <td>${burstPass === null ? na : hitDot(burstPass, 'Burst: ' + (p.burst?p.burst.toFixed(1):'—') + ' (need ≥121)')}<span class="mono" style="font-size:9px;color:${p.burst>=121?'var(--green)':'var(--text-muted)'}"> ${p.burst?p.burst.toFixed(0):'—'}</span></td>
+        <td>${bdrPass === null ? na : hitDot(bdrPass, 'BDR: ' + (p.comp_bdr?p.comp_bdr.toFixed(1):'—') + ' (need ≥50)')}<span class="mono" style="font-size:9px;color:${p.comp_bdr>=50?'var(--green)':'var(--text-muted)'}"> ${p.comp_bdr?p.comp_bdr.toFixed(0):'—'}</span></td>
+        <td>${ypaPass === null ? na : hitDot(ypaPass, 'ColYPA: ' + (p.col_ypa||'—') + ' (need ≥6.0)')}<span class="mono" style="font-size:9px;color:${p.col_ypa>=6?'var(--green)':'var(--text-muted)'}"> ${p.col_ypa||'—'}</span></td>
+        <td style="white-space:nowrap">${hitBar(p.hits, totalChecks || 5)}</td>
+        <td style="font-size:10px;color:var(--text-muted);max-width:220px;white-space:normal">${p.note}</td>
+      </tr>`;
+    }
+    html += `</tbody></table></div></div>`;
+  }
+
+  if (!html) html = '<div class="mono muted" style="padding:12px;font-size:12px">Select WR and/or RB to see prospect data</div>';
+  container.innerHTML = html;
+}
+
 
 function filterRookieBoard(filter, btn) {
   STATE.rookieFilter = filter;
