@@ -2304,16 +2304,7 @@ function splitAssetValue(asset) {
 
 function analyzeTrade() {
 
-EDIT 2 — Append timing block inside analyzeTrade()
-Find this exact block (the last thing in analyzeTrade):
-javascript  if (healthLines.length) {
-    detail.innerHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;line-height:1.8">${healthLines.join('<br>')}</div>`;
-  }
-}
-
-function clearTrade() {
-Replace with:
-javascript if (healthLines.length) {
+if (healthLines.length) {
     detail.innerHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;line-height:1.8">${healthLines.join('<br>')}</div>`;
   }
 
