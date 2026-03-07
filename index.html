@@ -1015,7 +1015,11 @@
     <div class="card" style="margin-bottom:16px;border:1px solid rgba(255,215,0,0.3)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin-bottom:0">🔬 Anatomy Prospect Scorer</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted)">Thresholds from 2011–2021 cohort · WR hit rate 50-57% on 3+ hits · RB 44-63%</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted)">Thresholds from 2011–2021 cohort · WR hit rate 50-57% on 3+ hits · RB 44-63%</div>
+          <button class="sync-btn" style="font-size:10px;padding:4px 10px" onclick="fetchProspectData(false).then(()=>renderProspectScorer())">⟳ Refresh Sheet</button>
+          <span id="prospectLastFetch" style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted)"></span>
+        </div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <button class="filter-btn active" id="psYear2025" onclick="switchProspectYear('2025',this)">2025 Class</button>
@@ -1120,6 +1124,7 @@ const CONFIG = {
   },
 
   // Pick values (KTC approximate)
+  ANATOMY_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1DAhsc8wfNeit65ndDYUuxoON_rnbiHnbtFPi9aRpeEk/export?format=csv&gid=1279331920',
   PICK_VALUES: {
     '2026 Early 1st': 5994, '2026 Mid 1st': 4687, '2026 Late 1st': 4283,
     '2026 Early 2nd': 3486, '2026 Mid 2nd': 3056, '2026 Late 2nd': 2798,
@@ -1136,7 +1141,11 @@ const CONFIG = {
     '2029 Early 1st': 4200, '2029 Mid 1st': 3800, '2029 Late 1st': 3400,
     '2029 Early 2nd': 2800, '2029 Mid 2nd': 2400, '2029 Late 2nd': 2100,
     '2029 Early 3rd': 1800, '2029 Mid 3rd': 1600, '2029 Late 3rd': 1400,
+    '2026 Early 5th': 220, '2026 Mid 5th': 150, '2026 Late 5th': 80,
+    '2027 Early 5th': 260, '2027 Mid 5th': 175, '2027 Late 5th': 95,
+    '2028 Early 5th': 230, '2028 Mid 5th': 155, '2028 Late 5th': 85,
     '2029 Early 4th': 1200, '2029 Mid 4th': 1000, '2029 Late 4th': 800,
+    '2029 Early 5th': 200, '2029 Mid 5th': 140, '2029 Late 5th': 75,
   }
 };
 
@@ -2919,6 +2928,10 @@ async function syncAll() {
     await Promise.all([fetchSleeperPlayers(), fetchStandings(), fetchDraftOrder()]);
     await fetchRosters();
     await fetchTradedPicks();
+    // Fetch live prospect data from Anatomy sheet (non-blocking, updates 2026 class)
+    fetchProspectData(false).then(res => {
+      if (res) console.log('Prospect refresh: ' + res.wr + ' WRs, ' + res.rb + ' RBs');
+    });
     setLoadingProgress(80, 'PROCESSING DATA...');
     buildAllRosters();
     buildPickMap();
@@ -3153,6 +3166,8 @@ function toggleProspectPos(pos, btn) {
 function renderProspectScorer() {
   const container = document.getElementById('prospectScorerContent');
   if (!container) return;
+  const lastFetchEl = document.getElementById('prospectLastFetch');
+  if (lastFetchEl) lastFetchEl.textContent = STATE.prospectLastFetch ? 'Last sync: ' + STATE.prospectLastFetch : '2026: static data';
 
   const wrData = PROSPECT_PROFILES['WR_' + prospectYear] || [];
   const rbData = PROSPECT_PROFILES['RB_' + prospectYear] || [];
@@ -3326,6 +3341,116 @@ function renderProspectScorer() {
 
   if (!html) html = '<div class="mono muted" style="padding:12px;font-size:12px">Select WR and/or RB to see prospect data</div>';
   container.innerHTML = html;
+}
+
+
+
+// ============================================================
+// LIVE PROSPECT DATA FETCH — Anatomy of Top WR & RB Google Sheet
+// ============================================================
+async function fetchProspectData(showStatus) {
+  const url = CONFIG.ANATOMY_SHEET_URL;
+  if (showStatus) setLoadingProgress(50, 'FETCHING PROSPECT DATA...');
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    const rows = text.trim().split('\n').map(row => {
+      // Handle quoted fields with commas
+      const result = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < row.length; i++) {
+        const ch = row[i];
+        if (ch === '"') { inQ = !inQ; }
+        else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+        else { cur += ch; }
+      }
+      result.push(cur.trim());
+      return result;
+    });
+
+    // Skip header row (row 0)
+    const dataRows = rows.slice(1);
+
+    function parseNum(v) {
+      if (!v || v === '' || v === 'N/A' || v === '#DIV/0!') return null;
+      const n = parseFloat(String(v).replace(/,/g, ''));
+      return isNaN(n) ? null : n;
+    }
+    function parseStr(v) {
+      return (v && v.trim() !== '' && v.trim() !== 'N/A') ? v.trim() : null;
+    }
+
+    const WR_THRESH = PROSPECT_PROFILES.WR_THRESHOLDS;
+    const RB_THRESH = PROSPECT_PROFILES.RB_THRESHOLDS;
+
+    function calcWrHits(dc, t40, split, wdom, boy, ras) {
+      let hits = 0;
+      if (dc !== null && dc <= WR_THRESH.dc_max) hits++;
+      if (t40 !== null && t40 <= WR_THRESH.speed) hits++;
+      if (split !== null && split <= WR_THRESH.split) hits++;
+      if (wdom !== null && wdom >= WR_THRESH.wdom) hits++;
+      if (boy !== null && boy >= 1 && boy <= 3) hits++;
+      if (ras !== null && ras >= WR_THRESH.ras) hits++;
+      return hits;
+    }
+
+    function calcRbHits(dc, speed, burst, bdr, ypa) {
+      let hits = 0;
+      if (dc !== null && dc <= RB_THRESH.dc_max) hits++;
+      if (speed !== null && speed >= RB_THRESH.speed_score) hits++;
+      if (burst !== null && burst >= RB_THRESH.burst) hits++;
+      if (bdr !== null && bdr >= RB_THRESH.comp_bdr) hits++;
+      if (ypa !== null && ypa >= RB_THRESH.col_ypa) hits++;
+      return hits;
+    }
+
+    const newWR = [], newRB = [];
+
+    for (const row of dataRows) {
+      // WR (cols 0-15)
+      const wrName = parseStr(row[0]);
+      if (wrName) {
+        const dc    = parseNum(row[1]);
+        const t40   = parseNum(row[2]);
+        const split = parseNum(row[3]);
+        const wdom  = parseNum(row[4]);
+        const boy   = parseNum(row[7]);
+        const early = parseStr(row[8]);
+        const ras   = parseNum(row[14]);
+        const hits  = calcWrHits(dc, t40, split, wdom, boy, ras);
+        newWR.push({ name: wrName, dc, t40, split, wdom: wdom ? Math.round(wdom) : null,
+          boy: boy ? Math.round(boy) : null, early, ras, hits, note: '' });
+      }
+      // RB (cols 17-32)
+      const rbName = parseStr(row[17]);
+      if (rbName) {
+        const dc      = parseNum(row[18]);
+        const speed   = parseNum(row[19]);
+        const t40     = parseNum(row[20]);
+        const burst   = parseNum(row[24]);
+        const bdr     = parseNum(row[25]);
+        const col_ypa = parseNum(row[32]);
+        const hits    = calcRbHits(dc, speed, burst, bdr, col_ypa);
+        newRB.push({ name: rbName, dc, speed, t40, burst, comp_bdr: bdr, col_ypa, hits, note: '' });
+      }
+    }
+
+    // Sort by hits desc
+    newWR.sort((a,b) => b.hits - a.hits || (a.dc||99) - (b.dc||99));
+    newRB.sort((a,b) => b.hits - a.hits);
+
+    PROSPECT_PROFILES.WR_2026 = newWR;
+    PROSPECT_PROFILES.RB_2026 = newRB;
+
+    STATE.prospectLastFetch = new Date().toLocaleString();
+    console.log(`Prospect data loaded: ${newWR.length} WRs, ${newRB.length} RBs`);
+    if (showStatus) setLoadingProgress(100, 'PROSPECT DATA LOADED');
+    return { wr: newWR.length, rb: newRB.length };
+  } catch(e) {
+    console.warn('Prospect fetch failed:', e.message);
+    return null;
+  }
 }
 
 
