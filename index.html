@@ -3181,7 +3181,7 @@ function renderProspectScorer() {
     else if (hits >= Math.ceil(maxPossible * 0.2)) { color = 'var(--yellow)'; tierLabel = 'TIER 3'; }
     else { color = 'var(--red)'; tierLabel = 'TIER 4'; }
     const pendingHtml = pending
-      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold);margin-left:4px">+${pending} pending</span>` : '';
+      ? `<span style="font-family:monospace;font-size:9px;color:var(--gold);margin-left:4px">+${pending} pending</span>` : '';
     return `<div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
       <div style="width:55px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden">
         <div style="width:${Math.round(pct*100)}%;height:100%;background:${color};border-radius:3px"></div>
@@ -3219,7 +3219,7 @@ function renderProspectScorer() {
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
         <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;color:var(--blue)">WR ${prospectYear} Class</div>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-3 DC · 40≤4.59 · 10yd≤1.56 · WDOM≥25 · BOY Yr1-3 · RAS≥8</span>
-        ${is2026 ? '<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
+        ${is2026 ? '<span style="font-family:monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
       </div>
       <div style="overflow-x:auto"><table class="data-table" style="font-size:12px"><thead><tr>
         <th>Player</th><th>KTC</th>
@@ -3276,7 +3276,7 @@ function renderProspectScorer() {
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
         <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;color:var(--green)">RB ${prospectYear} Class</div>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-2 DC · SpeedScore≥100 · Burst≥121 · CompBDR≥50 · ColYPA≥6.0</span>
-        ${is2026 ? '<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
+        ${is2026 ? '<span style="font-family:monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
       </div>
       <div style="overflow-x:auto"><table class="data-table" style="font-size:12px"><thead><tr>
         <th>Player</th><th>KTC</th>
