@@ -2313,15 +2313,17 @@ javascript  if (healthLines.length) {
 
 function clearTrade() {
 Replace with:
-javascript  if (healthLines.length) {
+javascript if (healthLines.length) {
     detail.innerHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;line-height:1.8">${healthLines.join('<br>')}</div>`;
   }
 
   // Ciely current/future value split + contention window alignment
-  const sumSplit = assets => assets.reduce((acc, x) => {
-    const s = splitAssetValue(x);
-    return { now: acc.now + s.now, future: acc.future + s.future };
-  }, { now: 0, future: 0 });
+  const sumSplit = function(assets) {
+    return assets.reduce(function(acc, x) {
+      const s = splitAssetValue(x);
+      return { now: acc.now + s.now, future: acc.future + s.future };
+    }, { now: 0, future: 0 });
+  };
   const splitIN  = sumSplit(a);
   const splitOUT = sumSplit(b);
   const totalIN  = splitIN.now  + splitIN.future  || 1;
@@ -2332,37 +2334,40 @@ javascript  if (healthLines.length) {
   const outFutPct = 100 - outNowPct;
 
   const myWindow = calcContentionWindow(STATE.myRoster || []);
-  const windowYears = myWindow.years ?? 0;
+  const windowYears = (myWindow.years !== null && myWindow.years !== undefined) ? myWindow.years : 0;
   const receivingFuture = inFutPct >= 50;
+
   let windowNote = '';
   if (windowYears >= 1.5) {
     windowNote = receivingFuture
-      ? `<span style="color:var(--green)">✅ Future-heavy return aligns with your ${myWindow.label} window</span>`
-      : `<span style="color:var(--yellow)">⚠️ Your window is ${myWindow.label} — future assets preferred over now value</span>`;
+      ? '<span style="color:var(--green)">&#x2705; Future-heavy return aligns with your ' + myWindow.label + ' window</span>'
+      : '<span style="color:var(--yellow)">&#x26A0;&#xFE0F; Your window is ' + myWindow.label + ' — future assets preferred over now value</span>';
   } else if (windowYears >= 0.5) {
     windowNote = receivingFuture
-      ? `<span style="color:var(--green)">✅ Future value fits your ${myWindow.label}</span>`
-      : `<span style="color:var(--accent)">ℹ️ Now-heavy return — works if targeting near-term wins (${myWindow.label})</span>`;
+      ? '<span style="color:var(--green)">&#x2705; Future value fits your ' + myWindow.label + '</span>'
+      : '<span style="color:var(--accent)">&#x2139;&#xFE0F; Now-heavy return — works if targeting near-term wins (' + myWindow.label + ')</span>';
   } else if (windowYears >= -0.5) {
     windowNote = !receivingFuture
-      ? `<span style="color:var(--green)">✅ Present-weighted return matches your PRIME WINDOW</span>`
-      : `<span style="color:var(--yellow)">⚠️ In PRIME WINDOW — future assets may not peak in time</span>`;
+      ? '<span style="color:var(--green)">&#x2705; Present-weighted return matches your PRIME WINDOW</span>'
+      : '<span style="color:var(--yellow)">&#x26A0;&#xFE0F; In PRIME WINDOW — future assets may not peak in time</span>';
   } else {
     windowNote = !receivingFuture
-      ? `<span style="color:var(--yellow)">⚠️ Window closing — now value is correct priority</span>`
-      : `<span style="color:var(--red)">🛑 Window closing — avoid trading for long-term futures</span>`;
+      ? '<span style="color:var(--yellow)">&#x26A0;&#xFE0F; Window closing — now value is correct priority</span>'
+      : '<span style="color:var(--red)">&#x1F6D1; Window closing — avoid trading for long-term futures</span>';
   }
 
-  const bar = (pct, color) => `<span style="display:inline-block;width:${Math.round(pct * 0.55)}px;height:5px;background:${color};border-radius:2px;vertical-align:middle;margin:0 3px"></span>`;
+  function mkBar(pct, color) {
+    const w = Math.round(pct * 0.55);
+    return '<span style="display:inline-block;width:' + w + 'px;height:5px;background:' + color + ';border-radius:2px;vertical-align:middle;margin:0 3px"></span>';
+  }
 
-  detail.innerHTML += `
-    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:2">
-      <div style="color:var(--text-muted);font-size:9px;letter-spacing:1px;margin-bottom:2px">📊 VALUE TIMING</div>
-      <div><span style="color:var(--accent2)">IN &nbsp;</span><span style="color:var(--text-dim)">Now ${inNowPct}%</span>${bar(inNowPct,'var(--accent2)')}<span style="color:var(--text-muted)">Future ${inFutPct}%</span>${bar(inFutPct,'var(--blue)')}</div>
-      <div><span style="color:var(--accent)">OUT </span><span style="color:var(--text-dim)">Now ${outNowPct}%</span>${bar(outNowPct,'var(--accent)')}<span style="color:var(--text-muted)">Future ${outFutPct}%</span>${bar(outFutPct,'var(--blue)')}</div>
-      <div style="margin-top:2px">${windowNote}</div>
-    </div>`;
-}  
+  detail.innerHTML += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-family:\'IBM Plex Mono\',monospace;font-size:11px;line-height:2">'
+    + '<div style="color:var(--text-muted);font-size:9px;letter-spacing:1px;margin-bottom:2px">&#x1F4CA; VALUE TIMING</div>'
+    + '<div><span style="color:var(--accent2)">IN &nbsp;</span><span style="color:var(--text-dim)">Now ' + inNowPct + '%</span>' + mkBar(inNowPct,'var(--accent2)') + '<span style="color:var(--text-muted)">Future ' + inFutPct + '%</span>' + mkBar(inFutPct,'var(--blue)') + '</div>'
+    + '<div><span style="color:var(--accent)">OUT </span><span style="color:var(--text-dim)">Now ' + outNowPct + '%</span>' + mkBar(outNowPct,'var(--accent)') + '<span style="color:var(--text-muted)">Future ' + outFutPct + '%</span>' + mkBar(outFutPct,'var(--blue)') + '</div>'
+    + '<div style="margin-top:2px">' + windowNote + '</div>'
+    + '</div>';
+}
   
 function clearTrade() {
   STATE.tradeAssets = { a: [], b: [] };
