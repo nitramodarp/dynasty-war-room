@@ -3169,6 +3169,12 @@ function renderProspectScorer() {
   const lastFetchEl = document.getElementById('prospectLastFetch');
   if (lastFetchEl) lastFetchEl.textContent = STATE.prospectLastFetch ? 'Last sync: ' + STATE.prospectLastFetch : '2026: static data';
 
+  // Pre-seed AI comp cache from any static comps so they survive fetch overwrites
+  [...(PROSPECT_PROFILES.WR_2025||[]), ...(PROSPECT_PROFILES.WR_2026||[]),
+   ...(PROSPECT_PROFILES.RB_2025||[]), ...(PROSPECT_PROFILES.RB_2026||[])].forEach(p => {
+    if (p.comp && !STATE.aiComps[p.name]) STATE.aiComps[p.name] = { comp: p.comp, rationale: '' };
+  });
+
   const wrData = PROSPECT_PROFILES['WR_' + prospectYear] || [];
   const rbData = PROSPECT_PROFILES['RB_' + prospectYear] || [];
   const wrThresh = PROSPECT_PROFILES.WR_THRESHOLDS;
@@ -3275,7 +3281,12 @@ function renderProspectScorer() {
         <td>${boaPass === null ? na : hitDot(boaPass, 'BOY: Year '+p.boy+' (need Yr1-3)')}<span class="mono" style="font-size:10px;color:var(--text-muted)"> Yr${p.boy||'—'}</span></td>
         <td>${rasPass === null ? na : hitDot(rasPass, 'RAS: '+p.ras+' (need ≥8.0)')}<span class="mono" style="font-size:10px;color:${p.ras>=8?'var(--green)':'var(--text-muted)'}"> ${p.ras||'—'}</span></td>
         <td>${hitBar(p.hits, 6, pendingCount)}</td>
-        <td style="font-size:10px;color:var(--text-muted);max-width:200px;white-space:normal">${p.note}</td>
+        <td id="${'comp-wr-' + p.name}" style="white-space:nowrap;min-width:120px">${
+          (p.comp || (STATE.aiComps[p.name] && STATE.aiComps[p.name].comp))
+            ? '<span style="color:var(--accent);font-weight:600;font-size:11px">' + (p.comp || STATE.aiComps[p.name].comp) + '</span>'
+            : '<button onclick="triggerAiComp(\'' + p.name.replace(/'/g,"\\'") + '\',\'WR\',' + JSON.stringify({dc:p.dc,t40:p.t40,wdom:p.wdom,boy:p.boy,ras:p.ras,hits:p.hits}) + ',this)" style="font-size:9px;padding:2px 6px;background:rgba(0,212,255,0.1);border:1px solid var(--accent);border-radius:3px;color:var(--accent);cursor:pointer">&#x26A1; AI</button>'
+        }</td>
+        <td style="font-size:10px;color:var(--text-muted);max-width:180px;white-space:normal">${p.note}</td>
       </tr>`;
     }
 
@@ -3330,9 +3341,9 @@ function renderProspectScorer() {
         <td>${bdrPass === null ? na : hitDot(bdrPass, 'BDR: '+(p.comp_bdr?p.comp_bdr.toFixed(1):'—')+' (need ≥50)')}<span class="mono" style="font-size:9px;color:${p.comp_bdr>=50?'var(--green)':'var(--text-muted)'}"> ${p.comp_bdr?p.comp_bdr.toFixed(0):'—'}</span></td>
         <td>${ypaPass === null ? na : hitDot(ypaPass, 'ColYPA: '+(p.col_ypa||'—')+' (need ≥6.0)')}<span class="mono" style="font-size:9px;color:${p.col_ypa>=6?'var(--green)':'var(--text-muted)'}"> ${p.col_ypa||'—'}</span></td>
         <td>${hitBar(p.hits, 5, pendingCount)}</td>
-        <td id="${'comp-' + p.name}" style="white-space:nowrap;min-width:120px">${
-          p.comp
-            ? '<span style="color:var(--green);font-weight:600;font-size:11px">' + p.comp + '</span>'
+        <td id="${'comp-rb-' + p.name}" style="white-space:nowrap;min-width:120px">${
+          (p.comp || (STATE.aiComps[p.name] && STATE.aiComps[p.name].comp))
+            ? '<span style="color:var(--green);font-weight:600;font-size:11px">' + (p.comp || STATE.aiComps[p.name].comp) + '</span>'
             : '<button onclick="triggerAiComp(\'' + p.name.replace(/'/g,"\\'") + '\',\'RB\',' + JSON.stringify({dc:p.dc,speed:p.speed,burst:p.burst,comp_bdr:p.comp_bdr,col_ypa:p.col_ypa,hits:p.hits}) + ',this)" style="font-size:9px;padding:2px 6px;background:rgba(76,255,145,0.1);border:1px solid var(--green);border-radius:3px;color:var(--green);cursor:pointer">&#x26A1; AI</button>'
         }</td>
         <td style="font-size:10px;color:var(--text-muted);max-width:180px;white-space:normal">${p.note}</td>
@@ -3426,8 +3437,11 @@ async function fetchProspectData(showStatus) {
         const early = parseStr(row[8]);
         const ras   = parseNum(row[14]);
         const hits  = calcWrHits(dc, t40, split, wdom, boy, ras);
+        // Preserve any existing static comp
+        const existingWR = (PROSPECT_PROFILES.WR_2026 || []).find(x => x.name === wrName);
         newWR.push({ name: wrName, dc, t40, split, wdom: wdom ? Math.round(wdom) : null,
-          boy: boy ? Math.round(boy) : null, early, ras, hits, note: '' });
+          boy: boy ? Math.round(boy) : null, early, ras, hits, note: '',
+          comp: existingWR ? (existingWR.comp || null) : null });
       }
       // RB (cols 17-32)
       const rbName = parseStr(row[17]);
@@ -3439,7 +3453,9 @@ async function fetchProspectData(showStatus) {
         const bdr     = parseNum(row[25]);
         const col_ypa = parseNum(row[32]);
         const hits    = calcRbHits(dc, speed, burst, bdr, col_ypa);
-        newRB.push({ name: rbName, dc, speed, t40, burst, comp_bdr: bdr, col_ypa, hits, note: '' });
+        const existingRB = (PROSPECT_PROFILES.RB_2026 || []).find(x => x.name === rbName);
+        newRB.push({ name: rbName, dc, speed, t40, burst, comp_bdr: bdr, col_ypa, hits, note: '',
+          comp: existingRB ? (existingRB.comp || null) : null });
       }
     }
 
@@ -3487,7 +3503,8 @@ async function triggerAiComp(playerName, pos, profileData, btnEl) {
   btnEl.textContent = '...';
   const result = await fetchAiComp(playerName, pos, profileData);
   if (result) {
-    const compCell = document.getElementById('comp-' + CSS.escape(playerName));
+    const compCell = document.getElementById('comp-wr-' + CSS.escape(playerName)) ||
+                   document.getElementById('comp-rb-' + CSS.escape(playerName));
     if (compCell) {
       const nameSpan = document.createElement('span');
       nameSpan.style.cssText = 'color:var(--accent);font-weight:600;font-size:11px';
