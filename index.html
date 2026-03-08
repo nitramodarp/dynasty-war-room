@@ -1926,9 +1926,16 @@ function renderRosterTable(tbodyId, players) {
         if (taxi) return '<span class="badge badge-taxi">TAXI</span>';
         const posPlayers = STATE.myRoster.filter(x=>x.pos===p.pos).sort((a,b)=>b.value-a.value);
         const rank = posPlayers.findIndex(x=>x.name===p.name)+1;
-        const starters = {QB:2,RB:4,WR:5,TE:2}[p.pos]||3;
-        if (rank <= starters) return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;font-weight:700;color:var(--green)">STARTER</span>';
-        if (rank <= starters+2) return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--accent)">FLEX</span>';
+        // SF lineup: QB1+SF, RB×2, WR×2, TE×1, FLEX×2 (RB/WR/TE)
+        // QB: rank1=QB1(STARTER), rank2=SF(FLEX), rest=DEPTH
+        // RB/WR: rank1-2=STARTER, rank3-4=FLEX, rest=DEPTH
+        // TE: rank1=STARTER, rank2=FLEX, rest=DEPTH
+        const starterCounts = {QB:1, RB:2, WR:2, TE:1};
+        const flexCounts    = {QB:1, RB:2, WR:2, TE:1};
+        const s = starterCounts[p.pos]||2;
+        const f = s + (flexCounts[p.pos]||2);
+        if (rank <= s) return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;font-weight:700;color:var(--green)">STARTER</span>';
+        if (rank <= f) return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;font-weight:600;color:var(--accent)">FLEX</span>';
         return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--text-muted)">DEPTH</span>';
       })()}</td>
     </tr>`;
