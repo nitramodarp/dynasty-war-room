@@ -787,7 +787,7 @@
               <th>VORP</th>
               <th>Archetype</th>
               <th>Health</th>
-              <th>Status</th>
+              <th>Role</th>
             </tr>
           </thead>
           <tbody id="rosterOverviewBody">
@@ -822,7 +822,7 @@
               <th onclick="sortTable('fullRosterTable', 5)">VORP</th>
               <th>Archetype</th>
               <th>Health</th>
-              <th>Status</th>
+              <th>Role</th>
             </tr>
           </thead>
           <tbody id="fullRosterBody">
@@ -1922,7 +1922,15 @@ function renderRosterTable(tbodyId, players) {
       <td class="mono" style="font-size:12px;${vorpStyle}">${p.vorp > 0 ? '+' : ''}${fmt(p.vorp)}${tepTag}</td>
       <td>${a ? `<span class="badge badge-${a.cls}">${a.label}</span>` : '—'}</td>
       <td>${healthBadge(p)}</td>
-      <td>${taxi ? '<span class="badge badge-taxi">Taxi</span>' : ''}</td>
+      <td>${(function(){
+        if (taxi) return '<span class="badge badge-taxi">TAXI</span>';
+        const posPlayers = STATE.myRoster.filter(x=>x.pos===p.pos).sort((a,b)=>b.value-a.value);
+        const rank = posPlayers.findIndex(x=>x.name===p.name)+1;
+        const starters = {QB:2,RB:4,WR:5,TE:2}[p.pos]||3;
+        if (rank <= starters) return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;font-weight:700;color:var(--green)">STARTER</span>';
+        if (rank <= starters+2) return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--accent)">FLEX</span>';
+        return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--text-muted)">DEPTH</span>';
+      })()}</td>
     </tr>`;
   }).join('');
 }
@@ -2347,19 +2355,22 @@ function analyzeTrade() {
   if (Math.abs(diff) < 200) {
     label.textContent = '✅ FAIR TRADE';
     label.style.color = 'var(--green)';
-    detail.innerHTML = `Raw values nearly equal (${fmt(rawA)} vs ${fmt(rawB)})<br>Difference of ${fmt(Math.abs(diff))} — both sides can feel good about this`;
+    const deltaColor = 'var(--green)';
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${deltaColor}">±${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">gap</span><br><span style="font-size:11px">Raw values nearly equal (${fmt(rawA)} vs ${fmt(rawB)}) — both sides can feel good</span>`;
   } else if (diff > 0) {
     const severity = pct > 40 ? '🛑 MASSIVE OVERPAY' : pct > 20 ? '⚠️ YOU WIN THIS TRADE' : '✅ SLIGHT EDGE TO YOU';
     const color = pct > 40 ? 'var(--green)' : pct > 20 ? 'var(--accent)' : 'var(--accent)';
     label.textContent = severity;
     label.style.color = color;
-    detail.innerHTML = `You receive ${fmt(rawA)} · You give ${fmt(rawB)}<br>You win by ${fmt(diff)} (${pct.toFixed(0)}%)<br>Stud-adjusted: ${aPct}% vs ${bPct}%`;
+    const winColor = pct > 40 ? 'var(--green)' : 'var(--accent)';
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${winColor}">+${fmt(diff)}</span> <span style="color:var(--text-muted);font-size:11px">in your favor (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
   } else {
     const severity = pct > 40 ? '🛑 VETO: MASSIVE OVERPAY' : pct > 20 ? '⚠️ THEY WIN THIS TRADE' : '⚠️ SLIGHT EDGE TO THEM';
     const color = pct > 40 ? 'var(--red)' : 'var(--yellow)';
     label.textContent = severity;
     label.style.color = color;
-    detail.innerHTML = `You receive ${fmt(rawA)} · You give ${fmt(rawB)}<br>They win by ${fmt(Math.abs(diff))} (${pct.toFixed(0)}%)<br>Stud-adjusted: ${aPct}% vs ${bPct}%`;
+    const loseColor = pct > 40 ? 'var(--red)' : 'var(--yellow)';
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${loseColor}">-${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">against you (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
   }
 
   // Health context: flag SELL/CUT assets and warn on giving away HOLDs
@@ -2775,7 +2786,127 @@ function findTrades() {
     }
   }
 
+  // ── Pick sweeteners: when gap is 500-2500, suggest closest pick ──────────
+  var myPickAssets = (STATE.myPicks || [])
+    .filter(function(pk) { return pk.year >= new Date().getFullYear() && pk.year <= new Date().getFullYear() + 2; })
+    .map(function(pk) {
+      var val = CONFIG.PICK_VALUES[pk.label] || 0;
+      return { label: pk.label, value: val, year: pk.year, round: pk.round };
+    })
+    .filter(function(pk) { return pk.value > 0; })
+    .sort(function(a,b) { return a.value - b.value; });
+
+  // Re-examine standard deals and add pick sweetener if gap warrants it
+  var sweetenable = suggestions.filter(function(s) {
+    return s.type === 'standard' && s.valueDiff >= 400 && s.valueDiff <= 2800;
+  });
+  for (var si = 0; si < sweetenable.length; si++) {
+    var deal = sweetenable[si];
+    // If they win (they give more value), we add a pick to them
+    // If we win (we give more value)... actually sweeteners go to equalise
+    var gap = deal.iGet.value - deal.iGive.value; // positive = they give more = we underpay
+    if (Math.abs(gap) < 400) continue;
+
+    // Find pick closest to abs(gap)
+    var bestPick = null, bestDiff = Infinity;
+    for (var pki = 0; pki < myPickAssets.length; pki++) {
+      var d = Math.abs(myPickAssets[pki].value - Math.abs(gap));
+      if (d < bestDiff) { bestDiff = d; bestPick = myPickAssets[pki]; }
+    }
+    if (!bestPick || bestDiff > Math.abs(gap) * 0.6) continue; // pick too far off
+
+    suggestions.push({
+      id: 'trade-' + (idCounter++),
+      team: deal.team,
+      iGet: deal.iGet,
+      iGive: deal.iGive,
+      iGivePick: bestPick,
+      iGetPos: deal.iGetPos,
+      iGivePos: deal.iGivePos,
+      score: deal.score + 150,
+      valueDiff: Math.abs(gap - (gap > 0 ? -bestPick.value : bestPick.value)),
+      profile: deal.profile,
+      type: 'sweetened',
+      whyTheyAccept: deal.whyTheyAccept + ' + ' + bestPick.label + ' closes the value gap',
+      whyYouAccept: deal.whyYouAccept + ' — adding ' + bestPick.label + ' to balance'
+    });
+  }
+
+  // ── Pick-for-player: sell aging player for picks ────────────────────────
+  for (var t2 = 0; t2 < allTeams.length; t2++) {
+    var tName = allTeams[t2];
+    if (tName === CONFIG.MY_TEAM_NAME) continue;
+    var tProfile = OWNER_PROFILES[tName];
+    var tNeeds = teamNeeds[tName];
+
+    // Their picks we could target
+    var theirPicks = (STATE.tradedPicks || [])
+      .filter(function(pk) {
+        return pk.currentOwner === tName &&
+               pk.year >= new Date().getFullYear() &&
+               pk.year <= new Date().getFullYear() + 2;
+      })
+      .map(function(pk) {
+        var val = CONFIG.PICK_VALUES[pk.label] || 0;
+        return { label: pk.label, value: val, year: pk.year, round: pk.round };
+      })
+      .filter(function(pk) { return pk.value > 500; })
+      .sort(function(a,b) { return b.value - a.value; });
+
+    var mySellPlayers = (STATE.myRoster || []).filter(function(pl) {
+      if (CONFIG.PROTECTED.indexOf(pl.name) >= 0) return false;
+      var arch = getArchetype(pl.pos, pl.age);
+      return arch && (arch.cls === 'sell' || arch.cls === 'aging') && pl.value > 1500;
+    }).sort(function(a,b) { return b.value - a.value; });
+
+    for (var spi = 0; spi < Math.min(mySellPlayers.length, 3); spi++) {
+      var sellPl = mySellPlayers[spi];
+      // Find 1 or 2 picks that roughly match player value
+      for (var pi2 = 0; pi2 < Math.min(theirPicks.length, 3); pi2++) {
+        var pk1 = theirPicks[pi2];
+        var singleDiff = Math.abs(pk1.value - sellPl.value);
+        if (singleDiff < sellPl.value * 0.35) {
+          // Single pick deal
+          var tNeed = tNeeds[sellPl.pos];
+          suggestions.push({
+            id: 'trade-' + (idCounter++),
+            team: tName,
+            iGet: null, iGetPick: pk1,
+            iGive: sellPl,
+            iGetPos: 'PICK', iGivePos: sellPl.pos,
+            score: 400 + (tNeed ? tNeed.needScore * 0.3 : 0) + (tProfile && tProfile.activity === 'HIGH' ? 300 : 0),
+            valueDiff: singleDiff,
+            profile: tProfile,
+            type: 'pick-for-player',
+            whyTheyAccept: tName + ' gets ' + sellPl.pos + ' help (' + sellPl.name + ', value ' + fmt(sellPl.value) + ')',
+            whyYouAccept: 'Sell high on aging asset — ' + pk1.label + ' (' + fmt(pk1.value) + ') for ' + sellPl.name
+          });
+        } else if (pi2 + 1 < theirPicks.length) {
+          // Two-pick deal
+          var pk2 = theirPicks[pi2 + 1];
+          var twoDiff = Math.abs(pk1.value + pk2.value - sellPl.value);
+          if (twoDiff < sellPl.value * 0.4) {
+            suggestions.push({
+              id: 'trade-' + (idCounter++),
+              team: tName,
+              iGet: null, iGetPick: pk1, iGetPick2: pk2,
+              iGive: sellPl,
+              iGetPos: 'PICK', iGivePos: sellPl.pos,
+              score: 350 + (tProfile && tProfile.activity === 'HIGH' ? 300 : 0),
+              valueDiff: twoDiff,
+              profile: tProfile,
+              type: 'pick-for-player',
+              whyTheyAccept: tName + ' gets proven ' + sellPl.pos,
+              whyYouAccept: 'Convert ' + sellPl.name + ' into ' + pk1.label + ' + ' + pk2.label
+            });
+          }
+        }
+      }
+    }
+  }
+
   // Deduplicate — remove same team+player combos
+
   var seen = new Set();
   var deduped = suggestions.filter(function(s) {
     var key = s.team + '|' + s.iGet.name + '|' + s.iGive.name;
@@ -3286,7 +3417,7 @@ function renderProspectScorer() {
         <td id="${'comp-wr-' + p.name}" style="white-space:nowrap;min-width:130px">${
           (p.comp || (STATE.aiComps && STATE.aiComps[p.name] && STATE.aiComps[p.name].comp))
             ? '<span style="color:var(--accent);font-weight:600;font-size:11px">' + (p.comp || STATE.aiComps[p.name].comp) + '</span>'
-            : '<button onclick="triggerAiComp(\'' + p.name.replace(/'/g,"\\'") + '\',\'WR\',' + JSON.stringify({dc:p.dc,t40:p.t40,wdom:p.wdom,boy:p.boy,ras:p.ras,hits:p.hits}) + ',this)" style="font-size:9px;padding:2px 6px;background:rgba(0,212,255,0.1);border:1px solid var(--accent);border-radius:3px;color:var(--accent);cursor:pointer">&#x26A1; AI</button>'
+            : '<button onclick="triggerAiCompByName(\'' + p.name.replace(/'/g,"\\'") + '\',\'WR\',this)" style="font-size:9px;padding:2px 6px;background:rgba(0,212,255,0.1);border:1px solid var(--accent);border-radius:3px;color:var(--accent);cursor:pointer">&#x26A1; AI</button>'
         }</td>
         <td style="font-size:10px;color:var(--text-muted);max-width:180px;white-space:normal">${p.note}</td>
       </tr>`;
@@ -3346,7 +3477,7 @@ function renderProspectScorer() {
         <td id="${'comp-rb-' + p.name}" style="white-space:nowrap;min-width:130px">${
           (p.comp || (STATE.aiComps && STATE.aiComps[p.name] && STATE.aiComps[p.name].comp))
             ? '<span style="color:var(--green);font-weight:600;font-size:11px">' + (p.comp || STATE.aiComps[p.name].comp) + '</span>'
-            : '<button onclick="triggerAiComp(\'' + p.name.replace(/'/g,"\\'") + '\',\'RB\',' + JSON.stringify({dc:p.dc,speed:p.speed,burst:p.burst,comp_bdr:p.comp_bdr,col_ypa:p.col_ypa,hits:p.hits}) + ',this)" style="font-size:9px;padding:2px 6px;background:rgba(76,255,145,0.1);border:1px solid var(--green);border-radius:3px;color:var(--green);cursor:pointer">&#x26A1; AI</button>'
+            : '<button onclick="triggerAiCompByName(\'' + p.name.replace(/'/g,"\\'") + '\',\'RB\',this)" style="font-size:9px;padding:2px 6px;background:rgba(76,255,145,0.1);border:1px solid var(--green);border-radius:3px;color:var(--green);cursor:pointer">&#x26A1; AI</button>'
         }</td>
         <td style="font-size:10px;color:var(--text-muted);max-width:180px;white-space:normal">${p.note}</td>
       </tr>`;
@@ -3497,6 +3628,22 @@ async function fetchAiComp(playerName, pos, profileData) {
     STATE.aiComps[playerName] = parsed;
     return parsed;
   } catch(e) { console.warn('AI comp failed:', playerName, e); return null; }
+}
+
+
+function triggerAiCompByName(playerName, pos, btnEl) {
+  // Build profile from PROSPECT_PROFILES lookup
+  const allProspects = [
+    ...(PROSPECT_PROFILES['WR_2025']||[]), ...(PROSPECT_PROFILES['WR_2026']||[]),
+    ...(PROSPECT_PROFILES['RB_2025']||[]), ...(PROSPECT_PROFILES['RB_2026']||[])
+  ];
+  const p = allProspects.find(x => x.name === playerName);
+  const profile = p
+    ? (pos === 'WR'
+        ? {dc:p.dc, t40:p.t40, wdom:p.wdom, boy:p.boy, ras:p.ras, hits:p.hits}
+        : {dc:p.dc, speed:p.speed, burst:p.burst, comp_bdr:p.comp_bdr, col_ypa:p.col_ypa, hits:p.hits})
+    : {};
+  triggerAiComp(playerName, pos, profile, btnEl);
 }
 
 async function triggerAiComp(playerName, pos, profileData, btnEl) {
