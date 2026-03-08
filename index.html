@@ -2568,58 +2568,79 @@ function dismissTrade(id) {
 }
 
 function renderTradeCard(s, i) {
-  var archA = getArchetype(s.iGet.pos, s.iGet.age);
-  var archB = getArchetype(s.iGive.pos, s.iGive.age);
-  var valueDiff = s.iGet.value - s.iGive.value;
+  var getVal  = s.iGet ? s.iGet.value : (s.iGetPick ? (s.iGetPick.value + (s.iGetPick2 ? s.iGetPick2.value : 0)) : 0);
+  var giveVal = (s.iGive ? s.iGive.value : 0) + (s.iGivePick ? s.iGivePick.value : 0);
+  var valueDiff = getVal - giveVal;
   var diffColor = valueDiff > 200 ? 'var(--green)' : valueDiff < -200 ? 'var(--red)' : 'var(--yellow)';
-  var activityColor = s.profile && s.profile.activity === 'HIGH' ? 'var(--green)' : s.profile && s.profile.activity === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)';
+  var actColor  = s.profile && s.profile.activity === 'HIGH' ? 'var(--green)' : s.profile && s.profile.activity === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)';
   var isTop = i === 0;
 
-  return '<div id="trade-card-' + s.id + '" style="background:var(--surface2);border:1px solid ' + (isTop?'var(--accent)':'var(--border)') + ';border-radius:12px;padding:16px;margin-bottom:12px;position:relative">' +
-    // Dismiss button
-    '<button onclick="dismissTrade(\'' + s.id + '\')" style="position:absolute;top:12px;right:12px;background:var(--surface3);border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:\'IBM Plex Mono\',monospace">✕ dismiss</button>' +
-    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;padding-right:80px">' +
-      (isTop?'<span style="font-family:\'Bebas Neue\',cursive;font-size:14px;color:var(--gold)">⭐ TOP PICK</span>':'<span class="mono muted" style="font-size:11px">#'+(i+1)+'</span>') +
-      '<span style="font-weight:600;font-size:14px">' + s.team + '</span>' +
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:' + activityColor + '">● ' + (s.profile?s.profile.activity:'?') + ' ACTIVITY</span>' +
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--text-dim)">' + (s.profile?s.profile.style:'') + '</span>' +
-    '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:12px">' +
-      '<div style="background:var(--surface3);border-radius:8px;padding:12px;border-left:3px solid var(--green)">' +
-        '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:6px">YOU RECEIVE</div>' +
-        '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGet.name + '</div>' +
-        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
-          posPill(s.iGet.pos) +
-          '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGet.value) + '</span>' +
-          '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGet.age + '</span>' +
-          (archA?'<span class="badge badge-'+archA.cls+'" style="font-size:8px">'+archA.label.split(' ')[0]+'</span>':'') +
-        '</div>' +
-      '</div>' +
-      '<div style="text-align:center;font-size:20px;color:var(--text-muted)">⇄</div>' +
-      '<div style="background:var(--surface3);border-radius:8px;padding:12px;border-left:3px solid var(--accent2)">' +
-        '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--accent2);letter-spacing:1px;margin-bottom:6px">YOU GIVE</div>' +
-        '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGive.name + '</div>' +
-        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
-          posPill(s.iGive.pos) +
-          '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGive.value) + '</span>' +
-          '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGive.age + '</span>' +
-          (archB?'<span class="badge badge-'+archB.cls+'" style="font-size:8px">'+archB.label.split(' ')[0]+'</span>':'') +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-    '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">' +
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:3px 8px;border-radius:4px;background:' + (valueDiff>200?'rgba(76,255,145,0.15)':valueDiff<-200?'rgba(255,68,68,0.15)':'rgba(255,215,0,0.15)') + ';color:' + diffColor + '">' +
-        (valueDiff>0?'+':'') + fmt(valueDiff) + ' value ' + (valueDiff>200?'(you win)':valueDiff<-200?'(they win)':'(fair)') +
-      '</span>' +
-      (s.type === 'age-swap' ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,165,0,0.15);color:var(--gold)">Age upgrade swap</span>' : '') +
-    '</div>' +
-    '<div style="border-top:1px solid var(--border);padding-top:10px">' +
-      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--text-muted);margin-bottom:4px;letter-spacing:0.5px">WHY IT WORKS</div>' +
-      '<div style="font-size:12px;color:var(--text-dim);margin-bottom:3px">✅ For you: ' + s.whyYouAccept + '</div>' +
-      '<div style="font-size:12px;color:var(--text-dim);margin-bottom:3px">✅ For them: ' + s.whyTheyAccept + '</div>' +
-      (s.profile && s.profile.notes?'<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:4px">💬 ' + s.profile.notes + '</div>':'') +
-    '</div>' +
-  '</div>';
+  function pill(pos) { return posPill(pos); }
+  function badge(arch) { return arch ? '<span class="badge badge-' + arch.cls + '" style="font-size:8px">' + arch.label.split(' ')[0] + '</span>' : ''; }
+
+  // YOU RECEIVE
+  var archA = s.iGet ? getArchetype(s.iGet.pos, s.iGet.age) : null;
+  var getPanel = s.iGet
+    ? '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGet.name + '</div>'
+      + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
+        + pill(s.iGet.pos)
+        + '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGet.value) + '</span>'
+        + '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGet.age + '</span>'
+        + badge(archA) + '</div>'
+    : '<div style="font-weight:600;font-size:13px;margin-bottom:4px">'
+        + (s.iGetPick ? s.iGetPick.label + (s.iGetPick2 ? ' + ' + s.iGetPick2.label : '') : '?') + '</div>'
+      + '<div style="display:flex;gap:6px;align-items:center">'
+        + '<span class="mono" style="font-size:11px;padding:2px 6px;border-radius:3px;background:rgba(255,215,0,0.15);color:var(--gold)">PICK</span>'
+        + '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(getVal) + '</span></div>';
+
+  // YOU GIVE
+  var archB = s.iGive ? getArchetype(s.iGive.pos, s.iGive.age) : null;
+  var givePanel = '';
+  if (s.iGive) {
+    givePanel = '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGive.name + '</div>'
+      + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
+        + pill(s.iGive.pos)
+        + '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGive.value) + '</span>'
+        + '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGive.age + '</span>'
+        + badge(archB) + '</div>'
+      + (s.iGivePick ? '<div style="margin-top:5px;font-size:10px;color:var(--gold)">+ ' + s.iGivePick.label + ' (' + fmt(s.iGivePick.value) + ')</div>' : '');
+  } else if (s.iGivePick) {
+    givePanel = '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGivePick.label + '</div>'
+      + '<div><span class="mono" style="font-size:11px;padding:2px 6px;border-radius:3px;background:rgba(255,215,0,0.15);color:var(--gold)">PICK</span>'
+      + '<span class="mono" style="font-size:11px;color:var(--accent);margin-left:6px">' + fmt(s.iGivePick.value) + '</span></div>';
+  }
+
+  var typeBadge = s.type === 'age-swap'    ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,165,0,0.15);color:var(--gold)">Age upgrade swap</span>'
+                : s.type === 'sweetened'   ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,215,0,0.12);color:var(--gold)">+ Pick sweetener</span>'
+                : s.type === 'pick-for-player' ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(180,76,255,0.15);color:var(--purple)">Sell for picks</span>'
+                : '';
+
+  var html = '<div id="trade-card-' + s.id + '" style="background:var(--surface2);border:1px solid ' + (isTop ? 'var(--accent)' : 'var(--border)') + ';border-radius:12px;padding:16px;margin-bottom:12px;position:relative">';
+  html += '<button onclick="dismissTrade(\'' + s.id + '\')" style="position:absolute;top:12px;right:12px;background:var(--surface3);border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer">✕ dismiss</button>';
+  html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;padding-right:80px">';
+  html += isTop ? '<span style="font-size:14px;color:var(--gold)">⭐ TOP PICK</span>' : '<span class="mono muted" style="font-size:11px">#' + (i + 1) + '</span>';
+  html += '<span style="font-weight:600;font-size:14px">' + s.team + '</span>';
+  html += '<span class="mono" style="font-size:10px;color:' + actColor + '">● ' + (s.profile ? s.profile.activity : '?') + ' ACTIVITY</span>';
+  html += '<span class="mono" style="font-size:10px;color:var(--text-dim)">' + (s.profile ? s.profile.style : '') + '</span>';
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:12px">';
+  html += '<div style="background:var(--surface3);border-radius:8px;padding:12px;border-left:3px solid var(--green)">';
+  html += '<div class="mono" style="font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:6px">YOU RECEIVE</div>' + getPanel;
+  html += '</div><div style="text-align:center;font-size:20px;color:var(--text-muted)">⇄</div>';
+  html += '<div style="background:var(--surface3);border-radius:8px;padding:12px;border-left:3px solid var(--accent2)">';
+  html += '<div class="mono" style="font-size:9px;color:var(--accent2);letter-spacing:1px;margin-bottom:6px">YOU GIVE</div>' + givePanel;
+  html += '</div></div>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">';
+  html += '<span class="mono" style="font-size:10px;padding:3px 8px;border-radius:4px;background:' + (valueDiff > 200 ? 'rgba(76,255,145,0.15)' : valueDiff < -200 ? 'rgba(255,68,68,0.15)' : 'rgba(255,215,0,0.15)') + ';color:' + diffColor + '">';
+  html += (valueDiff > 0 ? '+' : '') + fmt(valueDiff) + ' value ' + (valueDiff > 200 ? '(you win)' : valueDiff < -200 ? '(they win)' : '(fair)') + '</span>' + typeBadge;
+  html += '</div>';
+  html += '<div style="border-top:1px solid var(--border);padding-top:10px">';
+  html += '<div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:4px;letter-spacing:0.5px">WHY IT WORKS</div>';
+  html += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:3px">✅ For you: ' + s.whyYouAccept + '</div>';
+  html += '<div style="font-size:12px;color:var(--text-dim)">✅ For them: ' + s.whyTheyAccept + '</div>';
+  if (s.profile && s.profile.notes) html += '<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:4px">💬 ' + s.profile.notes + '</div>';
+  html += '</div></div>';
+  return html;
 }
 
 function runTradeFinder() {
@@ -2847,18 +2868,21 @@ function findTrades() {
     var tNeeds = teamNeeds[tName];
 
     // Their picks we could target
-    var theirPicks = (STATE.tradedPicks || [])
-      .filter(function(pk) {
-        return pk.currentOwner === tName &&
-               pk.year >= new Date().getFullYear() &&
-               pk.year <= new Date().getFullYear() + 2;
-      })
-      .map(function(pk) {
-        var val = CONFIG.PICK_VALUES[pk.label] || 0;
-        return { label: pk.label, value: val, year: pk.year, round: pk.round };
-      })
-      .filter(function(pk) { return pk.value > 500; })
-      .sort(function(a,b) { return b.value - a.value; });
+    // Get picks owned by this team from STATE.pickMap ("year_round_rosterId" => teamName)
+    var theirPicks = [];
+    var curYear = new Date().getFullYear();
+    Object.entries(STATE.pickMap || {}).forEach(function(entry) {
+      var key = entry[0], owner = entry[1];
+      if (owner !== tName) return;
+      var parts = key.split('_');
+      var yr = parseInt(parts[0]), rd = parseInt(parts[1]), origRosterId = parts[2];
+      if (yr < curYear || yr > curYear + 2) return;
+      var origTeam = STATE.rosterIdMap ? (STATE.rosterIdMap[origRosterId] || STATE.rosterIdMap[parseInt(origRosterId)] || 'Unknown') : 'Unknown';
+      var label = getPickLabel(yr, rd, origTeam);
+      var val = getPickValue(yr, rd, origTeam);
+      if (val > 400) theirPicks.push({ label: label, value: val, year: yr, round: rd });
+    });
+    theirPicks.sort(function(a,b) { return b.value - a.value; });
 
     var mySellPlayers = (STATE.myRoster || []).filter(function(pl) {
       if (CONFIG.PROTECTED.indexOf(pl.name) >= 0) return false;
@@ -2922,8 +2946,16 @@ function findTrades() {
     return true;
   });
 
-  deduped.sort(function(a,b) { return b.score - a.score; });
-  return deduped;
+  // ── Balance filter: only show trades where value gap ≤ 20% of total ──────
+  var balanced = deduped.filter(function(s) {
+    var getVal  = s.iGet ? s.iGet.value : (s.iGetPick ? (s.iGetPick.value + (s.iGetPick2 ? s.iGetPick2.value : 0)) : 0);
+    var giveVal = (s.iGive ? s.iGive.value : 0) + (s.iGivePick ? s.iGivePick.value : 0) + (s.iGivePick2 ? s.iGivePick2.value : 0);
+    var total = getVal + giveVal || 1;
+    var gap = Math.abs(getVal - giveVal);
+    return gap / total <= 0.20; // within 20% = fair enough to propose
+  });
+  balanced.sort(function(a,b) { return b.score - a.score; });
+  return balanced;
 }
 // ============================================================
 // LEAGUE INTEL
