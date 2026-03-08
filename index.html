@@ -2940,7 +2940,7 @@ function findTrades() {
 
   var seen = new Set();
   var deduped = suggestions.filter(function(s) {
-    var key = s.team + '|' + s.iGet.name + '|' + s.iGive.name;
+    var key = s.team + '|' + (s.iGet ? s.iGet.name : s.iGetPick ? s.iGetPick.label : 'pick') + '|' + (s.iGive ? s.iGive.name : s.iGivePick ? s.iGivePick.label : 'pick');
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
