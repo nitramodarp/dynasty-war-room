@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -740,14 +741,6 @@
 
   <!-- DASHBOARD TAB -->
   <div class="tab-content active" id="tab-dashboard">
-
-    <!-- GM BRIEF -->
-    <div id="gmBriefCard" style="background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:72px">
-      <div id="gmBriefInner" style="display:flex;align-items:center;gap:20px;flex:1">
-        <div id="gmBriefSpinner" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">⟳ GENERATING GM BRIEF...</div>
-      </div>
-    </div>
-
     <div class="grid-4" id="dashStatCards">
       <div class="stat-card">
         <div class="stat-value" id="ds-rank" style="color:var(--accent)">—</div>
@@ -1100,7 +1093,7 @@ const CONFIG = {
     '559519052479676416': 'NateDawg726',
     '739715132984307712': 'demon44',
     '997289100904370176': 'christinanesmith',
-    '801223429184409600': 'mikeatlanta',
+    '801223429184409600': 'mikelanta',
     '997331216271499264': 'Mowens54'
   },
   // Archetype age brackets
@@ -1132,8 +1125,8 @@ const CONFIG = {
     'Scotty Miller': 'Scott Miller',
   },
 
+  // Pick values (KTC approximate)
   ANATOMY_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1DAhsc8wfNeit65ndDYUuxoON_rnbiHnbtFPi9aRpeEk/export?format=csv&gid=1279331920',
-  // Pick values (KTC approximate) — overridden at runtime by live KTC CSV where available
   PICK_VALUES: {
     '2026 Early 1st': 5994, '2026 Mid 1st': 4687, '2026 Late 1st': 4283,
     '2026 Early 2nd': 3486, '2026 Mid 2nd': 3056, '2026 Late 2nd': 2798,
@@ -1166,33 +1159,33 @@ const CONFIG = {
 // RB: R1-2 DC, SpeedScore≥100, Burst≥121, CompBDR≥50, ColYPA≥6.0 → combo hit rate 44-63%
 // ============================================================
 const PROSPECT_PROFILES = {
-  WR_THRESHOLDS: { dc_max: 3.99, speed: 4.59, split: 1.56, wdom: 25, boa_min: 18, boa_max: 21, ras: 8.0 },
+  WR_THRESHOLDS: { dc_max: 3.99, speed: 4.59, split: 1.56, wdom: 25, boa_min: 18, boa_max: 21, ras: 8.0, yptpa: 3.0 },
   RB_THRESHOLDS: { dc_max: 2.99, speed_score: 100, burst: 121, comp_bdr: 50, col_ypa: 6.0 },
   // 2025 Draft Class WRs
   WR_2025: [
-    { name:'Jayden Higgins',    dc:2.02, t40:4.47, split:1.54, wdom:32, boy:2, ras:9.63, early:'Y', hits:4, comp:'Curtis Samuel', note:'Highest threshold score in class — production+speed+RAS+DC all green' },
-    { name:'Emeka Egbuka',      dc:1.19, t40:4.54, split:1.50, wdom:18, boy:2, ras:9.72, early:'Y', hits:3, comp:'Amari Cooper', note:'Elite RAS, R1 DC, clean 10yd split — WDOM only miss' },
-    { name:'Tetairoa McMillan', dc:1.08, t40:4.56, split:1.59, wdom:33, boy:1, ras:null, early:'Y', hits:3, comp:'Davante Adams', note:'R1.08, elite WDOM — BOY Year 1 is elite signal; split slightly over threshold' },
-    { name:'Tre Harris',        dc:2.23, t40:4.54, split:1.57, wdom:20, boy:3, ras:9.23, early:'Y', hits:3, comp:'Corey Davis', note:'Strong RAS, solid DC — WDOM just under 25 threshold' },
-    { name:'Luther Burden',     dc:2.07, t40:4.41, split:1.55, wdom:27, boy:2, ras:null, early:'N', hits:3, comp:'Jaylen Waddle', note:'Elite speed, WDOM clears, R2 DC — no early declare, missing RAS' },
-    { name:'Matthew Golden',    dc:1.23, t40:4.29, split:1.47, wdom:18, boy:3, ras:null, early:'N', hits:2, comp:'Marquise Brown', note:'Blazing 40 and split, R1 DC — WDOM misses; elite speed profile' },
-    { name:'Jaylin Noel',       dc:3.15, t40:4.39, split:1.52, wdom:21, boy:3, ras:9.75, early:'Y', hits:3, comp:'Mecole Hardman', note:'Late R3 DC hurts — speed/split/RAS all elite; WDOM near threshold' },
-    { name:'Kyle Williams',     dc:3.05, t40:4.40, split:1.60, wdom:28, boy:1, ras:6.35, early:'N', hits:3, comp:'Gabriel Davis', note:'BOY Year 1, WDOM clears, R3 DC — RAS miss, split slightly over' },
-    { name:'Elic Ayomanor',     dc:4.34, t40:4.44, split:1.56, wdom:38, boy:2, ras:9.71, early:'Y', hits:3, comp:'Dez Bryant', note:'Massive WDOM 38, elite RAS — late DC is the only red flag' },
-    { name:'Travis Hunter',     dc:1.02, t40:null, split:null, wdom:26, boy:3, ras:null, early:'N', hits:2, comp:'Diontae Johnson', note:'R1.02, WDOM clears — missing combine data (two-way player); watch DC + production' },
+    { name:'Jayden Higgins',    dc:2.02, t40:4.47, split:1.54, wdom:32, boy:2, ras:9.63, yptpa:null, early:'Y', hits:4, comp:'Curtis Samuel', note:'Highest threshold score in class — production+speed+RAS+DC all green' },
+    { name:'Emeka Egbuka',      dc:1.19, t40:4.54, split:1.50, wdom:18, boy:2, ras:9.72, yptpa:null, early:'Y', hits:3, comp:'Amari Cooper', note:'Elite RAS, R1 DC, clean 10yd split — WDOM only miss' },
+    { name:'Tetairoa McMillan', dc:1.08, t40:4.56, split:1.59, wdom:33, boy:1, ras:null, yptpa:null, early:'Y', hits:3, comp:'Davante Adams', note:'R1.08, elite WDOM — BOY Year 1 is elite signal; split slightly over threshold' },
+    { name:'Tre Harris',        dc:2.23, t40:4.54, split:1.57, wdom:20, boy:3, ras:9.23, yptpa:null, early:'Y', hits:3, comp:'Corey Davis', note:'Strong RAS, solid DC — WDOM just under 25 threshold' },
+    { name:'Luther Burden',     dc:2.07, t40:4.41, split:1.55, wdom:27, boy:2, ras:null, yptpa:null, early:'N', hits:3, comp:'Jaylen Waddle', note:'Elite speed, WDOM clears, R2 DC — no early declare, missing RAS' },
+    { name:'Matthew Golden',    dc:1.23, t40:4.29, split:1.47, wdom:18, boy:3, ras:null, yptpa:null, early:'N', hits:2, comp:'Marquise Brown', note:'Blazing 40 and split, R1 DC — WDOM misses; elite speed profile' },
+    { name:'Jaylin Noel',       dc:3.15, t40:4.39, split:1.52, wdom:21, boy:3, ras:9.75, yptpa:null, early:'Y', hits:3, comp:'Mecole Hardman', note:'Late R3 DC hurts — speed/split/RAS all elite; WDOM near threshold' },
+    { name:'Kyle Williams',     dc:3.05, t40:4.40, split:1.60, wdom:28, boy:1, ras:6.35, yptpa:null, early:'N', hits:3, comp:'Gabriel Davis', note:'BOY Year 1, WDOM clears, R3 DC — RAS miss, split slightly over' },
+    { name:'Elic Ayomanor',     dc:4.34, t40:4.44, split:1.56, wdom:38, boy:2, ras:9.71, yptpa:null, early:'Y', hits:3, comp:'Dez Bryant', note:'Massive WDOM 38, elite RAS — late DC is the only red flag' },
+    { name:'Travis Hunter',     dc:1.02, t40:null, split:null, wdom:26, boy:3, ras:null, yptpa:null, early:'N', hits:2, comp:'Diontae Johnson', note:'R1.02, WDOM clears — missing combine data (two-way player); watch DC + production' },
   ],
   // 2026 Draft Class WRs (no DC yet — combine data partial)
   WR_2026: [
-    { name:'Jeff Caldwell',      dc:null, t40:4.31, split:null, wdom:38, boy:2, ras:null, early:null, hits:2, comp:'Stefon Diggs', note:'Elite WDOM 38 + blazing 40 — top 2026 WR prospect on production+speed alone' },
-    { name:'Bryce Lance',        dc:null, t40:4.34, split:null, wdom:34, boy:3, ras:null, early:null, hits:2, comp:'Adam Thielen', note:'Elite speed + WDOM — BOY Year 3 is late but production is legit' },
-    { name:'Ted Hurst',          dc:null, t40:4.42, split:null, wdom:33, boy:2, ras:null, early:null, hits:2, comp:'Jarvis Landry', note:'Strong WDOM and BOY Year 2 profile — combine data pending' },
-    { name:'Tyren Montgomery',   dc:null, t40:null, split:null, wdom:38, boy:6, ras:null, early:null, hits:1, comp:'Kendall Hinton', note:'Elite WDOM but very late BOY (6th year) — age concern' },
-    { name:'Cooper Barkate',     dc:null, t40:null, split:null, wdom:26, boy:3, ras:null, early:null, hits:1, comp:'Cole Beasley', note:'WDOM clears threshold — no speed data yet' },
-    { name:'Griffin Wilde',      dc:null, t40:null, split:null, wdom:35, boy:2, ras:null, early:null, hits:1, comp:'Chris Godwin', note:'Great WDOM, BOY Year 2 — combine data needed before full grade' },
-    { name:'Jordyn Tyson',       dc:null, t40:null, split:null, wdom:30, boy:1, ras:null, early:null, hits:1, comp:'Rashod Bateman', note:'BOY Year 1 with 30 WDOM — could jump to 3+ hits post-combine' },
-    { name:'Brenen Thompson',    dc:null, t40:4.26, split:null, wdom:12, boy:4, ras:null, early:null, hits:1, comp:'Marquise Goodwin', note:'Fastest 40 in class (4.26) — but WDOM only 12, very late BOY' },
-    { name:'KC Concepcion',      dc:null, t40:null, split:null, wdom:28, boy:1, ras:null, early:null, hits:1, comp:'Brandin Cooks', note:'BOY Year 1, WDOM clears — needs combine data' },
-    { name:'Elijah Sarratt',     dc:null, t40:null, split:null, wdom:27, boy:2, ras:null, early:null, hits:1, comp:'Allen Lazard', note:'WDOM clears, BOY Year 2 — watch combine for speed/split' },
+    { name:'Jeff Caldwell',      dc:null, t40:4.31, split:null, wdom:38, boy:2, ras:null, yptpa:null, early:null, hits:2, comp:'Stefon Diggs', note:'Elite WDOM 38 + blazing 40 — top 2026 WR prospect on production+speed alone' },
+    { name:'Bryce Lance',        dc:null, t40:4.34, split:null, wdom:34, boy:3, ras:null, yptpa:null, early:null, hits:2, comp:'Adam Thielen', note:'Elite speed + WDOM — BOY Year 3 is late but production is legit' },
+    { name:'Ted Hurst',          dc:null, t40:4.42, split:null, wdom:33, boy:2, ras:null, yptpa:null, early:null, hits:2, comp:'Jarvis Landry', note:'Strong WDOM and BOY Year 2 profile — combine data pending' },
+    { name:'Tyren Montgomery',   dc:null, t40:null, split:null, wdom:38, boy:6, ras:null, yptpa:null, early:null, hits:1, comp:'Kendall Hinton', note:'Elite WDOM but very late BOY (6th year) — age concern' },
+    { name:'Cooper Barkate',     dc:null, t40:null, split:null, wdom:26, boy:3, ras:null, yptpa:null, early:null, hits:1, comp:'Cole Beasley', note:'WDOM clears threshold — no speed data yet' },
+    { name:'Griffin Wilde',      dc:null, t40:null, split:null, wdom:35, boy:2, ras:null, yptpa:null, early:null, hits:1, comp:'Chris Godwin', note:'Great WDOM, BOY Year 2 — combine data needed before full grade' },
+    { name:'Jordyn Tyson',       dc:null, t40:null, split:null, wdom:30, boy:1, ras:null, yptpa:null, early:null, hits:1, comp:'Rashod Bateman', note:'BOY Year 1 with 30 WDOM — could jump to 3+ hits post-combine' },
+    { name:'Brenen Thompson',    dc:null, t40:4.26, split:null, wdom:12, boy:4, ras:null, yptpa:null, early:null, hits:1, comp:'Marquise Goodwin', note:'Fastest 40 in class (4.26) — but WDOM only 12, very late BOY' },
+    { name:'KC Concepcion',      dc:null, t40:null, split:null, wdom:28, boy:1, ras:null, yptpa:null, early:null, hits:1, comp:'Brandin Cooks', note:'BOY Year 1, WDOM clears — needs combine data' },
+    { name:'Elijah Sarratt',     dc:null, t40:null, split:null, wdom:27, boy:2, ras:null, yptpa:null, early:null, hits:1, comp:'Allen Lazard', note:'WDOM clears, BOY Year 2 — watch combine for speed/split' },
   ],
   // 2025 Draft Class RBs
   RB_2025: [
@@ -1392,18 +1385,10 @@ function posPill(pos) {
 // ============================================================
 // DATA FETCHING
 // ============================================================
-// Wraps fetch with a hard timeout so a slow endpoint can't hang the sync chain
-function fetchWithTimeout(url, options = {}, ms = 10000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ms);
-  return fetch(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(timer));
-}
-
 async function fetchKTC() {
   setLoadingProgress(10, 'FETCHING KTC VALUES...');
   const url = CONFIG.KTC_CSV_URL;
-  const resp = await fetchWithTimeout(url);
+  const resp = await fetch(url);
   const text = await resp.text();
   const lines = text.trim().split('\n');
   const players = [];
@@ -1454,16 +1439,16 @@ function parseCSVLine(line) {
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
     if (c === '"') { inQuotes = !inQuotes; }
-    else if (c === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+    else if (c === ',' && !inQuotes) { result.push(current); current = ''; }
     else { current += c; }
   }
-  result.push(current.trim());
+  result.push(current);
   return result;
 }
 
 async function fetchSleeperPlayers() {
   setLoadingProgress(25, 'FETCHING SLEEPER PLAYER DATABASE...');
-  const resp = await fetchWithTimeout('https://api.sleeper.app/v1/players/nfl', {}, 12000);
+  const resp = await fetch('https://api.sleeper.app/v1/players/nfl');
   const data = await resp.json();
   const map = {};
   for (const id in data) {
@@ -1481,7 +1466,7 @@ async function fetchSleeperPlayers() {
 
 async function fetchRosters() {
   setLoadingProgress(45, 'FETCHING LEAGUE ROSTERS...');
-  const resp = await fetchWithTimeout(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/rosters`);
+  const resp = await fetch(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/rosters`);
   const rosters = await resp.json();
   const rosterMap = {};
   const rosterIdMap = {};
@@ -1504,7 +1489,7 @@ async function fetchRosters() {
 
 async function fetchTradedPicks() {
   setLoadingProgress(60, 'FETCHING TRADED PICKS...');
-  const resp = await fetchWithTimeout(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/traded_picks`);
+  const resp = await fetch(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/traded_picks`);
   STATE.tradedPicks = await resp.json();
 }
 
@@ -1635,16 +1620,27 @@ function buildAllRosters() {
   STATE._ktcNameMap = buildNameMap();
   calcVORPBaselines();
   const allRosters = {};
+  const rosterPicksFromPlayers = {}; // ownerName => [{season, round, rosterId, slot}]
 
   for (const ownerId in STATE.rosters) {
     const ownerName = CONFIG.OWNER_MAP[ownerId];
     if (!ownerName) continue;
     const players = [];
     const unmatched = [];
+    rosterPicksFromPlayers[ownerName] = [];
 
     for (const pid of STATE.rosters[ownerId]) {
-      // Dynasty pick IDs look like "2026_1_12_1" = season_round_rosterId_slot — skip them here
-      if (/^\d{4}_\d+_\d+_\d+$/.test(pid)) continue;
+      // Dynasty pick IDs look like "2026_1_12_1" = season_round_rosterId_slot
+      const pickMatch = pid.match(/^(\d{4})_(\d+)_(\d+)_(\d+)$/);
+      if (pickMatch) {
+        rosterPicksFromPlayers[ownerName].push({
+          season: pickMatch[1],
+          round: parseInt(pickMatch[2]),
+          rosterId: parseInt(pickMatch[3]),
+          slot: parseInt(pickMatch[4])
+        });
+        continue;
+      }
 
       const sleeperData = STATE.sleeperPlayers[pid];
       if (!sleeperData) continue;
@@ -1677,6 +1673,8 @@ function buildAllRosters() {
   }
   STATE.allRosters = allRosters;
   STATE.myRoster = allRosters[CONFIG.MY_TEAM_NAME] || [];
+  STATE.rosterPicksFromPlayers = rosterPicksFromPlayers;
+  console.log('Picks parsed from roster:', rosterPicksFromPlayers[CONFIG.MY_TEAM_NAME]);
 }
 
 function buildPickMap() {
@@ -1898,87 +1896,7 @@ function renderDashboard() {
   renderRosterTable('rosterOverviewBody', STATE.myRoster);
 }
 
-  // Roster overview table
-  renderRosterTable('rosterOverviewBody', STATE.myRoster);
-}
-
-// ============================================================
-// GM BRIEF — AI-generated narrative summary of current roster state
-// ============================================================
-async function generateGMBrief() {
-  const card = document.getElementById('gmBriefCard');
-  const inner = document.getElementById('gmBriefInner');
-  if (!card || !inner) return;
-
-  const stats = calcTeamStats(CONFIG.MY_TEAM_NAME);
-  const rankings = STATE.powerRankings || [];
-  const myRank = rankings.findIndex(r => r.name === CONFIG.MY_TEAM_NAME) + 1;
-  const window = calcContentionWindow(STATE.myRoster);
-
-  // Build compact roster context for the prompt
-  const top5 = [...STATE.myRoster].sort((a,b) => b.value - a.value).slice(0,5).map(p => `${p.name} (${p.pos}, age ${p.age}, KTC ${p.value})`);
-  const sellPlayers = STATE.myRoster.filter(p => { const h = getRosterHealthFlag(p); return h?.flag === 'SELL' || h?.flag === 'CUT'; }).map(p => p.name);
-  const injuredPlayers = STATE.myRoster.filter(p => p.injuryFlag).map(p => `${p.name} (${p.injuryFlag.label})`);
-  const myPicks = (STATE.myPicks || []).map(p => p.label).join(', ') || 'none';
-  const posVORPs = ['QB','RB','WR','TE'].map(pos => {
-    const v = STATE.myRoster.filter(p=>p.pos===pos).reduce((s,p)=>s+p.vorp,0);
-    return `${pos}: ${v > 0 ? '+' : ''}${Math.round(v)}`;
-  }).join(', ');
-
-  const prompt = `You are a sharp, direct dynasty fantasy football analyst writing a GM brief for a 12-team Superflex 0.5PPR 0.5TEP league. Your job is to produce a tightly edited 3-part briefing card:
-
-1. STATE_LABEL: 2-4 words capturing the team's current strategic posture (e.g. "Window Opening", "Steady State", "Sell Clock Running", "Capital Accumulation Mode"). Be precise, not generic.
-2. NARRATIVE: One sentence, 15-25 words. Direct, editorial voice — like a beat reporter who knows this team. Reference the most interesting specific tension or opportunity in the data.
-3. PRIORITY: One concrete action or watchpoint, 10-15 words. Start with a verb.
-
-Roster context:
-- League: 12-team SF 0.5PPR 0.5TEP
-- Power rank: #${myRank} of 12
-- Total value: ${fmt(stats.totalValue)} (roster: ${fmt(stats.totalRosterValue)} + picks: ${fmt(stats.totalPickValue)})
-- Avg age: ${stats.avgAge.toFixed(1)}
-- Contention window: ${window.label}
-- VORP by position: ${posVORPs}
-- Top 5 assets: ${top5.join('; ')}
-- Picks held: ${myPicks}
-- Sell/cut candidates: ${sellPlayers.length ? sellPlayers.join(', ') : 'none flagged'}
-- Injured: ${injuredPlayers.length ? injuredPlayers.join(', ') : 'none'}
-
-Respond ONLY with a JSON object, no markdown, no preamble:
-{"state":"...","narrative":"...","priority":"..."}`;
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await resp.json();
-    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    const brief = JSON.parse(text.replace(/```json|```/g,'').trim());
-
-    // Determine accent color from contention window
-    const accentColor = window.color || 'var(--accent)';
-
-    inner.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:2px;min-width:160px">
-        <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:${accentColor};line-height:1">${brief.state}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#${myRank} OF 12 · ${window.label} · AGE ${stats.avgAge.toFixed(1)}</div>
-      </div>
-      <div style="flex:1;border-left:1px solid var(--border);padding-left:20px;display:flex;flex-direction:column;gap:6px">
-        <div style="font-size:13px;color:var(--text);line-height:1.5;font-weight:400">${brief.narrative}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${accentColor};letter-spacing:0.3px">▶ ${brief.priority}</div>
-      </div>
-    `;
-    card.style.borderLeftColor = accentColor;
-  } catch(e) {
-    inner.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted)">GM brief unavailable</div>`;
-    console.warn('GM brief failed:', e);
-  }
-}
+function renderRosterTable(tbodyId, players) {
   const sorted = [...players].sort((a,b) => {
     const posOrder = {QB:0,RB:1,WR:2,TE:3};
     return (posOrder[a.pos]||9) - (posOrder[b.pos]||9) || b.value - a.value;
@@ -2594,7 +2512,7 @@ const OWNER_PROFILES = {
   'NateDawg726': { activity: 'MEDIUM', style: 'Veteran Buyer', buys: ['proven veterans'], sells: ['young upside'], notes: 'Desperate for QB upgrade. Dak at 32.6 is a problem.' },
   'demon44': { activity: 'MEDIUM', style: 'Dynasty Builder', buys: ['young QB'], sells: ['surplus'], notes: 'Drake Maye franchise QB. Terrible TE room in TE premium.' },
   'christinanesmith': { activity: 'LOW', style: 'Unknown', buys: ['proven RB'], sells: ['TE surplus'], notes: 'Inactive trader. College freshman. Has TE surplus with Bowers+Kincaid+Theo Johnson.' },
-  'mikeatlanta': { activity: 'HIGH', style: 'Win-Now Pick Spender', buys: ['proven RB','young QB','TE'], sells: ['aging WR','surplus QB'], notes: 'Drake Maye anchor across leagues. Elite young RBs (Hampton, Irving). Critical TE hole in TEP format — best Kittle buyer in league.' },
+  'mikelanta': { activity: 'HIGH', style: 'Youth Stacker', buys: ['young talent'], sells: ['surplus QB'], notes: 'Deep young roster. 3 QBs with Williams as franchise. Bryce Young surplus.' },
   'Mowens54': { activity: 'HIGH', style: 'Chronic Churner', buys: ['proven RB'], sells: ['QB surplus'], notes: 'Most active trader across all leagues. Always needs RBs. Has Burrow+Nix surplus.' },
 };
 
@@ -2659,6 +2577,7 @@ function renderTradeCard(s, i) {
   var actColor  = s.profile && s.profile.activity === 'HIGH' ? 'var(--green)' : s.profile && s.profile.activity === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)';
   var isTop = i === 0;
 
+  function pill(pos) { return posPill(pos); }
   function badge(arch) { return arch ? '<span class="badge badge-' + arch.cls + '" style="font-size:8px">' + arch.label.split(' ')[0] + '</span>' : ''; }
 
   // YOU RECEIVE
@@ -2666,7 +2585,7 @@ function renderTradeCard(s, i) {
   var getPanel = s.iGet
     ? '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGet.name + '</div>'
       + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
-        + posPill(s.iGet.pos)
+        + pill(s.iGet.pos)
         + '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGet.value) + '</span>'
         + '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGet.age + '</span>'
         + badge(archA) + '</div>'
@@ -2682,7 +2601,7 @@ function renderTradeCard(s, i) {
   if (s.iGive) {
     givePanel = '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGive.name + '</div>'
       + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
-        + posPill(s.iGive.pos)
+        + pill(s.iGive.pos)
         + '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGive.value) + '</span>'
         + '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGive.age + '</span>'
         + badge(archB) + '</div>'
@@ -3177,14 +3096,6 @@ async function syncAll() {
   btn.disabled = true;
   btn.textContent = '⟳ Syncing...';
 
-  // Safety net: always dismiss the overlay after 15 seconds no matter what
-  const safetyTimer = setTimeout(() => {
-    document.getElementById('loadingOverlay').style.display = 'none';
-    document.getElementById('lastSync').textContent = 'Sync timed out — check console';
-    btn.disabled = false;
-    btn.textContent = '⟳ Sync Data';
-  }, 15000);
-
   try {
     await fetchKTC();
     setLoadingProgress(35, 'FETCHING SLEEPER DATA...');
@@ -3201,22 +3112,19 @@ async function syncAll() {
     calcPowerRankings();
     setLoadingProgress(95, 'RENDERING...');
     renderDashboard();
-    generateGMBrief(); // non-blocking — renders async after main UI is ready
     populatePickDropdowns();
     document.getElementById('lastSync').textContent = 'Synced ' + new Date().toLocaleTimeString();
     setLoadingProgress(100, 'COMPLETE');
   } catch(e) {
     console.error(e);
     document.getElementById('lastSync').textContent = 'Sync failed: ' + e.message;
-    setLoadingProgress(100, 'ERROR — check console');
-  } finally {
-    clearTimeout(safetyTimer);
-    btn.disabled = false;
-    btn.textContent = '⟳ Sync Data';
-    setTimeout(() => {
-      document.getElementById('loadingOverlay').style.display = 'none';
-    }, 300);
   }
+
+  btn.disabled = false;
+  btn.textContent = '⟳ Sync Data';
+  setTimeout(() => {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }, 300);
 }
 
 // Close autocomplete on outside click
@@ -3631,8 +3539,6 @@ function renderProspectScorer() {
 
 // ============================================================
 // LIVE PROSPECT DATA FETCH — Anatomy of Top WR & RB Google Sheet
-// Header-based parser: finds columns by name, not by position.
-// Immune to sheet column reordering or insertion of new columns.
 // ============================================================
 async function fetchProspectData(showStatus) {
   const url = CONFIG.ANATOMY_SHEET_URL;
@@ -3641,11 +3547,21 @@ async function fetchProspectData(showStatus) {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const text = await resp.text();
+    const rows = text.trim().split('\n').map(row => {
+      // Handle quoted fields with commas
+      const result = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < row.length; i++) {
+        const ch = row[i];
+        if (ch === '"') { inQ = !inQ; }
+        else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+        else { cur += ch; }
+      }
+      result.push(cur.trim());
+      return result;
+    });
 
-    const rows = text.trim().split('\n').map(parseCSVLine);
-    if (rows.length < 2) throw new Error('Sheet returned no data rows');
-
-    const headers = rows[0].map(h => h.toLowerCase().trim());
+    // Skip header row (row 0)
     const dataRows = rows.slice(1);
 
     function parseNum(v) {
@@ -3656,59 +3572,6 @@ async function fetchProspectData(showStatus) {
     function parseStr(v) {
       return (v && v.trim() !== '' && v.trim() !== 'N/A') ? v.trim() : null;
     }
-
-    // Resolve a column index by searching for header keywords (first match wins).
-    // Returns -1 if no matching header is found.
-    function col(keywords, startFrom = 0) {
-      for (const kw of keywords) {
-        const idx = headers.findIndex((h, i) => i >= startFrom && h.includes(kw.toLowerCase()));
-        if (idx !== -1) return idx;
-      }
-      return -1;
-    }
-
-    // ── WR column discovery ──────────────────────────────────────
-    // The WR section always starts at column 0 (player name is the first column).
-    const WR_NAME  = 0;
-    const WR_DC    = col(['draft capital', 'dc'], 1);
-    const WR_40    = col(['40 yard', '40t', '40-', '40yd'], 1);
-    const WR_SPLIT = col(['10 yd', '10yd', 'split', '10-yard'], 1);
-    const WR_WDOM  = col(['wdom', 'dom', 'target share', 'tgt share'], 1);
-    const WR_BOY   = col(['boy', 'breakout year', 'breakout age'], 1);
-    const WR_EARLY = col(['early declare', 'early', 'declare'], 1);
-    const WR_RAS   = col(['ras'], 1);
-
-    // ── RB column discovery ──────────────────────────────────────
-    // The RB section starts after the WR block. We locate it by finding
-    // a second "player" or "name" header to the right of column 0.
-    const RB_NAME_CANDIDATES = ['player', 'name', 'rb name', 'rb player'];
-    let RB_NAME = -1;
-    for (const kw of RB_NAME_CANDIDATES) {
-      // Search from col 5 onward to skip the WR name column at 0
-      const idx = headers.findIndex((h, i) => i >= 5 && h.includes(kw));
-      if (idx !== -1) { RB_NAME = idx; break; }
-    }
-    // Fallback: find the first column after col 5 where header is blank or
-    // matches a known RB-section label
-    if (RB_NAME === -1) {
-      // Try locating via the SpeedScore header, then back up one
-      const spdIdx = col(['speed score', 'speedscore', 'speed sc'], 5);
-      if (spdIdx > 0) RB_NAME = spdIdx - 1;
-    }
-
-    // RB metrics — search from RB_NAME onward so we stay in the RB section
-    const RB_START = Math.max(RB_NAME, 5);
-    const RB_DC    = col(['draft capital', 'dc'], RB_START + 1);
-    const RB_SPD   = col(['speed score', 'speedscore', 'speed sc'], RB_START);
-    const RB_40    = col(['40 yard', '40t', '40-', '40yd'], RB_START);
-    const RB_BURST = col(['burst'], RB_START);
-    const RB_BDR   = col(['comp bdr', 'compbdr', 'bdr'], RB_START);
-    const RB_YPA   = col(['col ypa', 'colypa', 'college ypa', 'ypa'], RB_START);
-
-    console.log('Prospect sheet column map:', {
-      WR: { name: WR_NAME, dc: WR_DC, t40: WR_40, split: WR_SPLIT, wdom: WR_WDOM, boy: WR_BOY, early: WR_EARLY, ras: WR_RAS },
-      RB: { name: RB_NAME, dc: RB_DC, speed: RB_SPD, t40: RB_40, burst: RB_BURST, bdr: RB_BDR, ypa: RB_YPA }
-    });
 
     const WR_THRESH = PROSPECT_PROFILES.WR_THRESHOLDS;
     const RB_THRESH = PROSPECT_PROFILES.RB_THRESHOLDS;
@@ -3737,37 +3600,31 @@ async function fetchProspectData(showStatus) {
     const newWR = [], newRB = [];
 
     for (const row of dataRows) {
-      // ── WR row ──
-      const wrName = parseStr(row[WR_NAME]);
-      // Guard: reject rows where "name" parses as a pure number (sheet noise)
-      if (wrName && isNaN(parseFloat(wrName))) {
-        const dc    = WR_DC    >= 0 ? parseNum(row[WR_DC])    : null;
-        const t40   = WR_40    >= 0 ? parseNum(row[WR_40])    : null;
-        const split = WR_SPLIT >= 0 ? parseNum(row[WR_SPLIT]) : null;
-        const wdom  = WR_WDOM  >= 0 ? parseNum(row[WR_WDOM])  : null;
-        const boy   = WR_BOY   >= 0 ? parseNum(row[WR_BOY])   : null;
-        const early = WR_EARLY >= 0 ? parseStr(row[WR_EARLY]) : null;
-        const ras   = WR_RAS   >= 0 ? parseNum(row[WR_RAS])   : null;
+      // WR (cols 0-15)
+      const wrName = parseStr(row[0]);
+      if (wrName) {
+        const dc    = parseNum(row[1]);
+        const t40   = parseNum(row[2]);
+        const split = parseNum(row[3]);
+        const wdom  = parseNum(row[4]);
+        const boy   = parseNum(row[7]);
+        const early = parseStr(row[8]);
+        const ras   = parseNum(row[14]);
         const hits  = calcWrHits(dc, t40, split, wdom, boy, ras);
         const existingWR = (PROSPECT_PROFILES.WR_2026 || []).find(x => x.name === wrName);
-        newWR.push({ name: wrName, dc, t40, split,
-          wdom: wdom != null ? Math.round(wdom) : null,
-          boy:  boy  != null ? Math.round(boy)  : null,
-          early, ras, hits, note: '',
+        newWR.push({ name: wrName, dc, t40, split, wdom: wdom ? Math.round(wdom) : null,
+          boy: boy ? Math.round(boy) : null, early, ras, hits, note: '',
           comp: existingWR ? (existingWR.comp || null) : null });
       }
-
-      // ── RB row ──
-      if (RB_NAME < 0) continue;
-      const rbName = parseStr(row[RB_NAME]);
-      // Guard: reject rows where "name" parses as a pure number (sheet noise)
-      if (rbName && isNaN(parseFloat(rbName))) {
-        const dc      = RB_DC    >= 0 ? parseNum(row[RB_DC])    : null;
-        const speed   = RB_SPD   >= 0 ? parseNum(row[RB_SPD])   : null;
-        const t40     = RB_40    >= 0 ? parseNum(row[RB_40])     : null;
-        const burst   = RB_BURST >= 0 ? parseNum(row[RB_BURST]) : null;
-        const bdr     = RB_BDR   >= 0 ? parseNum(row[RB_BDR])   : null;
-        const col_ypa = RB_YPA   >= 0 ? parseNum(row[RB_YPA])   : null;
+      // RB (cols 17-32)
+      const rbName = parseStr(row[17]);
+      if (rbName) {
+        const dc      = parseNum(row[18]);
+        const speed   = parseNum(row[19]);
+        const t40     = parseNum(row[20]);
+        const burst   = parseNum(row[24]);
+        const bdr     = parseNum(row[25]);
+        const col_ypa = parseNum(row[32]);
         const hits    = calcRbHits(dc, speed, burst, bdr, col_ypa);
         const existingRB = (PROSPECT_PROFILES.RB_2026 || []).find(x => x.name === rbName);
         newRB.push({ name: rbName, dc, speed, t40, burst, comp_bdr: bdr, col_ypa, hits, note: '',
@@ -3775,19 +3632,15 @@ async function fetchProspectData(showStatus) {
       }
     }
 
-    // Sort by hits desc; WR also sorts by draft capital as tiebreaker
+    // Sort by hits desc
     newWR.sort((a,b) => b.hits - a.hits || (a.dc||99) - (b.dc||99));
     newRB.sort((a,b) => b.hits - a.hits);
 
-    // Only replace static data if the sheet returned meaningful results
-    if (newWR.length > 0) PROSPECT_PROFILES.WR_2026 = newWR;
-    if (newRB.length > 0) PROSPECT_PROFILES.RB_2026 = newRB;
+    PROSPECT_PROFILES.WR_2026 = newWR;
+    PROSPECT_PROFILES.RB_2026 = newRB;
 
     STATE.prospectLastFetch = new Date().toLocaleString();
     console.log(`Prospect data loaded: ${newWR.length} WRs, ${newRB.length} RBs`);
-    if (newRB.length === 0 && RB_NAME === -1) {
-      console.warn('Could not locate RB section in sheet. Check that a "Player" or "Name" header exists in the RB columns. Sheet headers:', headers.join(' | '));
-    }
     if (showStatus) setLoadingProgress(100, 'PROSPECT DATA LOADED');
     return { wr: newWR.length, rb: newRB.length };
   } catch(e) {
