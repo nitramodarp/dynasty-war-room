@@ -3538,6 +3538,8 @@ function renderProspectScorer() {
 
 // ============================================================
 // LIVE PROSPECT DATA FETCH — Anatomy of Top WR & RB Google Sheet
+// Header-based parser: finds columns by name, not by position.
+// Immune to sheet column reordering or insertion of new columns.
 // ============================================================
 async function fetchProspectData(showStatus) {
   const url = CONFIG.ANATOMY_SHEET_URL;
@@ -3546,8 +3548,9 @@ async function fetchProspectData(showStatus) {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const text = await resp.text();
-    const rows = text.trim().split('\n').map(row => {
-      // Handle quoted fields with commas
+
+    // CSV parser — handles quoted fields containing commas
+    function parseCSVRow(row) {
       const result = [];
       let cur = '', inQ = false;
       for (let i = 0; i < row.length; i++) {
@@ -3558,9 +3561,12 @@ async function fetchProspectData(showStatus) {
       }
       result.push(cur.trim());
       return result;
-    });
+    }
 
-    // Skip header row (row 0)
+    const rows = text.trim().split('\n').map(parseCSVRow);
+    if (rows.length < 2) throw new Error('Sheet returned no data rows');
+
+    const headers = rows[0].map(h => h.toLowerCase().trim());
     const dataRows = rows.slice(1);
 
     function parseNum(v) {
@@ -3571,6 +3577,59 @@ async function fetchProspectData(showStatus) {
     function parseStr(v) {
       return (v && v.trim() !== '' && v.trim() !== 'N/A') ? v.trim() : null;
     }
+
+    // Resolve a column index by searching for header keywords (first match wins).
+    // Returns -1 if no matching header is found.
+    function col(keywords, startFrom = 0) {
+      for (const kw of keywords) {
+        const idx = headers.findIndex((h, i) => i >= startFrom && h.includes(kw.toLowerCase()));
+        if (idx !== -1) return idx;
+      }
+      return -1;
+    }
+
+    // ── WR column discovery ──────────────────────────────────────
+    // The WR section always starts at column 0 (player name is the first column).
+    const WR_NAME  = 0;
+    const WR_DC    = col(['draft capital', 'dc'], 1);
+    const WR_40    = col(['40 yard', '40t', '40-', '40yd'], 1);
+    const WR_SPLIT = col(['10 yd', '10yd', 'split', '10-yard'], 1);
+    const WR_WDOM  = col(['wdom', 'dom', 'target share', 'tgt share'], 1);
+    const WR_BOY   = col(['boy', 'breakout year', 'breakout age'], 1);
+    const WR_EARLY = col(['early declare', 'early', 'declare'], 1);
+    const WR_RAS   = col(['ras'], 1);
+
+    // ── RB column discovery ──────────────────────────────────────
+    // The RB section starts after the WR block. We locate it by finding
+    // a second "player" or "name" header to the right of column 0.
+    const RB_NAME_CANDIDATES = ['player', 'name', 'rb name', 'rb player'];
+    let RB_NAME = -1;
+    for (const kw of RB_NAME_CANDIDATES) {
+      // Search from col 5 onward to skip the WR name column at 0
+      const idx = headers.findIndex((h, i) => i >= 5 && h.includes(kw));
+      if (idx !== -1) { RB_NAME = idx; break; }
+    }
+    // Fallback: find the first column after col 5 where header is blank or
+    // matches a known RB-section label
+    if (RB_NAME === -1) {
+      // Try locating via the SpeedScore header, then back up one
+      const spdIdx = col(['speed score', 'speedscore', 'speed sc'], 5);
+      if (spdIdx > 0) RB_NAME = spdIdx - 1;
+    }
+
+    // RB metrics — search from RB_NAME onward so we stay in the RB section
+    const RB_START = Math.max(RB_NAME, 5);
+    const RB_DC    = col(['draft capital', 'dc'], RB_START + 1);
+    const RB_SPD   = col(['speed score', 'speedscore', 'speed sc'], RB_START);
+    const RB_40    = col(['40 yard', '40t', '40-', '40yd'], RB_START);
+    const RB_BURST = col(['burst'], RB_START);
+    const RB_BDR   = col(['comp bdr', 'compbdr', 'bdr'], RB_START);
+    const RB_YPA   = col(['col ypa', 'colypa', 'college ypa', 'ypa'], RB_START);
+
+    console.log('Prospect sheet column map:', {
+      WR: { name: WR_NAME, dc: WR_DC, t40: WR_40, split: WR_SPLIT, wdom: WR_WDOM, boy: WR_BOY, early: WR_EARLY, ras: WR_RAS },
+      RB: { name: RB_NAME, dc: RB_DC, speed: RB_SPD, t40: RB_40, burst: RB_BURST, bdr: RB_BDR, ypa: RB_YPA }
+    });
 
     const WR_THRESH = PROSPECT_PROFILES.WR_THRESHOLDS;
     const RB_THRESH = PROSPECT_PROFILES.RB_THRESHOLDS;
@@ -3599,31 +3658,37 @@ async function fetchProspectData(showStatus) {
     const newWR = [], newRB = [];
 
     for (const row of dataRows) {
-      // WR (cols 0-15)
-      const wrName = parseStr(row[0]);
-      if (wrName) {
-        const dc    = parseNum(row[1]);
-        const t40   = parseNum(row[2]);
-        const split = parseNum(row[3]);
-        const wdom  = parseNum(row[4]);
-        const boy   = parseNum(row[7]);
-        const early = parseStr(row[8]);
-        const ras   = parseNum(row[14]);
+      // ── WR row ──
+      const wrName = parseStr(row[WR_NAME]);
+      // Guard: reject rows where "name" parses as a pure number (sheet noise)
+      if (wrName && isNaN(parseFloat(wrName))) {
+        const dc    = WR_DC    >= 0 ? parseNum(row[WR_DC])    : null;
+        const t40   = WR_40    >= 0 ? parseNum(row[WR_40])    : null;
+        const split = WR_SPLIT >= 0 ? parseNum(row[WR_SPLIT]) : null;
+        const wdom  = WR_WDOM  >= 0 ? parseNum(row[WR_WDOM])  : null;
+        const boy   = WR_BOY   >= 0 ? parseNum(row[WR_BOY])   : null;
+        const early = WR_EARLY >= 0 ? parseStr(row[WR_EARLY]) : null;
+        const ras   = WR_RAS   >= 0 ? parseNum(row[WR_RAS])   : null;
         const hits  = calcWrHits(dc, t40, split, wdom, boy, ras);
         const existingWR = (PROSPECT_PROFILES.WR_2026 || []).find(x => x.name === wrName);
-        newWR.push({ name: wrName, dc, t40, split, wdom: wdom ? Math.round(wdom) : null,
-          boy: boy ? Math.round(boy) : null, early, ras, hits, note: '',
+        newWR.push({ name: wrName, dc, t40, split,
+          wdom: wdom != null ? Math.round(wdom) : null,
+          boy:  boy  != null ? Math.round(boy)  : null,
+          early, ras, hits, note: '',
           comp: existingWR ? (existingWR.comp || null) : null });
       }
-      // RB (cols 17-32)
-      const rbName = parseStr(row[17]);
-      if (rbName) {
-        const dc      = parseNum(row[18]);
-        const speed   = parseNum(row[19]);
-        const t40     = parseNum(row[20]);
-        const burst   = parseNum(row[24]);
-        const bdr     = parseNum(row[25]);
-        const col_ypa = parseNum(row[32]);
+
+      // ── RB row ──
+      if (RB_NAME < 0) continue;
+      const rbName = parseStr(row[RB_NAME]);
+      // Guard: reject rows where "name" parses as a pure number (sheet noise)
+      if (rbName && isNaN(parseFloat(rbName))) {
+        const dc      = RB_DC    >= 0 ? parseNum(row[RB_DC])    : null;
+        const speed   = RB_SPD   >= 0 ? parseNum(row[RB_SPD])   : null;
+        const t40     = RB_40    >= 0 ? parseNum(row[RB_40])     : null;
+        const burst   = RB_BURST >= 0 ? parseNum(row[RB_BURST]) : null;
+        const bdr     = RB_BDR   >= 0 ? parseNum(row[RB_BDR])   : null;
+        const col_ypa = RB_YPA   >= 0 ? parseNum(row[RB_YPA])   : null;
         const hits    = calcRbHits(dc, speed, burst, bdr, col_ypa);
         const existingRB = (PROSPECT_PROFILES.RB_2026 || []).find(x => x.name === rbName);
         newRB.push({ name: rbName, dc, speed, t40, burst, comp_bdr: bdr, col_ypa, hits, note: '',
@@ -3631,15 +3696,19 @@ async function fetchProspectData(showStatus) {
       }
     }
 
-    // Sort by hits desc
+    // Sort by hits desc; WR also sorts by draft capital as tiebreaker
     newWR.sort((a,b) => b.hits - a.hits || (a.dc||99) - (b.dc||99));
     newRB.sort((a,b) => b.hits - a.hits);
 
-    PROSPECT_PROFILES.WR_2026 = newWR;
-    PROSPECT_PROFILES.RB_2026 = newRB;
+    // Only replace static data if the sheet returned meaningful results
+    if (newWR.length > 0) PROSPECT_PROFILES.WR_2026 = newWR;
+    if (newRB.length > 0) PROSPECT_PROFILES.RB_2026 = newRB;
 
     STATE.prospectLastFetch = new Date().toLocaleString();
     console.log(`Prospect data loaded: ${newWR.length} WRs, ${newRB.length} RBs`);
+    if (newRB.length === 0 && RB_NAME === -1) {
+      console.warn('Could not locate RB section in sheet. Check that a "Player" or "Name" header exists in the RB columns. Sheet headers:', headers.join(' | '));
+    }
     if (showStatus) setLoadingProgress(100, 'PROSPECT DATA LOADED');
     return { wr: newWR.length, rb: newRB.length };
   } catch(e) {
