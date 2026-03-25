@@ -740,6 +740,14 @@
 
   <!-- DASHBOARD TAB -->
   <div class="tab-content active" id="tab-dashboard">
+
+    <!-- GM BRIEF -->
+    <div id="gmBriefCard" style="background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:72px">
+      <div id="gmBriefInner" style="display:flex;align-items:center;gap:20px;flex:1">
+        <div id="gmBriefSpinner" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">⟳ GENERATING GM BRIEF...</div>
+      </div>
+    </div>
+
     <div class="grid-4" id="dashStatCards">
       <div class="stat-card">
         <div class="stat-value" id="ds-rank" style="color:var(--accent)">—</div>
@@ -1882,7 +1890,87 @@ function renderDashboard() {
   renderRosterTable('rosterOverviewBody', STATE.myRoster);
 }
 
-function renderRosterTable(tbodyId, players) {
+  // Roster overview table
+  renderRosterTable('rosterOverviewBody', STATE.myRoster);
+}
+
+// ============================================================
+// GM BRIEF — AI-generated narrative summary of current roster state
+// ============================================================
+async function generateGMBrief() {
+  const card = document.getElementById('gmBriefCard');
+  const inner = document.getElementById('gmBriefInner');
+  if (!card || !inner) return;
+
+  const stats = calcTeamStats(CONFIG.MY_TEAM_NAME);
+  const rankings = STATE.powerRankings || [];
+  const myRank = rankings.findIndex(r => r.name === CONFIG.MY_TEAM_NAME) + 1;
+  const window = calcContentionWindow(STATE.myRoster);
+
+  // Build compact roster context for the prompt
+  const top5 = [...STATE.myRoster].sort((a,b) => b.value - a.value).slice(0,5).map(p => `${p.name} (${p.pos}, age ${p.age}, KTC ${p.value})`);
+  const sellPlayers = STATE.myRoster.filter(p => { const h = getRosterHealthFlag(p); return h?.flag === 'SELL' || h?.flag === 'CUT'; }).map(p => p.name);
+  const injuredPlayers = STATE.myRoster.filter(p => p.injuryFlag).map(p => `${p.name} (${p.injuryFlag.label})`);
+  const myPicks = (STATE.myPicks || []).map(p => p.label).join(', ') || 'none';
+  const posVORPs = ['QB','RB','WR','TE'].map(pos => {
+    const v = STATE.myRoster.filter(p=>p.pos===pos).reduce((s,p)=>s+p.vorp,0);
+    return `${pos}: ${v > 0 ? '+' : ''}${Math.round(v)}`;
+  }).join(', ');
+
+  const prompt = `You are a sharp, direct dynasty fantasy football analyst writing a GM brief for a 12-team Superflex 0.5PPR 0.5TEP league. Your job is to produce a tightly edited 3-part briefing card:
+
+1. STATE_LABEL: 2-4 words capturing the team's current strategic posture (e.g. "Window Opening", "Steady State", "Sell Clock Running", "Capital Accumulation Mode"). Be precise, not generic.
+2. NARRATIVE: One sentence, 15-25 words. Direct, editorial voice — like a beat reporter who knows this team. Reference the most interesting specific tension or opportunity in the data.
+3. PRIORITY: One concrete action or watchpoint, 10-15 words. Start with a verb.
+
+Roster context:
+- League: 12-team SF 0.5PPR 0.5TEP
+- Power rank: #${myRank} of 12
+- Total value: ${fmt(stats.totalValue)} (roster: ${fmt(stats.totalRosterValue)} + picks: ${fmt(stats.totalPickValue)})
+- Avg age: ${stats.avgAge.toFixed(1)}
+- Contention window: ${window.label}
+- VORP by position: ${posVORPs}
+- Top 5 assets: ${top5.join('; ')}
+- Picks held: ${myPicks}
+- Sell/cut candidates: ${sellPlayers.length ? sellPlayers.join(', ') : 'none flagged'}
+- Injured: ${injuredPlayers.length ? injuredPlayers.join(', ') : 'none'}
+
+Respond ONLY with a JSON object, no markdown, no preamble:
+{"state":"...","narrative":"...","priority":"..."}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await resp.json();
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    const brief = JSON.parse(text.replace(/```json|```/g,'').trim());
+
+    // Determine accent color from contention window
+    const accentColor = window.color || 'var(--accent)';
+
+    inner.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:160px">
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:${accentColor};line-height:1">${brief.state}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#${myRank} OF 12 · ${window.label} · AGE ${stats.avgAge.toFixed(1)}</div>
+      </div>
+      <div style="flex:1;border-left:1px solid var(--border);padding-left:20px;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:13px;color:var(--text);line-height:1.5;font-weight:400">${brief.narrative}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${accentColor};letter-spacing:0.3px">▶ ${brief.priority}</div>
+      </div>
+    `;
+    card.style.borderLeftColor = accentColor;
+  } catch(e) {
+    inner.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted)">GM brief unavailable</div>`;
+    console.warn('GM brief failed:', e);
+  }
+}
   const sorted = [...players].sort((a,b) => {
     const posOrder = {QB:0,RB:1,WR:2,TE:3};
     return (posOrder[a.pos]||9) - (posOrder[b.pos]||9) || b.value - a.value;
@@ -3097,6 +3185,7 @@ async function syncAll() {
     calcPowerRankings();
     setLoadingProgress(95, 'RENDERING...');
     renderDashboard();
+    generateGMBrief(); // non-blocking — renders async after main UI is ready
     populatePickDropdowns();
     document.getElementById('lastSync').textContent = 'Synced ' + new Date().toLocaleTimeString();
     setLoadingProgress(100, 'COMPLETE');
