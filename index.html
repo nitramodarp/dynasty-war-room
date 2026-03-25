@@ -1392,10 +1392,18 @@ function posPill(pos) {
 // ============================================================
 // DATA FETCHING
 // ============================================================
+// Wraps fetch with a hard timeout so a slow endpoint can't hang the sync chain
+function fetchWithTimeout(url, options = {}, ms = 10000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 async function fetchKTC() {
   setLoadingProgress(10, 'FETCHING KTC VALUES...');
   const url = CONFIG.KTC_CSV_URL;
-  const resp = await fetch(url);
+  const resp = await fetchWithTimeout(url);
   const text = await resp.text();
   const lines = text.trim().split('\n');
   const players = [];
@@ -1455,7 +1463,7 @@ function parseCSVLine(line) {
 
 async function fetchSleeperPlayers() {
   setLoadingProgress(25, 'FETCHING SLEEPER PLAYER DATABASE...');
-  const resp = await fetch('https://api.sleeper.app/v1/players/nfl');
+  const resp = await fetchWithTimeout('https://api.sleeper.app/v1/players/nfl', {}, 12000);
   const data = await resp.json();
   const map = {};
   for (const id in data) {
@@ -1473,7 +1481,7 @@ async function fetchSleeperPlayers() {
 
 async function fetchRosters() {
   setLoadingProgress(45, 'FETCHING LEAGUE ROSTERS...');
-  const resp = await fetch(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/rosters`);
+  const resp = await fetchWithTimeout(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/rosters`);
   const rosters = await resp.json();
   const rosterMap = {};
   const rosterIdMap = {};
@@ -1496,7 +1504,7 @@ async function fetchRosters() {
 
 async function fetchTradedPicks() {
   setLoadingProgress(60, 'FETCHING TRADED PICKS...');
-  const resp = await fetch(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/traded_picks`);
+  const resp = await fetchWithTimeout(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/traded_picks`);
   STATE.tradedPicks = await resp.json();
 }
 
@@ -3169,6 +3177,14 @@ async function syncAll() {
   btn.disabled = true;
   btn.textContent = '⟳ Syncing...';
 
+  // Safety net: always dismiss the overlay after 15 seconds no matter what
+  const safetyTimer = setTimeout(() => {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('lastSync').textContent = 'Sync timed out — check console';
+    btn.disabled = false;
+    btn.textContent = '⟳ Sync Data';
+  }, 15000);
+
   try {
     await fetchKTC();
     setLoadingProgress(35, 'FETCHING SLEEPER DATA...');
@@ -3192,13 +3208,15 @@ async function syncAll() {
   } catch(e) {
     console.error(e);
     document.getElementById('lastSync').textContent = 'Sync failed: ' + e.message;
+    setLoadingProgress(100, 'ERROR — check console');
+  } finally {
+    clearTimeout(safetyTimer);
+    btn.disabled = false;
+    btn.textContent = '⟳ Sync Data';
+    setTimeout(() => {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }, 300);
   }
-
-  btn.disabled = false;
-  btn.textContent = '⟳ Sync Data';
-  setTimeout(() => {
-    document.getElementById('loadingOverlay').style.display = 'none';
-  }, 300);
 }
 
 // Close autocomplete on outside click
