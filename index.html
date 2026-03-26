@@ -1,62 +1,4 @@
-// GM BRIEF — rule-based, no API dependency
-function generateGMBrief() {
-  var card = document.getElementById('gmBriefCard');
-  var inner = document.getElementById('gmBriefInner');
-  if (!card || !inner) return;
-
-  var stats = calcTeamStats(CONFIG.MY_TEAM_NAME);
-  var rankings = STATE.powerRankings || [];
-  var myRank = rankings.findIndex(function(r) { return r.name === CONFIG.MY_TEAM_NAME; }) + 1;
-  var win = calcContentionWindow(STATE.myRoster);
-  var ac = win.color || 'var(--accent)';
-
-  // Derive state label from contention window + power rank
-  var stateLabel;
-  if (win.years >= 2)       stateLabel = '2–3 YRS AWAY';
-  else if (win.years >= 1)  stateLabel = 'WINDOW OPENING';
-  else if (win.years >= 0)  stateLabel = 'PRIME WINDOW';
-  else if (win.years >= -1) stateLabel = 'SELL CLOCK ON';
-  else                      stateLabel = 'WINDOW CLOSING';
-
-  // Find most interesting tension/opportunity
-  var rbVorp = STATE.myRoster.filter(function(p){return p.pos==='RB';}).reduce(function(s,p){return s+p.vorp;},0);
-  var teVorp = STATE.myRoster.filter(function(p){return p.pos==='TE';}).reduce(function(s,p){return s+p.vorp;},0);
-  var sellPlayers = STATE.myRoster.filter(function(p){var h=getRosterHealthFlag(p);return h&&h.flag==='SELL';});
-  var myPickVal = stats.totalPickValue;
-
-  var narrative, priority;
-
-  if (rbVorp < -2000) {
-    narrative = 'RB room is the roster's fault line — VORP deficit of ' + fmt(Math.abs(rbVorp)) + ' demands attention before the window opens.';
-    priority = 'Target RB depth; convert WR surplus into backfield capital.';
-  } else if (sellPlayers.length >= 3) {
-    narrative = sellPlayers.length + ' aging assets are burning value — the sell clock is running on ' + sellPlayers.slice(0,2).map(function(p){return p.name;}).join(' and ') + '.';
-    priority = 'Move sell candidates now before value decays further.';
-  } else if (win.years >= 1 && myPickVal > 12000) {
-    narrative = 'Strong pick capital of ' + fmtK(myPickVal) + ' with contention window ' + win.label.toLowerCase() + ' — conditions are right to buy proven contributors.';
-    priority = 'Deploy pick capital to accelerate the contention timeline.';
-  } else if (teVorp < -1500) {
-    narrative = 'TE room is a liability in a TEP format — Kittle's return is the single biggest value unlock on the roster.';
-    priority = 'Hold Kittle through recovery; target mikeatlanta once healthy.';
-  } else if (myRank <= 3) {
-    narrative = 'Ranked #' + myRank + ' in the league with ' + win.label.toLowerCase() + ' — patience is the correct posture.';
-    priority = 'Stay the course; avoid panic trades that dilute peak-window capital.';
-  } else {
-    narrative = 'Roster is at ' + win.label.toLowerCase() + ' with balanced positional value — maintain asset quality heading into the draft.';
-    priority = 'Monitor 2026 rookie draft for RB value at pick 1.11.';
-  }
-
-  inner.innerHTML =
-    '<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">'
-    + '<div style="font-family:Bebas Neue,cursive;font-size:22px;letter-spacing:2px;color:' + ac + ';line-height:1">' + stateLabel + '</div>'
-    + '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#' + myRank + ' OF 12 · ' + win.label + ' · AGE ' + stats.avgAge.toFixed(1) + '</div>'
-    + '</div>'
-    + '<div style="flex:1;border-left:1px solid var(--border);padding-left:20px;display:flex;flex-direction:column;gap:6px">'
-    + '<div style="font-size:13px;color:var(--text);line-height:1.5">' + narrative + '</div>'
-    + '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:' + ac + '">▶ ' + priority + '</div>'
-    + '</div>';
-  card.style.borderLeftColor = ac;
-}<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -802,7 +744,7 @@ function generateGMBrief() {
     <!-- GM BRIEF -->
     <div id="gmBriefCard" style="background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:72px">
       <div id="gmBriefInner" style="display:flex;align-items:center;gap:20px;flex:1">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">⧳ GENERATING GM BRIEF...</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">⧳ Generating brief...</div>
       </div>
     </div>
 
@@ -1525,20 +1467,16 @@ async function fetchKTCPicks() {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     var data = await resp.json();
     var picks = data.filter(function(p) { return p.position === 'RDP'; });
-    if (!picks.length) { console.warn('fetchKTCPicks: no RDP entries'); return 0; }
+    if (!picks.length) { console.warn('fetchKTCPicks: no RDP'); return 0; }
     var updated = 0;
     for (var i = 0; i < picks.length; i++) {
-      var pick = picks[i];
-      var val = pick.superflexValue || pick.value;
+      var pick = picks[i]; var val = pick.superflexValue || pick.value;
       if (pick.playerName && val > 0 && CONFIG.PICK_VALUES.hasOwnProperty(pick.playerName)) {
         CONFIG.PICK_VALUES[pick.playerName] = val; updated++;
       }
     }
-    console.log('KTC live picks: ' + updated + ' updated');
-    return updated;
-  } catch(e) {
-    console.warn('fetchKTCPicks failed:', e.message); return 0;
-  }
+    console.log('KTC live picks: ' + updated + ' updated'); return updated;
+  } catch(e) { console.warn('fetchKTCPicks failed:', e.message); return 0; }
 }
 
 async function fetchSleeperPlayers() {
@@ -1992,10 +1930,8 @@ function renderDashboard() {
 }
 
 
-// ============================================================
-// GM BRIEF
-// ============================================================
-async function generateGMBrief() {
+// GM BRIEF — rule-based, no API key required
+function generateGMBrief() {
   var card = document.getElementById('gmBriefCard');
   var inner = document.getElementById('gmBriefInner');
   if (!card || !inner) return;
@@ -2003,36 +1939,48 @@ async function generateGMBrief() {
   var rankings = STATE.powerRankings || [];
   var myRank = rankings.findIndex(function(r) { return r.name === CONFIG.MY_TEAM_NAME; }) + 1;
   var win = calcContentionWindow(STATE.myRoster);
-  var top5 = STATE.myRoster.slice().sort(function(a,b){return b.value-a.value;}).slice(0,5).map(function(p){return p.name+" ("+p.pos+", age "+p.age+", KTC "+p.value+")";}).join("; ");
-  var sellPlayers = STATE.myRoster.filter(function(p){var h=getRosterHealthFlag(p);return h&&(h.flag==="SELL"||h.flag==="CUT");}).map(function(p){return p.name;}).join(", ")||"none";
-  var injuredPlayers = STATE.myRoster.filter(function(p){return p.injuryFlag;}).map(function(p){return p.name+" ("+p.injuryFlag.label+")";}).join(", ")||"none";
-  var myPicks = (STATE.myPicks||[]).map(function(p){return p.label;}).join(", ")||"none";
-  var posVORPs = ["QB","RB","WR","TE"].map(function(pos){var v=STATE.myRoster.filter(function(p){return p.pos===pos;}).reduce(function(s,p){return s+p.vorp;},0);return pos+": "+(v>0?"+":"")+Math.round(v);}).join(", ");
-  var prompt = "You are a sharp dynasty fantasy football analyst. Produce a 3-part GM brief.\n1. STATE_LABEL: 2-4 words capturing strategic posture.\n2. NARRATIVE: One sentence 15-25 words, editorial voice.\n3. PRIORITY: One concrete action 10-15 words, start with a verb.\n\nRoster: #"+myRank+" of 12, value "+fmt(stats.totalValue)+", age "+stats.avgAge.toFixed(1)+", window: "+win.label+", VORP: "+posVORPs+", top assets: "+top5+", picks: "+myPicks+", sell: "+sellPlayers+", injured: "+injuredPlayers+"\n\nRespond ONLY with JSON (no markdown): {\"state\":\"...\",\"narrative\":\"...\",\"priority\":\"...\"}";
-  try {
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
-    });
-    var data = await resp.json();
-    var text = (data.content || []).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
-    var brief = JSON.parse(text.replace(/```json|```/g,'').trim());
-    var ac = win.color || 'var(--accent)';
-    inner.innerHTML =
-      '<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">'
-      + '<div style="font-family:Bebas Neue,cursive;font-size:22px;letter-spacing:2px;color:' + ac + ';line-height:1">' + brief.state + '</div>'
-      + '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#' + myRank + ' OF 12 · ' + win.label + ' · AGE ' + stats.avgAge.toFixed(1) + '</div>'
-      + '</div>'
-      + '<div style="flex:1;border-left:1px solid var(--border);padding-left:20px;display:flex;flex-direction:column;gap:6px">'
-      + '<div style="font-size:13px;color:var(--text);line-height:1.5">' + brief.narrative + '</div>'
-      + '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:' + ac + '">▶ ' + brief.priority + '</div>'
-      + '</div>';
-    card.style.borderLeftColor = ac;
-  } catch(e) {
-    inner.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text-muted)">GM brief unavailable</div>';
-    console.warn('GM brief failed:', e);
+  var ac = win.color || 'var(--accent)';
+  var stateLabel;
+  if (win.years >= 2)       stateLabel = '2–3 YRS AWAY';
+  else if (win.years >= 1)  stateLabel = 'WINDOW OPENING';
+  else if (win.years >= 0)  stateLabel = 'PRIME WINDOW';
+  else if (win.years >= -1) stateLabel = 'SELL CLOCK ON';
+  else                      stateLabel = 'WINDOW CLOSING';
+  var rbVorp = STATE.myRoster.filter(function(p){return p.pos==='RB';}).reduce(function(s,p){return s+p.vorp;},0);
+  var teVorp = STATE.myRoster.filter(function(p){return p.pos==='TE';}).reduce(function(s,p){return s+p.vorp;},0);
+  var sellList = STATE.myRoster.filter(function(p){var h=getRosterHealthFlag(p);return h&&h.flag==='SELL';});
+  var myPickVal = stats.totalPickValue;
+  var narrative, priority;
+  if (rbVorp < -2000) {
+    narrative = 'RB room is the roster fault line — VORP deficit of ' + fmt(Math.abs(rbVorp)) + ' demands attention before the window opens.';
+    priority = 'Target RB depth; convert WR surplus into backfield capital.';
+  } else if (sellList.length >= 3) {
+    var names = sellList.slice(0,2).map(function(p){return p.name;}).join(' and ');
+    narrative = sellList.length + ' aging assets are burning value — the sell clock is running on ' + names + '.';
+    priority = 'Move sell candidates now before value decays further.';
+  } else if (win.years >= 1 && myPickVal > 12000) {
+    narrative = 'Strong pick capital of ' + fmtK(myPickVal) + ' with window ' + win.label.toLowerCase() + ' — conditions are right to buy proven contributors.';
+    priority = 'Deploy pick capital to accelerate the contention timeline.';
+  } else if (teVorp < -1500) {
+    narrative = 'TE room is a liability in TEP format — Kittle recovery is the single biggest value unlock on the roster.';
+    priority = 'Hold Kittle through recovery; target mikeatlanta once healthy.';
+  } else if (myRank <= 3) {
+    narrative = 'Ranked #' + myRank + ' with ' + win.label.toLowerCase() + ' — patience is the correct posture right now.';
+    priority = 'Stay the course; avoid panic trades that dilute peak-window capital.';
+  } else {
+    narrative = 'Roster at ' + win.label.toLowerCase() + ' with balanced positional value — maintain asset quality into the draft.';
+    priority = 'Monitor 2026 rookie draft for RB value at pick 1.11.';
   }
+  var html = '<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">'
+    + '<div style="font-family:Bebas Neue,cursive;font-size:22px;letter-spacing:2px;color:' + ac + ';line-height:1">' + stateLabel + '</div>'
+    + '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#' + myRank + ' OF 12 · ' + win.label + ' · AGE ' + stats.avgAge.toFixed(1) + '</div>'
+    + '</div>'
+    + '<div style="flex:1;border-left:1px solid var(--border);padding-left:20px;display:flex;flex-direction:column;gap:6px">'
+    + '<div style="font-size:13px;color:var(--text);line-height:1.5">' + narrative + '</div>'
+    + '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:' + ac + '">&#9654; ' + priority + '</div>'
+    + '</div>';
+  inner.innerHTML = html;
+  card.style.borderLeftColor = ac;
 }
 
 function renderRosterTable(tbodyId, players) {
@@ -3232,13 +3180,11 @@ async function fetchDraftOrder() {
 }
 async function syncAll() {
   var btn = document.getElementById('syncBtn');
-  btn.disabled = true;
-  btn.textContent = '⧳ Syncing...';
+  btn.disabled = true; btn.textContent = '⧳ Syncing...';
   var safetyTimer = setTimeout(function() {
     document.getElementById('loadingOverlay').style.display = 'none';
     document.getElementById('lastSync').textContent = 'Sync timed out';
-    btn.disabled = false;
-    btn.textContent = '⧳ Sync Data';
+    btn.disabled = false; btn.textContent = '⧳ Sync Data';
   }, 15000);
   try {
     await fetchKTC();
@@ -3250,13 +3196,9 @@ async function syncAll() {
       if (res) console.log('Prospect refresh: ' + res.wr + ' WRs, ' + res.rb + ' RBs');
     });
     setLoadingProgress(80, 'PROCESSING DATA...');
-    buildAllRosters();
-    buildPickMap();
-    calcPowerRankings();
+    buildAllRosters(); buildPickMap(); calcPowerRankings();
     setLoadingProgress(95, 'RENDERING...');
-    renderDashboard();
-    generateGMBrief();
-    populatePickDropdowns();
+    renderDashboard(); generateGMBrief(); populatePickDropdowns();
     document.getElementById('lastSync').textContent = 'Synced ' + new Date().toLocaleTimeString();
     setLoadingProgress(100, 'COMPLETE');
   } catch(e) {
@@ -3264,12 +3206,8 @@ async function syncAll() {
     document.getElementById('lastSync').textContent = 'Sync failed: ' + e.message;
     setLoadingProgress(100, 'ERROR');
   } finally {
-    clearTimeout(safetyTimer);
-    btn.disabled = false;
-    btn.textContent = '⧳ Sync Data';
-    setTimeout(function() {
-      document.getElementById('loadingOverlay').style.display = 'none';
-    }, 300);
+    clearTimeout(safetyTimer); btn.disabled = false; btn.textContent = '⧳ Sync Data';
+    setTimeout(function() { document.getElementById('loadingOverlay').style.display = 'none'; }, 300);
   }
 }
 
@@ -3694,135 +3632,66 @@ async function fetchProspectData(showStatus) {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const text = await resp.text();
     const rows = text.trim().split('\n').map(parseCSVLine);
-    if (rows.length < 2) throw new Error('Sheet returned no data rows');
-
+    if (rows.length < 2) throw new Error('No data rows');
     const headers = rows[0].map(h => h.toLowerCase().trim());
     const dataRows = rows.slice(1);
-
     function parseNum(v) {
-      if (!v || v === '' || v === 'N/A' || v === '#DIV/0!') return null;
-      const n = parseFloat(String(v).replace(/,/g, ''));
-      return isNaN(n) ? null : n;
+      if (!v || v==='' || v==='N/A' || v==='#DIV/0!') return null;
+      const n = parseFloat(String(v).replace(/,/g,'')); return isNaN(n)?null:n;
     }
-    function parseStr(v) {
-      return (v && v.trim() !== '' && v.trim() !== 'N/A') ? v.trim() : null;
-    }
-    function col(keywords, from) {
-      from = from || 0;
-      for (const kw of keywords) {
-        const idx = headers.findIndex((h, i) => i >= from && h.includes(kw.toLowerCase()));
-        if (idx !== -1) return idx;
-      }
+    function parseStr(v) { return (v&&v.trim()!==''&&v.trim()!=='N/A')?v.trim():null; }
+    function col(kws, from) {
+      from=from||0;
+      for (const kw of kws) { const i=headers.findIndex((h,idx)=>idx>=from&&h.includes(kw.toLowerCase())); if(i!==-1)return i; }
       return -1;
     }
-
-    // WR columns (section starts at col 0)
-    const WR_NAME  = 0;
-    const WR_DC    = col(['draft capital','dc'], 1);
-    const WR_40    = col(['40 yard','40t','40-','40yd'], 1);
-    const WR_SPLIT = col(['10 yd','10yd','split','10-yard'], 1);
-    const WR_WDOM  = col(['wdom','dom','target share'], 1);
-    const WR_BOY   = col(['boy','breakout year','breakout age'], 1);
-    const WR_EARLY = col(['early declare','early','declare'], 1);
-    const WR_RAS   = col(['ras'], 1);
-
-    // RB columns — find the second "player/name" header after col 5
-    let RB_NAME = -1;
-    for (const kw of ['player','name','rb name','rb player']) {
-      const idx = headers.findIndex((h, i) => i >= 5 && h.includes(kw));
-      if (idx !== -1) { RB_NAME = idx; break; }
+    const WR_NAME=0, WR_DC=col(['draft capital','dc'],1), WR_40=col(['40 yard','40t','40-','40yd'],1);
+    const WR_SPLIT=col(['10 yd','10yd','split'],1), WR_WDOM=col(['wdom','dom'],1);
+    const WR_BOY=col(['boy','breakout'],1), WR_EARLY=col(['early'],1), WR_RAS=col(['ras'],1);
+    let RB_NAME=-1;
+    for (const kw of ['player','name','rb name']) {
+      const i=headers.findIndex((h,idx)=>idx>=5&&h.includes(kw)); if(i!==-1){RB_NAME=i;break;}
     }
-    if (RB_NAME === -1) {
-      const spdIdx = col(['speed score','speedscore','speed sc'], 5);
-      if (spdIdx > 0) RB_NAME = spdIdx - 1;
-    }
-    const RB_START = Math.max(RB_NAME, 5);
-    const RB_DC    = col(['draft capital','dc'], RB_START + 1);
-    const RB_SPD   = col(['speed score','speedscore','speed sc'], RB_START);
-    const RB_40    = col(['40 yard','40t','40-','40yd'], RB_START);
-    const RB_BURST = col(['burst'], RB_START);
-    const RB_BDR   = col(['comp bdr','compbdr','bdr'], RB_START);
-    const RB_YPA   = col(['col ypa','colypa','college ypa','ypa'], RB_START);
-
-    console.log('Prospect columns — WR:', {name:WR_NAME,dc:WR_DC,t40:WR_40,split:WR_SPLIT,wdom:WR_WDOM,boy:WR_BOY,ras:WR_RAS},
-                'RB:', {name:RB_NAME,dc:RB_DC,speed:RB_SPD,t40:RB_40,burst:RB_BURST,bdr:RB_BDR,ypa:RB_YPA});
-
-    const WR_THRESH = PROSPECT_PROFILES.WR_THRESHOLDS;
-    const RB_THRESH = PROSPECT_PROFILES.RB_THRESHOLDS;
-
-    function calcWrHits(dc, t40, split, wdom, boy, ras) {
-      let hits = 0;
-      if (dc !== null && dc <= WR_THRESH.dc_max) hits++;
-      if (t40 !== null && t40 <= WR_THRESH.speed) hits++;
-      if (split !== null && split <= WR_THRESH.split) hits++;
-      if (wdom !== null && wdom >= WR_THRESH.wdom) hits++;
-      if (boy !== null && boy >= 1 && boy <= 3) hits++;
-      if (ras !== null && ras >= WR_THRESH.ras) hits++;
-      return hits;
-    }
-    function calcRbHits(dc, speed, burst, bdr, ypa) {
-      let hits = 0;
-      if (dc !== null && dc <= RB_THRESH.dc_max) hits++;
-      if (speed !== null && speed >= RB_THRESH.speed_score) hits++;
-      if (burst !== null && burst >= RB_THRESH.burst) hits++;
-      if (bdr !== null && bdr >= RB_THRESH.comp_bdr) hits++;
-      if (ypa !== null && ypa >= RB_THRESH.col_ypa) hits++;
-      return hits;
-    }
-
-    const newWR = [], newRB = [];
-
+    if (RB_NAME===-1) { const s=col(['speed score','speedscore'],5); if(s>0)RB_NAME=s-1; }
+    const RS=Math.max(RB_NAME,5);
+    const RB_DC=col(['draft capital','dc'],RS+1), RB_SPD=col(['speed score','speedscore'],RS);
+    const RB_40=col(['40 yard','40t'],RS), RB_BURST=col(['burst'],RS);
+    const RB_BDR=col(['comp bdr','compbdr','bdr'],RS), RB_YPA=col(['col ypa','colypa','ypa'],RS);
+    console.log('Prospect cols WR:',{dc:WR_DC,t40:WR_40,split:WR_SPLIT,wdom:WR_WDOM,boy:WR_BOY,ras:WR_RAS},'RB:',{name:RB_NAME,dc:RB_DC,spd:RB_SPD,burst:RB_BURST,bdr:RB_BDR,ypa:RB_YPA});
+    const WT=PROSPECT_PROFILES.WR_THRESHOLDS, RT=PROSPECT_PROFILES.RB_THRESHOLDS;
+    function wrHits(dc,t40,split,wdom,boy,ras){let h=0;if(dc!=null&&dc<=WT.dc_max)h++;if(t40!=null&&t40<=WT.speed)h++;if(split!=null&&split<=WT.split)h++;if(wdom!=null&&wdom>=WT.wdom)h++;if(boy!=null&&boy>=1&&boy<=3)h++;if(ras!=null&&ras>=WT.ras)h++;return h;}
+    function rbHits(dc,spd,burst,bdr,ypa){let h=0;if(dc!=null&&dc<=RT.dc_max)h++;if(spd!=null&&spd>=RT.speed_score)h++;if(burst!=null&&burst>=RT.burst)h++;if(bdr!=null&&bdr>=RT.comp_bdr)h++;if(ypa!=null&&ypa>=RT.col_ypa)h++;return h;}
+    const newWR=[], newRB=[];
     for (const row of dataRows) {
-      // WR row — reject if name parses as a pure number
-      const wrName = parseStr(row[WR_NAME]);
-      if (wrName && isNaN(parseFloat(wrName))) {
-        const dc    = WR_DC    >= 0 ? parseNum(row[WR_DC])    : null;
-        const t40   = WR_40    >= 0 ? parseNum(row[WR_40])    : null;
-        const split = WR_SPLIT >= 0 ? parseNum(row[WR_SPLIT]) : null;
-        const wdom  = WR_WDOM  >= 0 ? parseNum(row[WR_WDOM])  : null;
-        const boy   = WR_BOY   >= 0 ? parseNum(row[WR_BOY])   : null;
-        const early = WR_EARLY >= 0 ? parseStr(row[WR_EARLY]) : null;
-        const ras   = WR_RAS   >= 0 ? parseNum(row[WR_RAS])   : null;
-        const hits  = calcWrHits(dc, t40, split, wdom, boy, ras);
-        const existingWR = (PROSPECT_PROFILES.WR_2026 || []).find(x => x.name === wrName);
-        newWR.push({ name: wrName, dc, t40, split,
-          wdom: wdom != null ? Math.round(wdom) : null,
-          boy:  boy  != null ? Math.round(boy)  : null,
-          early, ras, hits, note: '',
-          comp: existingWR ? (existingWR.comp || null) : null });
+      const wn=parseStr(row[WR_NAME]);
+      if (wn&&isNaN(parseFloat(wn))) {
+        const dc=WR_DC>=0?parseNum(row[WR_DC]):null, t40=WR_40>=0?parseNum(row[WR_40]):null;
+        const split=WR_SPLIT>=0?parseNum(row[WR_SPLIT]):null, wdom=WR_WDOM>=0?parseNum(row[WR_WDOM]):null;
+        const boy=WR_BOY>=0?parseNum(row[WR_BOY]):null, early=WR_EARLY>=0?parseStr(row[WR_EARLY]):null, ras=WR_RAS>=0?parseNum(row[WR_RAS]):null;
+        const hits=wrHits(dc,t40,split,wdom,boy,ras);
+        const ex=(PROSPECT_PROFILES.WR_2026||[]).find(x=>x.name===wn);
+        newWR.push({name:wn,dc,t40,split,wdom:wdom!=null?Math.round(wdom):null,boy:boy!=null?Math.round(boy):null,early,ras,hits,note:'',comp:ex?(ex.comp||null):null});
       }
-      // RB row — reject if name parses as a pure number
-      if (RB_NAME < 0) continue;
-      const rbName = parseStr(row[RB_NAME]);
-      if (rbName && isNaN(parseFloat(rbName))) {
-        const dc      = RB_DC    >= 0 ? parseNum(row[RB_DC])    : null;
-        const speed   = RB_SPD   >= 0 ? parseNum(row[RB_SPD])   : null;
-        const t40     = RB_40    >= 0 ? parseNum(row[RB_40])     : null;
-        const burst   = RB_BURST >= 0 ? parseNum(row[RB_BURST]) : null;
-        const bdr     = RB_BDR   >= 0 ? parseNum(row[RB_BDR])   : null;
-        const col_ypa = RB_YPA   >= 0 ? parseNum(row[RB_YPA])   : null;
-        const hits    = calcRbHits(dc, speed, burst, bdr, col_ypa);
-        const existingRB = (PROSPECT_PROFILES.RB_2026 || []).find(x => x.name === rbName);
-        newRB.push({ name: rbName, dc, speed, t40, burst, comp_bdr: bdr, col_ypa, hits, note: '',
-          comp: existingRB ? (existingRB.comp || null) : null });
+      if (RB_NAME<0) continue;
+      const rn=parseStr(row[RB_NAME]);
+      if (rn&&isNaN(parseFloat(rn))) {
+        const dc=RB_DC>=0?parseNum(row[RB_DC]):null, spd=RB_SPD>=0?parseNum(row[RB_SPD]):null;
+        const t40=RB_40>=0?parseNum(row[RB_40]):null, burst=RB_BURST>=0?parseNum(row[RB_BURST]):null;
+        const bdr=RB_BDR>=0?parseNum(row[RB_BDR]):null, ypa=RB_YPA>=0?parseNum(row[RB_YPA]):null;
+        const hits=rbHits(dc,spd,burst,bdr,ypa);
+        const ex=(PROSPECT_PROFILES.RB_2026||[]).find(x=>x.name===rn);
+        newRB.push({name:rn,dc,speed:spd,t40,burst,comp_bdr:bdr,col_ypa:ypa,hits,note:'',comp:ex?(ex.comp||null):null});
       }
     }
-
-    newWR.sort((a,b) => b.hits - a.hits || (a.dc||99) - (b.dc||99));
-    newRB.sort((a,b) => b.hits - a.hits);
-
-    if (newWR.length > 0) PROSPECT_PROFILES.WR_2026 = newWR;
-    if (newRB.length > 0) PROSPECT_PROFILES.RB_2026 = newRB;
-
-    STATE.prospectLastFetch = new Date().toLocaleString();
-    console.log('Prospect data loaded: ' + newWR.length + ' WRs, ' + newRB.length + ' RBs');
-    if (RB_NAME === -1) console.warn('Could not locate RB section. Headers:', headers.join(' | '));
-    if (showStatus) setLoadingProgress(100, 'PROSPECT DATA LOADED');
-    return { wr: newWR.length, rb: newRB.length };
-  } catch(e) {
-    console.warn('Prospect fetch failed:', e.message);
-    return null;
-  }
+    newWR.sort((a,b)=>b.hits-a.hits||(a.dc||99)-(b.dc||99));
+    newRB.sort((a,b)=>b.hits-a.hits);
+    if (newWR.length>0) PROSPECT_PROFILES.WR_2026=newWR;
+    if (newRB.length>0) PROSPECT_PROFILES.RB_2026=newRB;
+    STATE.prospectLastFetch=new Date().toLocaleString();
+    console.log('Prospect loaded: '+newWR.length+' WRs, '+newRB.length+' RBs');
+    if (showStatus) setLoadingProgress(100,'PROSPECT DATA LOADED');
+    return {wr:newWR.length,rb:newRB.length};
+  } catch(e) { console.warn('Prospect fetch failed:',e.message); return null; }
 }
 
 
