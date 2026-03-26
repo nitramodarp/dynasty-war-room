@@ -947,6 +947,7 @@
   <div class="tab-content" id="tab-draft-picks">
     <div class="card">
       <div class="card-title">📋 My Pick Capital</div>
+      <div id="pickValuesNotice" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:6px;border-left:2px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span>📅 Pick values: KTC SF scale, last updated <strong id="pickValuesDate" style="color:var(--text-dim)">—</strong></span><span style="color:var(--text-muted)">Update before NFL Draft (Apr) &amp; season start (Sep) — paste new values from <span style="color:var(--accent)">keeptradecut.com</span> → Superflex → picks</span></div>
       <div id="myPicksContainer">Loading...</div>
     </div>
     <div class="card">
@@ -1132,7 +1133,9 @@ const CONFIG = {
     'Scotty Miller': 'Scott Miller',
   },
 
-  // Pick values (KTC approximate)
+  // Pick values (KTC SF scale). Update twice yearly: before NFL Draft (April) and season start (Sep).
+  // To update: paste fresh values from keeptradecut.com/dynasty-rankings (Superflex, no TEP, picks section).
+  PICK_VALUES_UPDATED: 'March 2026',
   ANATOMY_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1DAhsc8wfNeit65ndDYUuxoON_rnbiHnbtFPi9aRpeEk/export?format=csv&gid=1279331920',
   PICK_VALUES: {
     '2026 Early 1st': 7100, '2026 Mid 1st': 5400, '2026 Late 1st': 3979,
@@ -1408,22 +1411,17 @@ async function fetchKTC() {
   const lines = text.trim().split('\n');
   const players = [];
   const pickPattern = /^\d{4}\s+(Early|Mid|Late)\s+\d(st|nd|rd|th)$/i;
-  const livePickValues = {};
+  // Skip picks from the SF TE+ CSV — their scale is inflated vs standard SF.
+  // fetchKTCPicks() handles live pick values; corrected fallbacks cover offline.
 
   for (let i = 1; i < lines.length; i++) {
     const cols = parseCSVLine(lines[i]);
     if (!cols[0]) continue;
     const name = cols[0]?.trim() || '';
-    // Skip header-like rows and non-player rows
     if (!name || name.startsWith('Updated') || name === 'Name' || name.startsWith('KTC') || name.startsWith('Fantasy')) continue;
     const value = parseFloat(cols[4]) || 0;
     if (!value) continue;
-
-    // Check if this row is a pick
-    if (pickPattern.test(name)) {
-      livePickValues[name] = value;
-      continue;
-    }
+    if (/^\d{4}\s+(Early|Mid|Late)\s+\d(st|nd|rd|th)$/i.test(name)) continue; // skip picks
 
     players.push({
       name,
@@ -1435,12 +1433,7 @@ async function fetchKTC() {
       rookie: ['true','1','yes','y'].includes((cols[6]?.trim() || '').toLowerCase())
     });
   }
-
-  // Merge live pick values into CONFIG, overriding hardcoded where available
-  for (const key in livePickValues) {
-    CONFIG.PICK_VALUES[key] = livePickValues[key];
-  }
-  console.log('Live pick values loaded from KTC:', Object.keys(livePickValues).length, 'picks');
+  console.log('KTC players loaded:', players.length);
 
   STATE.ktcPlayers = players.filter(p => p.value > 0 && ['QB','RB','WR','TE'].includes(p.pos));
   STATE.ktcPlayers.sort((a,b) => b.value - a.value);
@@ -2207,6 +2200,8 @@ function renderPowerRankings() {
 }
 
 function renderDraftPicks() {
+  const dateEl = document.getElementById('pickValuesDate');
+  if (dateEl && CONFIG.PICK_VALUES_UPDATED) dateEl.textContent = CONFIG.PICK_VALUES_UPDATED;
   // My picks
   const myPicksHtml = STATE.myPicks?.length
     ? `<table class="data-table">
