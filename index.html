@@ -740,6 +740,14 @@
 
   <!-- DASHBOARD TAB -->
   <div class="tab-content active" id="tab-dashboard">
+
+    <!-- GM BRIEF -->
+    <div id="gmBriefCard" style="background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:72px">
+      <div id="gmBriefInner" style="display:flex;align-items:center;gap:20px;flex:1">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">⧳ GENERATING GM BRIEF...</div>
+      </div>
+    </div>
+
     <div class="grid-4" id="dashStatCards">
       <div class="stat-card">
         <div class="stat-value" id="ds-rank" style="color:var(--accent)">—</div>
@@ -1127,25 +1135,25 @@ const CONFIG = {
   // Pick values (KTC approximate)
   ANATOMY_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1DAhsc8wfNeit65ndDYUuxoON_rnbiHnbtFPi9aRpeEk/export?format=csv&gid=1279331920',
   PICK_VALUES: {
-    '2026 Early 1st': 5994, '2026 Mid 1st': 4687, '2026 Late 1st': 4283,
-    '2026 Early 2nd': 3486, '2026 Mid 2nd': 3056, '2026 Late 2nd': 2798,
-    '2026 Early 3rd': 2347, '2026 Mid 3rd': 2184, '2026 Late 3rd': 2117,
-    '2026 Early 4th': 1771, '2026 Mid 4th': 1628, '2026 Late 4th': 1556,
-    '2027 Early 1st': 6643, '2027 Mid 1st': 5407, '2027 Late 1st': 4757,
-    '2027 Early 2nd': 3825, '2027 Mid 2nd': 3380, '2027 Late 2nd': 3049,
-    '2027 Early 3rd': 2439, '2027 Mid 3rd': 2298, '2027 Late 3rd': 2181,
-    '2027 Early 4th': 1806, '2027 Mid 4th': 1661, '2027 Late 4th': 1538,
-    '2028 Early 1st': 4800, '2028 Mid 1st': 4485, '2028 Late 1st': 4058,
-    '2028 Early 2nd': 3114, '2028 Mid 2nd': 2794, '2028 Late 2nd': 2648,
-    '2028 Early 3rd': 2127, '2028 Mid 3rd': 2021, '2028 Late 3rd': 1883,
-    '2028 Early 4th': 1617, '2028 Mid 4th': 1532, '2028 Late 4th': 1298,
-    '2029 Early 1st': 4200, '2029 Mid 1st': 3800, '2029 Late 1st': 3400,
-    '2029 Early 2nd': 2800, '2029 Mid 2nd': 2400, '2029 Late 2nd': 2100,
-    '2029 Early 3rd': 1800, '2029 Mid 3rd': 1600, '2029 Late 3rd': 1400,
+    '2026 Early 1st': 7100, '2026 Mid 1st': 5400, '2026 Late 1st': 3979,
+    '2026 Early 2nd': 2800, '2026 Mid 2nd': 2400, '2026 Late 2nd': 2100,
+    '2026 Early 3rd': 1900, '2026 Mid 3rd': 1700, '2026 Late 3rd': 1500,
+    '2026 Early 4th': 1200, '2026 Mid 4th': 1000, '2026 Late 4th':  850,
+    '2027 Early 1st': 7400, '2027 Mid 1st': 5800, '2027 Late 1st': 4800,
+    '2027 Early 2nd': 3200, '2027 Mid 2nd': 2800, '2027 Late 2nd': 2400,
+    '2027 Early 3rd': 2000, '2027 Mid 3rd': 1800, '2027 Late 3rd': 1600,
+    '2027 Early 4th': 1300, '2027 Mid 4th': 1100, '2027 Late 4th':  900,
+    '2028 Early 1st': 6800, '2028 Mid 1st': 5200, '2028 Late 1st': 3987,
+    '2028 Early 2nd': 2900, '2028 Mid 2nd': 2500, '2028 Late 2nd': 2200,
+    '2028 Early 3rd': 1800, '2028 Mid 3rd': 1600, '2028 Late 3rd': 1400,
+    '2028 Early 4th': 1100, '2028 Mid 4th':  950, '2028 Late 4th':  800,
+    '2029 Early 1st': 6500, '2029 Mid 1st': 4800, '2029 Late 1st': 3600,
+    '2029 Early 2nd': 2800, '2029 Mid 2nd': 2400, '2029 Late 2nd': 2000,
+    '2029 Early 3rd': 1700, '2029 Mid 3rd': 1500, '2029 Late 3rd': 1300,
     '2026 Early 5th': 220, '2026 Mid 5th': 150, '2026 Late 5th': 80,
     '2027 Early 5th': 260, '2027 Mid 5th': 175, '2027 Late 5th': 95,
     '2028 Early 5th': 230, '2028 Mid 5th': 155, '2028 Late 5th': 85,
-    '2029 Early 4th': 1200, '2029 Mid 4th': 1000, '2029 Late 4th': 800,
+    '2029 Early 4th': 1100, '2029 Mid 4th':  950, '2029 Late 4th':  750,
     '2029 Early 5th': 200, '2029 Mid 5th': 140, '2029 Late 5th': 75,
   }
 };
@@ -1384,6 +1392,14 @@ function posPill(pos) {
 // ============================================================
 // DATA FETCHING
 // ============================================================
+function fetchWithTimeout(url, opts, ms) {
+  opts = opts || {}; ms = ms || 10000;
+  var ctrl = new AbortController();
+  var timer = setTimeout(function() { ctrl.abort(); }, ms);
+  opts.signal = ctrl.signal;
+  return fetch(url, opts).finally(function() { clearTimeout(timer); });
+}
+
 async function fetchKTC() {
   setLoadingProgress(10, 'FETCHING KTC VALUES...');
   const url = CONFIG.KTC_CSV_URL;
@@ -1443,6 +1459,28 @@ function parseCSVLine(line) {
   }
   result.push(current);
   return result;
+}
+
+async function fetchKTCPicks() {
+  try {
+    var resp = await fetchWithTimeout('https://leaguemate.fyi/api/ktc', {}, 8000);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    var picks = data.filter(function(p) { return p.position === 'RDP'; });
+    if (!picks.length) { console.warn('fetchKTCPicks: no RDP entries'); return 0; }
+    var updated = 0;
+    for (var i = 0; i < picks.length; i++) {
+      var pick = picks[i];
+      var val = pick.superflexValue || pick.value;
+      if (pick.playerName && val > 0 && CONFIG.PICK_VALUES.hasOwnProperty(pick.playerName)) {
+        CONFIG.PICK_VALUES[pick.playerName] = val; updated++;
+      }
+    }
+    console.log('KTC live picks: ' + updated + ' updated');
+    return updated;
+  } catch(e) {
+    console.warn('fetchKTCPicks failed:', e.message); return 0;
+  }
 }
 
 async function fetchSleeperPlayers() {
@@ -1893,6 +1931,50 @@ function renderDashboard() {
 
   // Roster overview table
   renderRosterTable('rosterOverviewBody', STATE.myRoster);
+}
+
+
+// ============================================================
+// GM BRIEF
+// ============================================================
+async function generateGMBrief() {
+  var card = document.getElementById('gmBriefCard');
+  var inner = document.getElementById('gmBriefInner');
+  if (!card || !inner) return;
+  var stats = calcTeamStats(CONFIG.MY_TEAM_NAME);
+  var rankings = STATE.powerRankings || [];
+  var myRank = rankings.findIndex(function(r) { return r.name === CONFIG.MY_TEAM_NAME; }) + 1;
+  var win = calcContentionWindow(STATE.myRoster);
+  var top5 = STATE.myRoster.slice().sort(function(a,b){return b.value-a.value;}).slice(0,5).map(function(p){return p.name+" ("+p.pos+", age "+p.age+", KTC "+p.value+")";}).join("; ");
+  var sellPlayers = STATE.myRoster.filter(function(p){var h=getRosterHealthFlag(p);return h&&(h.flag==="SELL"||h.flag==="CUT");}).map(function(p){return p.name;}).join(", ")||"none";
+  var injuredPlayers = STATE.myRoster.filter(function(p){return p.injuryFlag;}).map(function(p){return p.name+" ("+p.injuryFlag.label+")";}).join(", ")||"none";
+  var myPicks = (STATE.myPicks||[]).map(function(p){return p.label;}).join(", ")||"none";
+  var posVORPs = ["QB","RB","WR","TE"].map(function(pos){var v=STATE.myRoster.filter(function(p){return p.pos===pos;}).reduce(function(s,p){return s+p.vorp;},0);return pos+": "+(v>0?"+":"")+Math.round(v);}).join(", ");
+  var prompt = "You are a sharp dynasty fantasy football analyst. Produce a 3-part GM brief.\n1. STATE_LABEL: 2-4 words capturing strategic posture.\n2. NARRATIVE: One sentence 15-25 words, editorial voice.\n3. PRIORITY: One concrete action 10-15 words, start with a verb.\n\nRoster: #"+myRank+" of 12, value "+fmt(stats.totalValue)+", age "+stats.avgAge.toFixed(1)+", window: "+win.label+", VORP: "+posVORPs+", top assets: "+top5+", picks: "+myPicks+", sell: "+sellPlayers+", injured: "+injuredPlayers+"\n\nRespond ONLY with JSON (no markdown): {\"state\":\"...\",\"narrative\":\"...\",\"priority\":\"...\"}";
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    var data = await resp.json();
+    var text = (data.content || []).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
+    var brief = JSON.parse(text.replace(/```json|```/g,'').trim());
+    var ac = win.color || 'var(--accent)';
+    inner.innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">'
+      + '<div style="font-family:Bebas Neue,cursive;font-size:22px;letter-spacing:2px;color:' + ac + ';line-height:1">' + brief.state + '</div>'
+      + '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#' + myRank + ' OF 12 · ' + win.label + ' · AGE ' + stats.avgAge.toFixed(1) + '</div>'
+      + '</div>'
+      + '<div style="flex:1;border-left:1px solid var(--border);padding-left:20px;display:flex;flex-direction:column;gap:6px">'
+      + '<div style="font-size:13px;color:var(--text);line-height:1.5">' + brief.narrative + '</div>'
+      + '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:' + ac + '">▶ ' + brief.priority + '</div>'
+      + '</div>';
+    card.style.borderLeftColor = ac;
+  } catch(e) {
+    inner.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text-muted)">GM brief unavailable</div>';
+    console.warn('GM brief failed:', e);
+  }
 }
 
 function renderRosterTable(tbodyId, players) {
@@ -3091,18 +3173,22 @@ async function fetchDraftOrder() {
   }
 }
 async function syncAll() {
-  const btn = document.getElementById('syncBtn');
+  var btn = document.getElementById('syncBtn');
   btn.disabled = true;
-  btn.textContent = '⟳ Syncing...';
-
+  btn.textContent = '⧳ Syncing...';
+  var safetyTimer = setTimeout(function() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('lastSync').textContent = 'Sync timed out';
+    btn.disabled = false;
+    btn.textContent = '⧳ Sync Data';
+  }, 15000);
   try {
     await fetchKTC();
     setLoadingProgress(35, 'FETCHING SLEEPER DATA...');
-    await Promise.all([fetchSleeperPlayers(), fetchStandings(), fetchDraftOrder()]);
+    await Promise.all([fetchSleeperPlayers(), fetchStandings(), fetchDraftOrder(), fetchKTCPicks()]);
     await fetchRosters();
     await fetchTradedPicks();
-    // Fetch live prospect data from Anatomy sheet (non-blocking, updates 2026 class)
-    fetchProspectData(false).then(res => {
+    fetchProspectData(false).then(function(res) {
       if (res) console.log('Prospect refresh: ' + res.wr + ' WRs, ' + res.rb + ' RBs');
     });
     setLoadingProgress(80, 'PROCESSING DATA...');
@@ -3111,19 +3197,22 @@ async function syncAll() {
     calcPowerRankings();
     setLoadingProgress(95, 'RENDERING...');
     renderDashboard();
+    generateGMBrief();
     populatePickDropdowns();
     document.getElementById('lastSync').textContent = 'Synced ' + new Date().toLocaleTimeString();
     setLoadingProgress(100, 'COMPLETE');
   } catch(e) {
     console.error(e);
     document.getElementById('lastSync').textContent = 'Sync failed: ' + e.message;
+    setLoadingProgress(100, 'ERROR');
+  } finally {
+    clearTimeout(safetyTimer);
+    btn.disabled = false;
+    btn.textContent = '⧳ Sync Data';
+    setTimeout(function() {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }, 300);
   }
-
-  btn.disabled = false;
-  btn.textContent = '⟳ Sync Data';
-  setTimeout(() => {
-    document.getElementById('loadingOverlay').style.display = 'none';
-  }, 300);
 }
 
 // Close autocomplete on outside click
