@@ -3227,11 +3227,15 @@ function calcRookieFitScore(rookie) {
 
   let score = 50; // base
 
-  // Positional need bonus (0-30)
+  // Positional need bonus (0-30) — higher VORP deficit = bigger bonus
   if (posNeed.needScore > 1000) score += 30;
   else if (posNeed.needScore > 500) score += 20;
   else if (posNeed.needScore > 200) score += 10;
-  else if (posNeed.surplus > 2) score -= 10; // already deep here
+  else if (posNeed.surplus > 2) score -= 15; // already deep, actively penalise
+
+  // Positional surplus penalty — if we're well-stocked, reduce the score
+  // This prevents QBs/WRs from scoring high when we don't need them
+  if (posNeed.surplus > 1 && posNeed.needScore === 0) score -= 10;
 
   // Age bonus — younger = higher ceiling (0-15); guard against age -1/null from KTC
   if (rookie.age && rookie.age > 17 && rookie.age < 21) score += 15;
@@ -3243,11 +3247,12 @@ function calcRookieFitScore(rookie) {
   else if (rookie.value > 3500) score += 10;
   else if (rookie.value > 2000) score += 5;
 
-  // SF bonus for QBs
-  if (rookie.pos === 'QB') score += 10;
+  // SF bonus for QBs — ONLY if we actually need QB depth
+  // (gated on needScore so entrenched QB rooms don't inflate QB rookies)
+  if (rookie.pos === 'QB' && posNeed.needScore > 200) score += 10;
 
-  // TE premium bonus
-  if (rookie.pos === 'TE') score += 8;
+  // TE premium bonus — ONLY if TE room has a real VORP deficit
+  if (rookie.pos === 'TE' && posNeed.needScore > 200) score += 8;
 
   return Math.min(100, Math.max(0, Math.round(score)));
 }
