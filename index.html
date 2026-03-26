@@ -1133,8 +1133,7 @@ const CONFIG = {
   },
 
   ANATOMY_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1DAhsc8wfNeit65ndDYUuxoON_rnbiHnbtFPi9aRpeEk/export?format=csv&gid=1279331920',
-  // Pick values — corrected to current KTC SF scale (March 2026)
-  // Overridden at runtime by fetchKTCPicks(); these serve as offline fallback only.
+  // Pick values — current KTC SF scale (March 2026). Overridden live by fetchKTCPicks().
   PICK_VALUES: {
     '2026 Early 1st': 7100, '2026 Mid 1st': 5400, '2026 Late 1st': 3979,
     '2026 Early 2nd': 2800, '2026 Mid 2nd': 2400, '2026 Late 2nd': 2100,
@@ -1393,7 +1392,6 @@ function posPill(pos) {
 // ============================================================
 // DATA FETCHING
 // ============================================================
-// Wraps fetch with a hard timeout so a slow endpoint can't hang the sync chain
 function fetchWithTimeout(url, options = {}, ms = 10000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
@@ -1448,41 +1446,6 @@ async function fetchKTC() {
   return players;
 }
 
-// ── Live pick values from KTC JSON API ──────────────────────────────────────
-// Fetches the full KTC player+pick list, filters for RDP (Rookie Draft Picks),
-// and maps each pick's name and superflexValue into CONFIG.PICK_VALUES.
-// Uses superflexValue (SF scale) since our league is Superflex.
-// Falls back to hardcoded CONFIG.PICK_VALUES if the fetch fails.
-async function fetchKTCPicks() {
-  try {
-    const resp = await fetchWithTimeout('https://leaguemate.fyi/api/ktc', {}, 8000);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-
-    // Filter to picks only (position === 'RDP')
-    const picks = data.filter(p => p.position === 'RDP');
-    if (!picks.length) {
-      console.warn('fetchKTCPicks: no RDP entries found in response');
-      return 0;
-    }
-
-    let updated = 0;
-    for (const pick of picks) {
-      const name = pick.playerName; // e.g. "2026 Early 1st"
-      const val = pick.superflexValue || pick.value;
-      if (name && val > 0 && CONFIG.PICK_VALUES.hasOwnProperty(name)) {
-        CONFIG.PICK_VALUES[name] = val;
-        updated++;
-      }
-    }
-    console.log(`Live pick values from KTC API: ${updated} picks updated`);
-    return updated;
-  } catch(e) {
-    console.warn('fetchKTCPicks failed, using fallback values:', e.message);
-    return 0;
-  }
-}
-
 function parseCSVLine(line) {
   const result = [];
   let current = '';
@@ -1495,6 +1458,29 @@ function parseCSVLine(line) {
   }
   result.push(current.trim());
   return result;
+}
+
+async function fetchKTCPicks() {
+  try {
+    const resp = await fetchWithTimeout('https://leaguemate.fyi/api/ktc', {}, 8000);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const picks = data.filter(p => p.position === 'RDP');
+    if (!picks.length) { console.warn('fetchKTCPicks: no RDP entries'); return 0; }
+    let updated = 0;
+    for (const pick of picks) {
+      const val = pick.superflexValue || pick.value;
+      if (pick.playerName && val > 0 && CONFIG.PICK_VALUES.hasOwnProperty(pick.playerName)) {
+        CONFIG.PICK_VALUES[pick.playerName] = val;
+        updated++;
+      }
+    }
+    console.log('Live pick values from KTC API: ' + updated + ' updated');
+    return updated;
+  } catch(e) {
+    console.warn('fetchKTCPicks failed, using fallback:', e.message);
+    return 0;
+  }
 }
 
 async function fetchSleeperPlayers() {
@@ -1934,6 +1920,7 @@ function renderDashboard() {
   renderRosterTable('rosterOverviewBody', STATE.myRoster);
 }
 
+
 function renderRosterTable(tbodyId, players) {
   const sorted = [...players].sort((a,b) => {
     const posOrder = {QB:0,RB:1,WR:2,TE:3};
@@ -1977,7 +1964,6 @@ function renderRosterTable(tbodyId, players) {
     </tr>`;
   }).join('');
 }
-
 // ============================================================
 // GM BRIEF — AI-generated narrative summary of current roster state
 // ============================================================
@@ -3251,14 +3237,13 @@ async function fetchDraftOrder() {
 async function syncAll() {
   const btn = document.getElementById('syncBtn');
   btn.disabled = true;
-  btn.textContent = '⟳ Syncing...';
+  btn.textContent = '⧳ Syncing...';
 
-  // Safety net: always dismiss overlay after 15s regardless of what hangs
   const safetyTimer = setTimeout(() => {
     document.getElementById('loadingOverlay').style.display = 'none';
-    document.getElementById('lastSync').textContent = 'Sync timed out — check console';
+    document.getElementById('lastSync').textContent = 'Sync timed out';
     btn.disabled = false;
-    btn.textContent = '⟳ Sync Data';
+    btn.textContent = '⧳ Sync Data';
   }, 15000);
 
   try {
@@ -3287,7 +3272,7 @@ async function syncAll() {
   } finally {
     clearTimeout(safetyTimer);
     btn.disabled = false;
-    btn.textContent = '⟳ Sync Data';
+    btn.textContent = '⧳ Sync Data';
     setTimeout(() => {
       document.getElementById('loadingOverlay').style.display = 'none';
     }, 300);
