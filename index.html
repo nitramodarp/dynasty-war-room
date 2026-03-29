@@ -4,33 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dynasty War Room</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #07070f;
-    --surface: #0e0e1c;
-    --surface2: #161628;
-    --surface3: #1e1e38;
-    --border: #2e2e4a;
-    --accent: #00d4ff;
-    --accent2: #ff6b35;
-    --accent3: #7fff6b;
-    --gold: #ffd700;
-    --text: #eaeaf4;
-    --text-dim: #9090b0;
-    --text-muted: #60607a;
-    --red: #ff4444;
-    --orange: #ff8c42;
-    --yellow: #ffd700;
-    --green: #4cff91;
-    --blue: #4ca9ff;
-    --purple: #b44cff;
+    --bg: #05080F;
+    --surface: #0C1120;
+    --surface2: #121A2C;
+    --surface3: #1A2438;
+    --border: #243048;
+    --accent: #FF6B1A;
+    --accent2: #00CFFF;
+    --accent3: #00FF88;
+    --gold: #FFD700;
+    --text: #E2EAF6;
+    --text-dim: #7A8EAE;
+    --text-muted: #3C4E68;
+    --red: #FF3050;
+    --orange: #FF6B1A;
+    --yellow: #FFCF00;
+    --green: #00FF88;
+    --blue: #00CFFF;
+    --purple: #B060FF;
 
     /* Archetype colors */
-    --young: #4ca9ff;
-    --peak: #4cff91;
-    --aging: #ffd700;
-    --sell: #ff4444;
+    --young: #00CFFF;
+    --peak: #00FF88;
+    --aging: #FFCF00;
+    --sell: #FF3050;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,36 +38,43 @@
   body {
     background: var(--bg);
     background-image: radial-gradient(ellipse 90% 50% at 15% 0%, #0e0e24 0%, transparent 70%),
-                      radial-gradient(ellipse 60% 40% at 85% 100%, #0a0a20 0%, transparent 60%);
+                      radial-gradient(ellipse 60% 40% at 85% 100%, #050D1A 0%, transparent 60%);
     color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Barlow', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
 
   /* HEADER */
   .header {
-    background: linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #0a0a1f 100%);
+    background: rgba(5,8,15,0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
+    padding: 0 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 64px;
-    position: sticky;
+    height: 56px;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 100;
-    backdrop-filter: blur(10px);
   }
 
   .header-logo {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 28px;
-    letter-spacing: 3px;
-    background: linear-gradient(135deg, var(--accent), var(--purple));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .header-logo em {
+    color: var(--accent);
+    font-style: normal;
   }
 
   .header-right {
@@ -77,68 +84,178 @@
   }
 
   .sync-btn {
-    background: linear-gradient(135deg, var(--accent), var(--purple));
+    background: var(--accent);
     border: none;
-    border-radius: 6px;
+    border-radius: 3px;
     color: #000;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    font-weight: 600;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
     letter-spacing: 1px;
-    padding: 8px 16px;
+    padding: 7px 14px;
     cursor: pointer;
     text-transform: uppercase;
-    transition: opacity 0.2s;
+    transition: opacity 0.15s, transform 0.1s;
+    min-height: 36px;
   }
 
   .sync-btn:hover { opacity: 0.85; }
+  .sync-btn:active { transform: scale(0.96); }
   .sync-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .last-sync {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 10px;
     color: var(--text-muted);
   }
 
-  /* NAV */
-  .nav {
+  /* BOTTOM NAV */
+  .nav { display: none; } /* Hide legacy nav */
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(12,17,32,0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
     display: flex;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .bottom-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 2px;
-    padding: 0 24px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-  }
-
-  .nav-tab {
-    padding: 12px 20px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    white-space: nowrap;
-    transition: all 0.2s;
     background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
+    border: none;
+    border-top: 2px solid transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.15s, border-color 0.15s, background 0.1s;
+    padding: 0;
+    min-height: 60px;
   }
 
-  .nav-tab:hover { color: var(--text); }
-  .nav-tab.active {
+  .bottom-nav-btn.active {
     color: var(--accent);
-    border-bottom-color: var(--accent);
+    border-top-color: var(--accent);
+  }
+
+  .bottom-nav-btn:active {
+    background: rgba(255,107,26,0.06);
+  }
+
+  .bottom-nav-icon {
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .bottom-nav-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* MORE DRAWER */
+  .more-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 200;
+    display: none;
+    backdrop-filter: blur(2px);
+  }
+
+  .more-overlay.show { display: block; }
+
+  .more-drawer {
+    position: fixed;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    z-index: 201;
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+    padding: 8px 0 20px;
+  }
+
+  .more-drawer.open { transform: translateY(0); }
+
+  .drawer-handle {
+    width: 36px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 8px auto 16px;
+  }
+
+  .drawer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 0 14px;
+  }
+
+  .drawer-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 14px;
+    text-align: left;
+    transition: all 0.12s;
+    min-height: 56px;
+    width: 100%;
+  }
+
+  .drawer-item:active, .drawer-item:hover {
+    background: var(--surface3);
+    border-color: var(--accent);
+  }
+
+  .drawer-item.active { border-color: var(--accent); background: rgba(255,107,26,0.08); }
+
+  .drawer-icon { font-size: 18px; }
+
+  .drawer-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* Nav-tab kept for JS compatibility */
+  .nav-tab {
+    display: none;
   }
 
   /* MAIN */
   .main {
-    padding: 24px;
+    padding: 14px 14px 8px;
     max-width: 1400px;
     margin: 0 auto;
+  }
+
+  @media (min-width: 600px) {
+    .main { padding: 20px 24px; }
   }
 
   .tab-content { display: none; }
@@ -148,106 +265,120 @@
   .loading-overlay {
     position: fixed;
     inset: 0;
-    background: var(--bg);
+    background: #020407;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    gap: 24px;
+    gap: 0;
+  }
+
+  .loading-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,107,26,0.013) 3px, rgba(255,107,26,0.013) 4px);
+    pointer-events: none;
   }
 
   .loading-logo {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 64px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 80px;
     letter-spacing: 6px;
-    background: linear-gradient(135deg, var(--accent), var(--purple));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    line-height: 0.9;
+    color: var(--text);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 32px;
   }
 
   .loading-bar-wrap {
-    width: 300px;
+    width: 220px;
     height: 2px;
     background: var(--border);
-    border-radius: 2px;
     overflow: hidden;
+    margin-bottom: 14px;
   }
 
   .loading-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--purple));
+    background: var(--accent);
     width: 0%;
     transition: width 0.3s ease;
+    box-shadow: 0 0 10px var(--accent);
   }
 
   .loading-status {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
     color: var(--text-muted);
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
   }
 
   /* CARDS */
   .card {
-    background: linear-gradient(160deg, #111122 0%, var(--surface) 40%);
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 14px;
   }
 
   .card-title {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 20px;
-    letter-spacing: 2px;
-    color: var(--accent);
-    margin-bottom: 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    text-shadow: 0 0 24px rgba(0,212,255,0.35);
+    gap: 8px;
   }
 
   /* GRID LAYOUTS */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 600px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+  }
 
   /* STAT CARDS */
   .stat-card {
-    background: linear-gradient(160deg, #131326 0%, var(--surface2) 60%);
+    background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    border-radius: 6px;
+    padding: 14px 12px;
   }
 
   .stat-value {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 36px;
-    letter-spacing: 2px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 40px;
+    letter-spacing: 1px;
     line-height: 1;
-    text-shadow: 0 0 20px currentColor;
   }
 
   .stat-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
     color: var(--text-muted);
     text-transform: uppercase;
-    margin-top: 4px;
+    margin-bottom: 2px;
   }
 
   .stat-sub {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
     color: var(--text-dim);
-    margin-top: 2px;
+    margin-top: 3px;
   }
 
   /* TABLES */
@@ -258,12 +389,12 @@
   }
 
   .data-table th {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
     letter-spacing: 1px;
     text-transform: uppercase;
     color: var(--text-muted);
-    padding: 8px 12px;
+    padding: 7px 10px;
     text-align: left;
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
@@ -274,32 +405,32 @@
   .data-table th:hover { color: var(--accent); }
 
   .data-table td {
-    padding: 8px 12px;
-    border-bottom: 1px solid rgba(42,42,64,0.5);
+    padding: 9px 10px;
+    border-bottom: 1px solid rgba(36,48,72,0.5);
     vertical-align: middle;
   }
 
-  .data-table tr:hover td { background: var(--surface2); }
+  .data-table tr:hover td { background: rgba(255,107,26,0.04); }
   .data-table tr:last-child td { border-bottom: none; }
 
   /* ARCHETYPE BADGES */
   .badge {
     display: inline-block;
     padding: 2px 8px;
-    border-radius: 4px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px;
-    font-weight: 600;
+    border-radius: 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
     white-space: nowrap;
   }
 
-  .badge-young { background: rgba(76,169,255,0.15); color: var(--blue); border: 1px solid rgba(76,169,255,0.3); }
-  .badge-peak { background: rgba(76,255,145,0.15); color: var(--green); border: 1px solid rgba(76,255,145,0.3); }
-  .badge-aging { background: rgba(255,215,0,0.15); color: var(--yellow); border: 1px solid rgba(255,215,0,0.3); }
-  .badge-sell { background: rgba(255,68,68,0.15); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
-  .badge-taxi { background: rgba(180,76,255,0.15); color: var(--purple); border: 1px solid rgba(180,76,255,0.3); }
+  .badge-young { background: rgba(0,207,255,0.12); color: var(--blue); border: 1px solid rgba(0,207,255,0.25); }
+  .badge-peak { background: rgba(0,255,136,0.12); color: var(--green); border: 1px solid rgba(0,255,136,0.25); }
+  .badge-aging { background: rgba(255,207,0,0.12); color: var(--yellow); border: 1px solid rgba(255,207,0,0.25); }
+  .badge-sell { background: rgba(255,48,80,0.12); color: var(--red); border: 1px solid rgba(255,48,80,0.25); }
+  .badge-taxi { background: rgba(176,96,255,0.12); color: var(--purple); border: 1px solid rgba(176,96,255,0.25); }
 
   /* POS PILL */
   .pos-pill {
@@ -307,7 +438,7 @@
     width: 28px;
     height: 20px;
     border-radius: 4px;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 10px;
     font-weight: 600;
     text-align: center;
@@ -321,36 +452,36 @@
 
   /* POWER RANKINGS */
   .team-rank-card {
-    background: linear-gradient(135deg, #131326 0%, var(--surface2) 60%);
+    background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
+    border-radius: 6px;
+    padding: 12px 14px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 8px;
-    transition: all 0.2s;
+    gap: 14px;
+    margin-bottom: 6px;
+    transition: border-color 0.15s;
     cursor: pointer;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
   }
 
-  .team-rank-card:hover { border-color: var(--accent); transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,212,255,0.1); }
-  .team-rank-card.my-team { border-color: var(--accent); background: linear-gradient(135deg, rgba(0,212,255,0.06) 0%, #131326 60%); box-shadow: 0 2px 20px rgba(0,212,255,0.12); }
+  .team-rank-card:hover { border-color: var(--accent); }
+  .team-rank-card.my-team { border-color: var(--accent); background: rgba(255,107,26,0.06); }
 
   .rank-num {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 32px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 34px;
     color: var(--text-muted);
     min-width: 40px;
     text-align: center;
     line-height: 1;
   }
 
-  .rank-num.top3 { color: var(--gold); text-shadow: 0 0 16px rgba(255,215,0,0.5); }
+  .rank-num.top3 { color: var(--gold); }
 
   .team-info { flex: 1; }
   .team-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-  .team-archetype { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); }
+  .team-archetype { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); }
 
   .team-stats {
     display: flex;
@@ -360,13 +491,13 @@
 
   .team-stat { }
   .team-stat-val {
-    font-family: 'Bebas Neue', cursive;
+    font-family: 'Barlow Condensed', sans-serif;
     font-size: 20px;
     letter-spacing: 1px;
     line-height: 1;
   }
   .team-stat-lbl {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 9px;
     color: var(--text-muted);
     letter-spacing: 0.5px;
@@ -377,14 +508,16 @@
   .trade-side {
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
+    border-radius: 6px;
+    padding: 14px;
   }
 
   .trade-side-title {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 16px;
-    letter-spacing: 2px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
     margin-bottom: 12px;
     display: flex;
     justify-content: space-between;
@@ -392,7 +525,9 @@
   }
 
   .trade-total {
-    font-size: 24px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
     color: var(--accent);
   }
 
@@ -406,13 +541,14 @@
     flex: 1;
     background: var(--surface3);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 4px;
     color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 13px;
-    padding: 8px 12px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    padding: 9px 12px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.15s;
+    min-height: 42px;
   }
 
   .trade-search:focus { border-color: var(--accent); }
@@ -422,18 +558,19 @@
   .add-btn {
     background: var(--surface3);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 4px;
     color: var(--accent);
     cursor: pointer;
-    font-size: 18px;
-    width: 36px;
+    font-size: 20px;
+    width: 42px;
+    min-height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all 0.15s;
   }
 
-  .add-btn:hover { background: rgba(0,212,255,0.1); border-color: var(--accent); }
+  .add-btn:hover { background: rgba(255,107,26,0.1); border-color: var(--accent); }
 
   .autocomplete-list {
     position: absolute;
@@ -487,22 +624,23 @@
 
   .trade-verdict {
     background: var(--surface2);
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 6px;
+    padding: 18px;
     text-align: center;
-    margin-top: 16px;
+    margin-top: 14px;
     border: 1px solid var(--border);
   }
 
   .verdict-label {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 28px;
-    letter-spacing: 3px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 32px;
+    letter-spacing: 2px;
     margin-bottom: 8px;
   }
 
   .verdict-detail {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 12px;
     color: var(--text-dim);
     line-height: 1.8;
@@ -541,14 +679,15 @@
   .pick-select {
     background: var(--surface3);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 4px;
     color: var(--text);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 12px;
-    padding: 8px 12px;
+    padding: 9px 12px;
     outline: none;
     cursor: pointer;
     width: 100%;
+    min-height: 42px;
   }
 
   .pick-select:focus { border-color: var(--accent); }
@@ -557,11 +696,13 @@
   .pick-year-section { margin-bottom: 24px; }
 
   .pick-year-header {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 24px;
-    letter-spacing: 3px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
     color: var(--accent);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border);
   }
@@ -574,7 +715,7 @@
   }
 
   .picks-grid-header {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 9px;
     color: var(--text-muted);
     text-align: center;
@@ -583,7 +724,7 @@
   }
 
   .picks-grid-round {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 10px;
     color: var(--text-dim);
     padding: 6px 8px;
@@ -594,10 +735,10 @@
   .pick-cell {
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 5px 4px;
+    border-radius: 3px;
+    padding: 4px 2px;
     text-align: center;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 9px;
     line-height: 1.3;
     transition: all 0.2s;
@@ -623,7 +764,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text-muted);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 10px;
     letter-spacing: 0.5px;
     padding: 6px 12px;
@@ -654,7 +795,7 @@
     border-radius: 8px;
     padding: 16px;
     color: var(--red);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 12px;
     margin-bottom: 16px;
   }
@@ -678,7 +819,7 @@
 
   .text-right { text-align: right; }
   .text-center { text-align: center; }
-  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .mono { font-family: 'DM Mono', monospace; }
 
   .divider {
     height: 1px;
@@ -690,23 +831,50 @@
     display: inline-block;
     padding: 1px 6px;
     border-radius: 3px;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'DM Mono', monospace;
     font-size: 9px;
     font-weight: 600;
     letter-spacing: 0.5px;
     margin-left: 4px;
   }
 
-  .tag-taxi { background: rgba(180,76,255,0.2); color: var(--purple); }
-  .tag-rookie { background: rgba(255,215,0,0.2); color: var(--gold); }
+  .tag-taxi { background: rgba(176,96,255,0.15); color: var(--purple); }
+  .tag-rookie { background: rgba(255,215,0,0.15); color: var(--gold); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* TEAM STATS */
+  .team-stat-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+
+  .team-stat-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .team-info { flex: 1; }
+  .team-name { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+  .team-archetype { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); }
+  .team-stats { display: flex; gap: 18px; text-align: right; }
 </style>
 </head>
 <body>
 
 <!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
-  <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGiEcFxgfGRQUHScdHyIjJSUlFhwpLCgkKyEkJST/2wBDAQYGBgkICREJCREkGBQYJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCT/wgARCAEnASwDASIAAhEBAxEB/8QAGwAAAQUBAQAAAAAAAAAAAAAAAAEDBAUGAgf/xAAZAQADAQEBAAAAAAAAAAAAAAAAAQIDBAX/2gAMAwEAAhADEAAAAfN0CslAAEBCooAAADSiKCAAKAIdoPk6QEAEAAqAAqAKIowEEADEVAUAYgAAIAGKgJKIMU5UaqPIXu1nJ5rm+jDpUlcuY62LYQDrhpUFEKgwATVABFRWIKIBAYAgCeOHzuMrLgglwqCDOyWHNv1bTUeazYxcVqZynm49srUaJPiXFUxYMuYaSWmNgglFQBFRgqCAAYCoQUYaPNuTXpFYzf8AD3easbPIdfI0g7pnOs2pAup9e5y9lg/Dmxo72r1zDjWddLjVlg3U1nEpzp5KSPZVbXE5+0hzaC6x7EA0gQVCKA0UBADABDmrx/WevpGddu+Lt85fsH+/z3n7SsTjPt2PL2s2PEpU1Ibc0liNYxIcCNZwU4UmLadPHUVk+9IkOysVjvVsh18gigAAADaKCBFARUUEUBdarJvZ67anlpy9kWPI0nRz0T/oOKjVbSslRc7k7b5j8xENxH9rUeac6WlcGig18TBzonZzAAgAAAAAAAAAAABUUAmXUaVWpsJfN1wZdZnVVzMyulpLV3tTNOTaq9VUyt9ObWotM3U7drLWkt3ObZonzTjdZro56pOudcBUAAAAQFAAAAe71+eucvbBMOiU9XORpKp7aOGTkPN6RJj3nM1VuzZLFn18vPZvOX3V55yVZOua3MbDNOZ+ijWOds8vsjrqe8SoyEPb4/o5o4LpiidIwAQoAWOxyGg5eye25xnsO8qEzrPwqnS5uzqwkz6K2HaQnY6vq6prQdU6rKJsF6O1USoFteWgfyFWl6FX56dNPOM9jcyGlzumVWB1cYIACKhUXoLmyiS+TulTIsuNJfEmsFlYzN904OV2px2d921LZssae0ez2o35j2mNe+/PmozDtXGlbMrLHfmm5/d4tNzW47ay0iWEDLaLWWMXTPOnfHVwgDEATJMaymrWS1J5OyTMh2M29ktXldIzGkzWl6OfQZfc5uHSutOFPsxol52s2muc9o8V2FUX0CDPc1LMnlzo6+Awrb3WE3sufBnwubprIsyHc0UawrurhURalBQEuqi7y3mT49jzdKTI/KciktbjXPPX77m/MV92+Px4vISdfO7YnSbzCVaT2a9wXPb0u8YWheCc6xsVF5/rLyDOix+uObqgQLqvqaqmv4HTzQed1tdMvEe9hqUeaXblty9jUk5zvmOndEy45l9PLHknFQ8y/NZCxnoWbl56tW6VUz01J0hx7CaKpv66PpjsqjTMsykqzjIBO08+PxObrsIUhqKqNjRel74uil5UnmLzsXOmM85byIaNOOdPEsejnmdEm1Gsm3g7Zk8oj09plk8UWjOO6yafm87+BEcTj7XNemMc5kGuUKLYxBVUWfEl857XQk6WZzH5+mTrci7S9DFTXDxO1jTMOh/loT4sKjYdHPGsWZumbr4+PtR1B1x0mzFsWWsxnvRqLPXLcSucOiI1MYC03VdadPJyOtuY8ebHZWOOV7U1pzkS09s4qykp+FhrtrDEbfXPyfvrnDp6gSUqLvRtSunmiTWZqau8uD5c5EHaAdAqbHXSBja3XZLn6uZUTRs0nSrvzJx0Cajy47VdT3dOJLOgsQluNjUrJabiLy70dvHo4beZCJrKvX9HN30g0Ps9BLda7GovKHEAOxFTGXuAMZs6pXjtx596XFyFTrTLhF5Fy24jUeDbRmszA09Ai17zWla664cap6ndU+PQyy5ztzI6OMelRn1UkacHKcjSE3eTpCds9h2vKgoip8J2jXnnoeR1MaShCp556QXPTfbXHPSMYq7mELGTJkQm8kZXSg7JgvN518HEuYCpyOCbrgM7eBN3sB8oAOdAgAGKAqJ8FVwACNg1yoNcqAcxQFHqQJp7QGXj4J//xAArEAACAgIBBAEDBAMBAQAAAAABAgADBBESBRATISIUIDEjMDJABkFQMzT/2gAIAQEAAQUC/wCxr/iKhhQE8CD31Nf3kXZxqtu+Gm/pvdtHuxNFK+TLR6tpIhXX9TifvESsmLj8RjfFgDNAh6xuxPmtfv1Uh/Fn41/Sxq9suKtq5dHgt+wDcFXrGUThNNscWh9R0OmqMFYQFPIbGALrOB1rUI76P7uFbRFsRhkYQZbajU3fHAB4KYqRW9Bos4+zD7DgGWb4eP0ZwLRgdsNdqcZrJRT4p1PHrx8jt/r9hHKHDy1cenXLxgwsQo0UblafFkZIrQNF3FU6Hmiixo6WaddRjqbEsHyFbatR9tMTFNs14mycqvGxyd/uo5Q4maGjDyLmY211K1LSsER7uSLNWRKyYtCcVrfl4Lo2NDVGVlnoxvyfctLKKajfYlQorKpRTdabrP3gdTp+ZsOA4ycbhZSolS8Rk63UIiCeFZXjgg4jRcYz6VI1Sxq4wIh/kApW9PfT8YUV1VgTqXUHzr/6CsVOFl+QXVixf4H6t55GcryrWrJNk5tK12upw4z+UubxjzM0vsZIx2DcTMWjz2hebdV6n9U39KtzW2PkhxkoIKWadNw8cGw1rXaqC3mBEtiXRrAYzxrFi2BbFFVledhIG+kIYcVHVMweP+pio/Kuh3C1iuedKxkdQNhx6i4upKli1ZpyOcLECy8ytOUfF8mPh9SegrcLJYgshpsQX0NCpH9KvEstlHT+MqxlA2EGRkATJtd5jEA49+jZYWliuTRRxfIp/Svx2WUMTBZZWuYoeYKW+CrL9i0NLKQwsxyy34FlU1+6tTvK+m3PKOmrXFREnJI1uhfk2T6r5LvIKYyuBe1J+qvulFLJK1lh+JXlMjB5WePqCjHxGJJKLazbwGu0BPLqbVpdhVXR+lES3Etq/apTm1FRVdOJzabMTcZGYeCZuDMRtR6g4VikfyXMyCtEb5E+g08dbweRYVJl2lSxOduMnFfGTPp49PGe5xMtU8bl4v8AsYf8639MxM12Bi2QussAZbBwZcgrFs5xU1Lm5XVH2az4j/Omzi9y7lhZVstLTEq5FFAnmQQ5KiWWcoYG1HcazP5/sYglbRTDFSMupbkcIMz3Vf5BktpkYGV/hrOK0HlNasN/6VS87MjSlLOS3+wdB67Qq3dRKz65yasnc2W7AyyZQ/Zx10FixRFWXehmtMeryRKzTMh+TVejWY3yHluQDLvQ/Xl4y9QlAyLHt+L2vLG+dKmyNh+rV4Pi+zSnxddQxzLhtfvX2yelSKIkH4yrABkPyfpqbS7QS32/8ZU05xbAoyLQ9aZAIN5rbyhgzAhm+L/nDt9sw8WUhDYraehtq8aNHGw4033Y424ixIomvXUy69sJ+ERfMc2rx363XX+NlQbdHl81p+N/MDHsOlIIZSHb88irYp+pnVdB0/lhqSjLGEeNLx8/uxVgiiJF7dTPbp1DWqtXjr6kmwvpF9hn9c4uSolfUk425/OeQmJc/JzEXy2ZGO1LYmWcY5FxyLE/liH4GWR4Zkj76F4osQRRB+NzIw3ymq6ImqKFoXjMzE8tbg7X0PDylYGvpkMODVPAqx/iDX7fYGDV+vdji1T0qN0t4+JbVMI/plo8YR5cOQ7eu6jk2pWvpV0BCYsQcQDAIqwJOs4xxMvwnbGN7n1dlM+usn1tjTZMU82rqYyvH8Vfn962B6njS0NR9OxaEzW5bXNQYl11uH/jD2GroXTqklVVlzU0srVYxioBAI2hB8jUm34wLFWNalU5W2xsWvKqy8H6Fvp1nAchXXBTVOFZjIkrx5SnlZqwVvxdxQ1c/lK/Uzf1KiNxZoAN7liToPTnWvt0z/HLMqdRyKOj4mLToATiRNyxpQOUqp4DU9Q8zK8cTiBFM/yD/wCDFyfGUqruhx4KlaCr5JijjZelQ6Vm8c8qIyRqRPDB6Jf1YPGQ+jv0V2bAFro19P2z85cOpmsyrqh6U8YbI1kpqbIsqrVAsdSRXXxIAhWfiaG+saGA9ZleU9R+vLE5ahvrgFbNJUBnnRcJeOpqMsZY0M0tgy0GNZUwYepZp16NkefB7ZeS2XdSBB6BO5oiKnlesBRXBFmosEK7jep1TCfJYCPjco2KRBUwnhgqnDcxqfDTNRpYI4nBnZsLig6bRLultjit+QAEwsj6DN7KuzUNQntZbqUj9NBKxBAIB9jrucJmYAsmiOx7anSKPNkzUMIjCOsqPAHspKzNxQIsXGF7Yb/GVrB8ezPoVob7DRxoVIogWARYYO5GiVBmdh8hxmpqOpmBjDGxtdjDGjRn4sDyB7D0cij6Zla5HbN+nKsLUA0BDLmM6dj6GvggnGKO4+wifiEbmdV4btzc6fV58zX2GNLfQcyi7ix7Axgrrcj1WWfI4vVr+n1f7PqFpjJ57qq+CiAai/hfXcQwd2EE6jj+SrhHGh0Sv9L7rRuWpDMe7lD23qZFP1VO9z32J2HnT8bxoO3+0P7W9FhsZVXhttOl6cnDC+ww/grLK9y6vU2VlNnmSfmDanMxDy3uFWM8FsxMN3sA0OxiwQfsEduo1eTHfZrxxrH7mDsYVlte5fXxi3NQ1bLenjYRbIJd0rk+2hJgdoHeLa0V9w9l7mA/eRsZlXgsq/8AL7D2PZhMivYdfnUxqldwtG1MX4zcJ3NLAyCBxFmoOywQdwfuM66nFcZueN2Pb/fcy0eno9uNTmazSy3qVNZBMCwVRKxAAISFHLnB2EHc/cO3Wa+eB0d/J03sY33PGWXpLvS/KuY+Qt8OOJ//xAAjEQACAgICAgIDAQAAAAAAAAAAAQIRAxASISAxMEETQFEy/9oACAEDAQE/Af2a1RRWq+FDjWkhiFE4nEa0/gi6IxXsy4+OkrIxRWkOCJxp6UPslXnjyuB1OJOLi6IC2hmYhHkyc+KpfDiycGTUZxshHqxWU9NMdk4Nqz/ERu/hjibIR4qhtITvSZfY/wCiaY4WTwteePHyI44rVCtdMoUSicbFEmhKkWSimZMfH144vW+RJkeyh2Mo+xzSItPWX14x60yPciZBj7HJoiNifZmXRhGiQ9wXYtZPRCVMcrdlnJsikSXfRGTskx5E40YdMmu94v6LWX0VuJzgOS+iVfRZxMXT0zKvsURIhClq6Jyt7oUqOaHk0xFkXesmoQ03Q34L2OFn4z8ZPrrwUqIysyLrwnO35Qn9PVEnb8YyrslNv1vJKkLzxytGSXXnFq+xxLJu38EJUzL8EJ/T+Nu68X+m/D//xAAlEQACAgICAwACAgMAAAAAAAAAAQIRAxASISAwMUFRIjNAUGH/2gAIAQIBAT8B/wAuzl7VK/Cxss5CfqkrJTknRiyclqxye2KbIu1pz/CIp+eTGpneORGVqyQxaesZknwVmLG32/Tkx80Y24SonLujotas6ZGaj9P7ZiXplNIlK3ZFD63RH9Ev0RlRHKn5znxJZG9WOn/JCkctRdDkQG7elJohO/vjl+74kV2PrS1YxQGmIx/fGWkj5ERNCKTGJDXRjZlExeEvg9Y/pJFVrihi/wCkl0IUKZm0iPzeQesaLK1IplMQ0WZO1qJjf4GyyUrekrIxrwqzixR21qSrWPU56SIrwfwUjmcyHffg42SjRj09Rh0JeM4/lbiqXjKNiil93CNv0Tj2Qj3taWpLroTKIKl6JK0Q9E4fr/SrX//EADQQAAEDAgQFAwMCBQUAAAAAAAEAAhEQIQMSMUEgIjBRYRMyQARCcYGRFDNSscEjUGBi0f/aAAgBAQAGPwL/AI5KsvH+yCdFyCFM2UKFCJ+Np0ZREbKN0F5RU0BedFpHw5LSQoOiLRpxhqhyzRoswWitWYsu6m54tOrz/suREndQeDmCvpS96WrO9MoXlXV1c1mLINsQiMNwI16khX1rFRmF0OGy0C5jwl0qwpKibIZMrsZ28e1X6shAE3oTFxS2quopoFd8fhe9yhuK5Wx1zYrj+qs5y71i65FAQa1H6nHFvtb/AFFOe7U9eygm9J2K5RdEOjMoputCvcQrYqvjIy5x/VWzLUq90IXlRuvUcOYo/UY9sJmp7+EXGzdGt7D4MhQdadlG/dXKzDDcfMLspF1+a5VyiVeL7LmwnR3WYUzO0CuYYNT2QwsK2Bh+0d/Pw5FLUnEEv8oiBCJaONubRQQFyCAhFwgxoQ+mwtNX+fiyNFdXUmyysXMtFLTWBQgar0cY6bqdVy2KJlOJVwR8LSFzCVNLGaXrlaNVfWU2N1MgAKzgjcqSFna/8BQ+zldWAKLNlI5h1uVpKuMqvrS1NLK4VhZFps4aK+G6yy4eCZ7lF2MQ939qBaA/lF+C7I7sgDDgi76n9kQwcqurzClXpcQVyP8A3Vx07LVa8OfD/ZQg5phwUPF0GNGUL09eA/1KDpSEAgI4NVqr/Dsgv8oQ5Q2mZQoWbMrm9MxV6W+TG1J70yK6sr60ilrq/FPxNaZWAypxmT5UNY4lSOXwgMVsRus23DHyCprJXlWaBCnZWMo1imbvxnq20rfRHtXMV4oVEWhXKuYThSQhOgTWqyE9SejlUqKGdleVZQ6EVIa5ZSFm7hZRTwi8oIdQcUBcyytoYRbuFCDjusp1XtC9gUQKZolRGqlXFLL2odDWsIDp+pHI9CFBbddls5exWAUuM0koO3UOsrUgheDxFuEwuU477eFl9AO8mmXCY558BQRzKT0fKtYL0sduZQ53+kdCszUVcK4XtCspaDKA7aqOGeysr1kI/UYxs/2tqMX6qcPC7bleh9IxrcR6k6nhtwQ0KXa1JGzlzHlKzNM0/wCyINlsSoavTfMYmnFC8cBJWFGmUVzm7vtajiYhknhv7QuUUsr8L2kiSrKNEJUhqNgjdcy/iXDm+3jyuuFyOzN/staQUGH3YRyGud/6Dtw+FA6IxmOJy/aoNLLeoY3V1kzDGw4srRJUOfzeFzlxXqfTuL8Pcbiocf5WJyv/APeg3z087BD/AO6g2IpotKF50Zx2rIXr4Qgfe3tQYT5bnHKdivRfGdgrFY2TPHUztHNwtbubnoTX/C9RozYR2OywxhkuYT7Ez6ht8roe3cJr2Xa4SOCyzFEdXw6okWbfo5TpwFp9rtV6JblLNHDdHNcndegMP1Gj2nxTxTwo60jUUsn4h1J6WU68Fv5rPavK0rAWY6/AI2KKw/x0pCneso/UYen3N7U5WlewrM8QB8EkatV1hjx05amuG6sVDxBUrNhODWnZaQtaaq/XgpzfKZ+OpZeVzKxtW5potPgDEWGe7enNJCjccWilT13+FhHsI6we0rK4XViv/8QAKBABAAICAgIBBAMAAwEAAAAAAQARITFBURBhcSAwgZFAobHR4fBQ/9oACAEBAAE/IfOv/p1GaQJX3d/xKjtMf7CFtzEU/KIhXivDEl39L/FYEDOIlVQQP9YyyDasA5mGCYfKYV8VHsYiUvxOBfmcn7F/cQLVX0rNw3HbJVLfcuxm4T8G5mMccSk9ID2cQVq8RGtWp+pccINdzVocxxgfwaX0iSiA9gqChv6V3BHs1qZxthULFNQoA5XjkjADiCwUbf1BnaPdZXLUpXUrBgbb5mZ0kr4j9jj1FNKO2J2hnPnBdq+4NMMbWdNsqZ2dTYTncaB4YEomasSnXBxAveOElYwUO7iyC3AdmonRP+MGoBmJ4YVUWWkJ7RZYvOCtR1s0Y2zcr/8AsTCi5kUbiFAGHHryt0rP2SfFBRhF0uGVJM9xUiM4V3P0UYLYw8yguZ+YVqoW0x1/iHUfPC4oMb3nKJYWQavc4QE5jPUbeYxYwS7temyG+42yHq47tZ+0eTaQahgL+ZWEGDGNoo83G5nxEui/USLC/MbzekO069wdKHueo+Jfa/B0gvlucUGXsEYrJ7g6xEQgohwLVn5aPc6cRv8AxUSrJf31dqmUEx89kuwQehQcZiVAuKiGE7gd1Fdr9wr0fmJE62Y1zn4gzJK7eyYvaPzHOM9wRwMvdOTNyRBoAceiFK3u70mKIwNdX8GxFMpdaXCYQWxr3MmGBDYXT2tOCNcHnEx4ctJKdSoFTuKyzHTA7lvkQMUtpGlC4EKxieGnuGGbdfLLCn4yItwxP9D+GYaG7Y4vlqGwh8Q4iQwIcKnqGPiBwwBpzNrAtuazELlhqkT9xdmNkLo7R4mCMJaFNzt1H+BXi5ceQScYx3CN6EW/xOaF4hEKHMSWK2Swdy9xUFZbaytlU3MIyqFzDixFvaWUDqJo59QexPZ9B903U1VENDY9wZT9xoNBzOUkC5K/uXPaZaK63KyPymI0UalFKGgHLzzBNz1AozSwBfctqmcnMD/qTCNc8yyCRCFvhNSwH/UihrT1Hxf2/wAbMCVbn7QiqJ1LiYBJUT9EoNhVYIS7eRGgnSw3DERR9povE3I6iNjdQBn0I3knKpmgOWJ0JWDKzp1UtW9xGRcbj1kj8zgESTJe0J1D1HI52faryAAhHkpwQyzTOGINlwjFTzGFpW53MlK4KvW4u+Cw1gHL7l1OCPF6lSqwpZuJL8OYTnFxVUMg5gGeBU8RTd1FvvB8yxguXJVfRX088AwistKqESgzFajLuW6KZmF/iV045gdBnfqJTYNwzJ5jhx4iSjmLamAKYqu2A/0JZDeJiyZnAmhZCKyY+7NseArWUyPs0NzLBZkxGMZorO1NDG/JEe4gwZS4ZfeUVWMkuCFcK+YMhkcTEDDjqLDPyCY9MVmjn1RoJyzcDmIqWfYEoZvuN7lniQszIMRjDr48YyLDtXUuhWIpDF3Vy9QdCDL80VD6w5rliKgrY0m25ij5QqrlVqzLy0tTcGkCLkSXkd/SeBQQUFTDjwWGOoYz4OFfyMDbMxAOmFqBSaVMAKlEAs69QK4YY6jjJGbIJvahtHUckVxUXCr4lhRR3CCprLy8sCUL66fomUUpM8bQvShb3KxXJHR0TBdo5BLGuYWQ+ri0KJ57jwFlb6jYBD/YMaL8wJEHiOUldRzNw5QKTJGPzB3KtiQe0fMMQalc3gxZKr9/XiZJXgwczWLZMDKxD6iExT8z3iWsTUupn30C5ZNHFVMXQ+ZQE6hIUPwTmlxiAX5TxFatnIROeZnA1HPMfhrmx7l8ljwBmKlGc/1/2GEWYNTLEHg1cL3Dnd9yhhC8wJmpZnSksyu+J7JlMUEDc/ol3/CBqF8EGyviMHM6YyCyP1EMeiIjJDtqyG3Y8KkOYEOKC9xszBuYfmVWPF+RwgxCVg8wr3LKe5oCIy58BOGC/kfcoQDZZKNT0lc7scy4lD3Mua/mcdPuYltFwGpfBji5QBlEFK0MjKXeYVAj1fBCHEu5lDqZ8TmMsZjvgg6hyNYISzexlT0Ii6KaAaTqIRJjAhE3JfBmOFaJgeXIy30iiJiAcXxMglK6vUwDWVGgrc08sudXEtaKg8i/iaucVCYDqhiko6mL2QT5TLAiOcqXlBeILGbXUpWyMFPzPtmijBKhalZP/epRj1FbDtnNuRWcIRgUbnuiIDllTe5iQpG+Adyxs9pRoIRCpWhj5DUxxYIFolI4gKXg6mWMsWwaz7EsRkxcu7QV8pexASI4mDAwIWwxUHbTMRC8FyTpUlHo79eXyiY7GWFJbNK5ymX6j5jBSc3cqFE9/Cj3O5vBASbU+BpEFEpXwmbGQ9RrmAE5zc/OPMrxK8EzekOwqxbg8HxaBhqOmYFsmCLfuBLlBwagZoSpYS/1jX9eVz7+AStghOqcSZkei6O4IKg4hhxMpnNa8CEvKRAU3lmDMI9zlEwV0gHhmTVELgZKQDGIV4jyKQpOomEL9Io3e4nCsr4QZjmdO30PEPrT4SVSXT2TgMy1VS/MmVS4lUw7m/Ab5MMtKxsiwg7BAeoMwwwIO9fzAhJrwXeAUCC7eZnKiFtJBXrh/aZl3RFxsljL1FriXA3jxb0QGi/c5xMNU6cbgVTOD4q/FgmDUFzpDES5mJkJwWb9whhS6hD24JUTFZ2wipnBiDEBMuagCPAjyBY4exDWl/8AgTnFAafUJ1sbVzGioEnOS6RUQDRyzAEbw5ZrqYoFROYrI4YZISybVBFMyR3RMJAlx3+YZeHXgecyNzsB/XlSkDMor09wYNF8JAI7XkywRK9HSV0IV3HuxFAqxCCNpYlGMlRITBqafQsmZMUc5BMXsTEWlDzUTES3w3GCpQvw0wVCHJCp1LXZ1MdahvyZTuoNUGtvUqwpQzqPge4NkcTcJz5YYMCqNQchLV6gl7tCPl3ghqnhzMRdSWOQhCNNkuocIQhRIy2vkj9oUWag1I/ErkdT2IJBohqOZtFTFZHxNzTD6eaDKT8xLhj14YR14WIOZVtw4lkEaiuFW+TuJV7HTFHJC/foM007lvkxbhmDAEM5jgM76cBA9IhqG4sTm5cM4vpckJZcxUZMxkfEz+L9DFxDBMoktgLia0y2nUvo4cRBQIL7JJTmBAtM9hEalXJQtKh8KKyLiM0/UEwlRm8MrPg+kMLjyLmZOImjAp6zEn4Uyi67lHFMt5hMFwTjEtchIvJ4hDJDCH0bRIP5mP8AQQKiViHlhuDUrn9iZKCwYLqZYyBP/9oADAMBAAIAAwAAABB5I+sbMP8AJkgJzLnYBCUAdv8ANzCRqZE57W7AmuMSP/hhiSWHWdwooBgFLrO8DmBklG8sI0cGq/kO4KkAnKXhbugJ1CfiI2w2IU6o8WbVI0fnCpLB4www0w6w8kt39w38H4n7gxzxw95WVHWABTOOUJrWtIw31DNGn0JC6sF5oNgBDUSeR+B2CGa/lRxujKwAO4fqBKSJRoyamTD0B64/q58uhh4g3zdmzIvkGF3w8KYcU9NAhQFNdm/AmzFe6IDTpr2hFXao9ZPr92CfC1kXbWDb57S/foURIs5MvTZinEGPQxjguGkF51Gj2JXASEE8SnhQP0fDHIkmci7nPjhJox5PYvgX3HIvHQHAoIfv4Q//xAAgEQEBAQACAwEBAAMAAAAAAAABABEQISAxQVFhMHGB/9oACAEDAQE/ELLJ8csss8TjPFsseA9rOTHO8jXCftbfSUJWcy5Tgdb4ZZw27WeY72d6erQLZkIsHySwnqddRGZJmvUh0RbbbwSHXq/5mYKPcdJJIQh3NhFFu+GwzbL/AA4wU0IN6Yb7Y7fE2J7sUtNvsi1/wF8PhAG2TZ6J07vkyTpGbFOwO7M8vafUruXu7GRT5T+epF7djhBLp6sgul7ci7cDnpmyJBdOyb7YXoyE9dh3Te4gNODteQ1jgIlhwMBlm5H9SmDMfbGGX3wdiXVpDTIY5w92x4bLvB2TU/V8kj2wGnIw3ZpfuV7scMnwMe2CyXpAIfyHqYEYdy49bMemw3pxG9MRtYSlkDW9FLZfomfcv8izCde4fl0jDsA04OYcFustmmXvgOO4GLtKg/YgDZJwz6Yjtto4DPVt0BLvgll+EHDWecmR4hPghPlvDH7Hh8i/3JZPOFnhLZgPWJMkH29N6gvvgM8AvRwzZfyYiyFWGFt3wOci4fAO8D+8BweBwXw4eHg8Hfu//8QAHhEAAwADAQEBAQEAAAAAAAAAAAERECExQSBRMHH/2gAIAQIBAT8Q/hSl+WIv3cvcgv8AB5biovQmWEiQSlMoT+ooWBSCd3cOFRxibfRJ+Ce0QF0QhSfsdjxCCeIJI+i1H4IkH0OMLg7EzVC/1Dj54TKoel5EOA0nUS8KoJZtCXgMIEnR8QhKL+PXZzgxuU3QVbGt6KlRDjCVurBnBqX98y6emT9EidGRDZ+mxpNKDeM96g8bpvCU5bHa9fO2adojAgv6Rui0LwxNRD3wU08Hnzeu4ox6Dd0oqh54LcaFngxs8xsjF3ieOidLh47GxxHNCGeEEX4jdRBKpCeMZXw4Wb3J9JHWN1NtG3STpVLvRDorkYy0tHSsNvAQhwPZMMaIggli0a7ISBr2aWiYImoy7D+41RELMUlr47Qno/0MtdFw1CHaHPsaOPDU6TohliZUKUhITFlCxjmbP8N+jxD/AD4eGyGvDVvwY3hKN26HrZb8wz+ZlE23lYa9QnRo20REGhZfwlG1hZQ0ImH9PDH3C+j0f//EACYQAQACAgICAgIDAQEBAAAAAAEAESExQVEQYXGBIJGhscHR4fD/2gAIAQEAAT8Qlzfhfg3+Nks8OZaEvPisSmOTwZ8DRUuyGDxZ3L+YS5dRnPj7iZ3NcxbcQnPi/Bq44j+Gqi5mXEFWInGGGzhluGWpSOYGfw47jKuWy5ZxN7nw8a5lzMTxZLzHyOKl3NSybi01L9sMwWHuVvsUwR1cjkYsBxixVxTmG6eInWmF3c5Z1GovPcpDLlw3KeCcSqI7jUolzf1+BGVKmmPjUWJcZiAMvUAqmcjuZgi8ZfUKCAhc9RJ6AKPqLV26NvUvwVHRpi+4BcYRhKT37jdD0bYImCL9S8+pvXgMbjz+BfC8zPEohNyvJllGDsnivFEzYl6TCqAycJkNRA4ZUjLMkqhXgZSQ2sx4ffzKhYOYysoYNk91B6mmEYz7mYJsnLC4sP7ssMoicvpI2gKMA7mOhXUWmiPM1L/BaiWRlz7lwfBrMCe/4WA+4pXi9F0EqceR69eK9xsFg5D7Y4myaKtNuGVUBwLQzBQr61AWoeD5CKBQtTxfEdwFVlYPMZ8iUZ1EgKspkvMYNPR4qO0LEGPtFQMEBpKqheA8IAH2isxIFhOuY5j6eNS7cOax5S5qb/EjllA9MCBOQFzsm/mgtQxFzFwxa4DQ+M+dS9DMpqyW4Yv3XFuFMpEGA7kpTBgUzAO2XFEVszg1iiOd2LNEqIVm8S+ZabXS6iqgWVcUDdAMRTsMdhDsgfrZGCKYX8kaWMgowQDRn9zbBbEFpbFtWgJvhpQnTGjPR4bv0rrxiGFAHcMHg8Md+GKQirjrAGjmXFhD9Rng9QiYpxArDWQ7VEQGpg56lldVuxKCmfWo3BNx3QvcqBC+pdQEN3/aZDxutwYYioosirSA9yoqV6lwh7HmNJeWDqXqBqpaZar0K3uzuJoGzFPEVvxW++CAZDWn6JgerL9PgXuJ2Kz5fw58gWJT4foU3hgsNOeYeKNMVGvIrTuKQrJu5QHkxWpchyBnMQHgYGquVn0EyAmhyJs0ej+ZYl2WNmGQjfIr2yujMzSCWAxiihAA3jAlQqXWGXE62lMSmVBxBsgBt7jnN7zxzFuV1HPuLNaFrSqywddRGp4sdNrLuC8NHo9eFjDMdyuZc48L1Bl2xhC7A6gGwMZdw7mWvmIwXXRL56tXDKkIMC1iHhkyrhii34Ayy0sftDRfs3IL7ugXzLGuZRE253wZYLT3OhEgoXw4JgwwG4iewqomRmwBaj0XTd3T1GgxlvEQoMDWe/7gMH2G6tA7XEd/1xGh/vk/C38WHg8DVg8RVZqt5iWttZisc1qsf+pfZbAeogEuMSuFhaykLPpHSUjCZbB6g3r5DWYLEqwJuM3w6WKqIuX/AJBcY4MxYEiUbqEjtK2EyUZuGA+AHUfG3a4XExuT1HKrNw+RyuexYt78bmKL/GvX4M5hVZnwPgFi8CnNQ8BUp9wFuVo4ZcKS8DX+TIlMNg+CVgumj+oDQ/Co0LTTBYXLeG6ljKf1A7AvfcAgH4h8hbxMRGO0wRIvAxZGWv4eH1FofkwnM6rv+bhKSaZXT8CbIZlY1AzGpUr8LPHuXHfl6Ygd5jsShzFkzbLWiaLl9NTuMwQYrFwsBTQXuXAcviQyoi2uzqKiE2wgsNy0PnMUtVWrrUenzH1NjrQuRlgHAYOJkCzC5h7uCmuYUE9enuJKuw5XLp44UCZ8PHgk0y8/hxUxHJUJtlsyAFXQRAV7UzKYpyLhoIhoVFdDY6S/C9OZcFTYvSYXrcXKq1uiLAdduYDT1pAfcXbLs4Jyx5S1KTfPpKiamVWzBBKbcVBD1tCFcAqlaGGULBYu4HQU4IjajZsh4OFn6S2XI0QYIQ2ik8Bnw/C/BlmvAT924YlET97jVAuRAVM9Ep3v1iJVQ1bKwuCHAgLr/ZRK7Ku5cnmgWXAA5YpOmv4QO4hxCs/5StQHFcwPUai6gFrWwLJUllIoGIp592Q0Gtr37lwgKRVPqXlse9QR/A2UnoFiXdeu5igPpludPWxxSeARtan4YkutQLzPualTmM0XBbyWXMCQ4IC2E5V/kj9tzFRL9zCgPUscDm5Zch7pUIstoLniOfUuligbfKAIBwFYiCuLA7RaR0MRmWJqGppNRkALzD19MLTMx8ljxBino7mPU5VzKCLUSG5ypidKUsILUv8AU0/fUpqpdSrfFY34WJ4NRgCyGii1KJWJY5xALdx0rDBKwlQksXFjFD9wRpG67htHRIJiglJj+ZkBiXZ9IvJmacRQVVSIUp4w3LwVy9RsKbpdJMWTYcE1MqFQeCxcBX+o+VZxcMKA4mjANsvieiLIeeJQyXNyotHhC6scQblfll8EAsGLqJYMZiO5fqgvFfmHZXZsgArfub1kjZxGaIV7KvfuCbgCUzVjBCuqae5lE11MAcsy17iJJ0HMp7mFXKNVsFynUI0tZZYSsFdQxN0Y4g6yzmuJR5u+WCWLfhElGDYVH4EuY835eZk1Vy517iWxCmLxZDC6lgdQMAtgAHJQyrBwyPEAm94Y4OY3bE3bj4isAJUfWqmxUth+MJg3CUHn7ipTNKKPcEGxZR+onHi1X+5l0/UvL8wJZTDc22uc4IR6OoizqCYItEoN9RJMEdQb8bmu/DUqvllVC6qWpYl4JCAhWMyvVEvqVG5ZxvfUKgsYgsKlQjUFNtw61eo3WjeMsx3rnthMw1oDT3EaqibFLCGYUR3FjduKjqbwsZb4gYa3HizGzDYpfF9QQKhmAmoVtBdoYhd4lrVkjMcMMeDXjkiy1JeRlKUISqjZLKxUxG4Fa09kZjVvuJkrXbMwUBLAK85l4KZQgVVpGJErBUV0zZoqGjTezZ1H1Uw3govgDGPaJVUBfb1UDrOWITGUKbtlwhu+zuGWRnwl4lmUzWRi6ULXRLdZpGrBBnWYRaxCKolLyVESvbzfgxLuZbi2iAApcOrKiRMvqUow0pzBrU6Jsf5hvQ4fUIM65XbKxFDUektQVh/CAoPct+okLChJ0hplKzBTWLrVoRq41RLguCNxa/oJQDxjGqIMqt3DAgKrriJlT56iwjU0ESnLgdEdegzHzuCMwdlywDLGRTAdHcR1KQmeokqF5jhULLEwHMtF4wKOiWi8xuLcK25yCIQqywSKDGDUpXW5X7TYmXIiyC+BLo5gnYLlf9RFlDRZxCV+z7TIg30xPW28kB7ANDEo0S/dcdRSAZBCl/VXLKsS9RDMrvDBFV8kYmlomZHBc4EYMHsFE4z9wVBkSzsZMQO4k5BGWQlG0uUMeoIB85iYiDOI+AR9SubtVQxqGuphFzHJqKhgjtBnDcEFMVNELuJI6rqUMDdZhKBbpA1LhI0GlldFVX9otLE1acRRnjAFE3+putQwMTVGaj/I/A6008QrgDHQAnuMbZxdRxQGikogG20WgbHVRGLESJqV10wKt7Y73Yih6vmc94GpGvxLfTyKfqPpS3rnEDBXSQ0yCDZlB0ZuVJQq8j8zElzdTRRAASYBBFb9JtI+B5Wy7jLYwd+6Lj1zd18xWjVUkrU1PW4gUJj7epjweRiqJaAV4BERhuWmXOAECCAYNTMBY0UTxTxDh1FAuCbbc/EpCV6luwHqVscSlwrK2rm5S8NHgakFAAaCMYnOPAf4mTcuTGpbdyoZ7QK5WW5l9ykauoHhRCqhR861X1BFRe2JoxBhu3oh/vzg6d22AmkGo2qFy3ALfFzNANLmj1BuEsvEQCvPaLfgjjMJo92C5VtBmlURyMJXt6lOLUBYDuAg6sGMNiIdMVGA6IpQDSS0Mz8TDSw5j1cMtpT0TA9TrEBdeF1VPFwBZoH/AOAibbQeOg9EpBRWoqxM5AZWyx7jjLzpbohgFOXbNQGZTHSwQxvcVWxMIjda1Dmb1CzC2nLmUtg8OGPcTpNSu0q0aYomK1ue4gDJg5JHO2wwEpUaZqNjVYfd9yzl5l5BC0zDcmWUliWLBgn0k+IB2onL0sEAt1BYCwLix+0AQUG81s+6ecpzU+gQRua2SwhbqohRMLC4oaVn/kAnjAmiYSbhp7mKczZMiow7lZq7NTg1VROw7hlWHCJkixAhZoXslG6nDCBWXdzHqpGT0vZmUcBD8wK1iI3LtTBUouaWLAjMI8kGx0IzCoR8XdckyNPV1BMlXcdXRdO7+Ja+4SxQhYnJ4shV9wirNbZaHrdQV4PbKqaN+5dyY+495JQkpoiKzUKBnTEBzMZQ8gzLDhOO4yNmDg/9TUaibGbBb5g5pfqV4J9SttxGEjLOr+Uo1LLZaZas+UowgcnfbKXmAU/yvUCIrg7dTpjCQTlxHANpoOTDNC0rOGHnU1C4KzBcmXSU53vqAwy+dMxlkyOWLVSfthoJuLTEuBhtEm8lISLMZMwIwnXMNpzDQgd0MGLSuHVRRuv4jIJRhnEG1dENRCcpJUEKFwWldINmAtZzFbJHYsSCn3Gj6ioAyrTbGC1SN1nf/DGBcwvdzbVzJPh9I4HJzCgkLyJcv7s8CZmQd+8wDAz2QLdwGcMcx5pcbYbheLPkldUgApBJlqVxiYMhNjmdWAO4GZpiuhK1L0awDgeZvWwKvn3MT5h10n0jUTUwpKOpdDWCJesMpgybnwsCy2m8kLGE5DHMcoUVbcCXE21Twp6gjUu9PcOpuG00/huGBE+OJRaC33DC6dG9wSXOPcBwYM13DjZhxP2swXirplhiZhemY6KiXCALDJBRezEVv5RRksjeKI8WGuDEGYmYlxwhCWGy6itKaj6hqcs1C/uwSxUtePuaemz1F1Qjmc3/ADLYCDSVSMu28S7lQ5GtjFLsXHzEQVpo2lS2hibl1Fo+UNL3KGolAIQsG0cLmZuBUmvFEZaPGY8RYlQKIZeVw5FCCUm/a5gzAmZtmpjZJhO2DWoRpDN4JUpTWJFyKq6mNtOGGqc8kWGVlQT1yEXI7O4QKW6ZfBPJgxO0N6jqwuAbAKCYAeYqY0TU9njKklAqICoOKUCzUTmDQS/BpgXLCKCpXR7kSsTjrT+pnKePAlAqGW8ANyMzKKEKGaDz6RBblU5OiXSsaHTBJ0Di/cxnKKGxjZ6Vz2w9QCnqhKRYwu8PUByHuWQRIODtAKNxVGNBoQWzOQJcWi6JqWQc+IGsQBljKYAE/IYrQUP9EJalRamTNR8BKqWQg4nKCOWGLlIrRt4MICAzyICqHuYC44vUoMRuj5iKWpgdGXqLAj9ROc+oIwqDdw3KauBBbtqZni9kG/Fcy8TNYcGaLhd7Ib6xP8S+oKTFjgXmWpZZDGVIaXqXUxx0aYgidlxUIYGNBm44/cr7h3HOV+40KX8ylbvqV2z4i7CNARELXBMkMxxXKKwYvAOqjGHiyLOXRzcuNip3Y+mpz4Fg+49BtgAMUZxBdwqk/Wy4JUuXwgLhio+tRxWLOMJ3LH0YZ//Z" style="width:180px;height:180px;object-fit:cover;border-radius:50%;border:2px solid var(--accent);margin-bottom:16px;opacity:0.9" />
-  <div class="loading-logo">Joe Mama's So Fat...</div>
+  <img src="data:image/jpeg;base64,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" style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:2px solid var(--accent);margin-bottom:20px;box-shadow:0 0 0 4px rgba(255,107,26,0.15);opacity:0.95" />
+  <div class="loading-logo">WAR<br>ROOM</div>
   <div class="loading-bar-wrap">
     <div class="loading-bar" id="loadingBar"></div>
   </div>
@@ -715,24 +883,43 @@
 
 <!-- HEADER -->
 <div class="header">
-  <div class="header-logo">⚔ Dynasty War Room</div>
+  <div class="header-logo">⚔ <em>WAR</em> ROOM</div>
   <div class="header-right">
     <div class="last-sync" id="lastSync">Never synced</div>
     <button class="sync-btn" id="syncBtn" onclick="syncAll()">⟳ Sync Data</button>
   </div>
 </div>
 
-<!-- NAV -->
-<div class="nav">
+<!-- BOTTOM NAV (replaces top nav) -->
+<div id="moreOverlay" class="more-overlay" onclick="closeMoreDrawer()"></div>
+<div id="moreDrawer" class="more-drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-grid">
+    <button class="drawer-item" id="drawer-power-rankings" onclick="showTab('power-rankings');closeMoreDrawer()"><span class="drawer-icon">📊</span><span class="drawer-label">Rankings</span></button>
+    <button class="drawer-item" id="drawer-trade-finder" onclick="showTab('trade-finder');closeMoreDrawer()"><span class="drawer-icon">🔍</span><span class="drawer-label">Finder</span></button>
+    <button class="drawer-item" id="drawer-league-intel" onclick="showTab('league-intel');closeMoreDrawer()"><span class="drawer-icon">🧠</span><span class="drawer-label">Intel</span></button>
+    <button class="drawer-item" id="drawer-waivers" onclick="showTab('waivers');closeMoreDrawer()"><span class="drawer-icon">📋</span><span class="drawer-label">Waivers</span></button>
+    <button class="drawer-item" id="drawer-rookie-board" onclick="showTab('rookie-board');closeMoreDrawer()"><span class="drawer-icon">🎓</span><span class="drawer-label">Rookies</span></button>
+  </div>
+</div>
+<div class="bottom-nav">
+  <button class="bottom-nav-btn active" id="bnav-dashboard" onclick="showTab('dashboard')"><span class="bottom-nav-icon">🏈</span><span class="bottom-nav-label">Field</span></button>
+  <button class="bottom-nav-btn" id="bnav-my-roster" onclick="showTab('my-roster')"><span class="bottom-nav-icon">👤</span><span class="bottom-nav-label">Roster</span></button>
+  <button class="bottom-nav-btn" id="bnav-trade-analyzer" onclick="showTab('trade-analyzer')"><span class="bottom-nav-icon">⚡</span><span class="bottom-nav-label">Trade</span></button>
+  <button class="bottom-nav-btn" id="bnav-draft-picks" onclick="showTab('draft-picks')"><span class="bottom-nav-icon">📅</span><span class="bottom-nav-label">Picks</span></button>
+  <button class="bottom-nav-btn" id="bnav-more" onclick="toggleMoreDrawer()"><span class="bottom-nav-icon">≡</span><span class="bottom-nav-label">More</span></button>
+</div>
+<!-- HIDDEN NAV (legacy JS compat) -->
+<div class="nav" style="display:none">
   <button class="nav-tab active" onclick="showTab('dashboard')">Dashboard</button>
   <button class="nav-tab" onclick="showTab('my-roster')">My Roster</button>
   <button class="nav-tab" onclick="showTab('power-rankings')">Power Rankings</button>
   <button class="nav-tab" onclick="showTab('trade-analyzer')">Trade Analyzer</button>
   <button class="nav-tab" onclick="showTab('draft-picks')">Draft Picks</button>
   <button class="nav-tab" onclick="showTab('waivers')">Waivers</button>
-  <button class="nav-tab" onclick="showTab('trade-finder')">🔍 Trade Finder</button>
-  <button class="nav-tab" onclick="showTab('league-intel')">🧠 League Intel</button>
-  <button class="nav-tab" onclick="showTab('rookie-board')">🎓 Rookie Board</button>
+  <button class="nav-tab" onclick="showTab('trade-finder')">Trade Finder</button>
+  <button class="nav-tab" onclick="showTab('league-intel')">League Intel</button>
+  <button class="nav-tab" onclick="showTab('rookie-board')">Rookie Board</button>
 </div>
 
 <!-- MAIN CONTENT -->
@@ -742,9 +929,9 @@
   <div class="tab-content active" id="tab-dashboard">
 
     <!-- GM BRIEF -->
-    <div id="gmBriefCard" style="background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:72px">
+    <div id="gmBriefCard" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:72px">
       <div id="gmBriefInner" style="display:flex;align-items:center;gap:20px;flex:1">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">⧳ Generating brief...</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">⧳ Generating brief...</div>
       </div>
     </div>
 
@@ -878,7 +1065,7 @@
   <div class="tab-content" id="tab-trade-analyzer">
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">⚡ Trade Analyzer</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:16px">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:16px">
         Accounts for stud factor, TE premium, age curves, and positional scarcity in your 12-team SF 0.5PPR 0.5TEP league. Applies the Ciely method: splits each asset into current vs. future value and flags alignment with your contention window.
       </div>
 
@@ -947,7 +1134,7 @@
   <div class="tab-content" id="tab-draft-picks">
     <div class="card">
       <div class="card-title">📋 My Pick Capital</div>
-      <div id="pickValuesNotice" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:6px;border-left:2px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span>📅 Pick values: KTC SF scale, last updated <strong id="pickValuesDate" style="color:var(--text-dim)">—</strong></span><span style="color:var(--text-muted)">Update before NFL Draft (Apr) &amp; season start (Sep) — paste new values from <span style="color:var(--accent)">keeptradecut.com</span> → Superflex → picks</span></div>
+      <div id="pickValuesNotice" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:6px;border-left:2px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span>📅 Pick values: KTC SF scale, last updated <strong id="pickValuesDate" style="color:var(--text-dim)">—</strong></span><span style="color:var(--text-muted)">Update before NFL Draft (Apr) &amp; season start (Sep) — paste new values from <span style="color:var(--accent)">keeptradecut.com</span> → Superflex → picks</span></div>
       <div id="myPicksContainer">Loading...</div>
     </div>
     <div class="card">
@@ -959,7 +1146,7 @@
   <!-- TRADE FINDER TAB -->
   <div class="tab-content" id="tab-trade-finder">
     <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);flex:1">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);flex:1">
         Finds mutually beneficial trades based on your roster needs vs league surplus. Applies the same mutual benefit filter we use manually.
       </div>
       <button class="sync-btn" onclick="runTradeFinder()">🔍 Find Trades</button>
@@ -1026,9 +1213,9 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin-bottom:0">🔬 Anatomy Prospect Scorer</div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted)">Thresholds from 2011–2021 cohort · WR hit rate 50-57% on 3+ hits · RB 44-63%</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)">Thresholds from 2011–2021 cohort · WR hit rate 50-57% on 3+ hits · RB 44-63%</div>
           <button class="sync-btn" style="font-size:10px;padding:4px 10px" onclick="fetchProspectData(false).then(()=>renderProspectScorer())">⟳ Refresh Sheet</button>
-          <span id="prospectLastFetch" style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted)"></span>
+          <span id="prospectLastFetch" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted)"></span>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -1377,7 +1564,7 @@ function healthBadge(player) {
   const bg = h.color.replace('var(--', '').replace(')', '');
   const bgMap = { green: 'rgba(76,255,145,0.15)', yellow: 'rgba(255,215,0,0.15)', red: 'rgba(255,68,68,0.15)', orange: 'rgba(255,140,66,0.15)' };
   const bgColor = bgMap[bg] || 'rgba(100,100,100,0.15)';
-  return `<span title="${h.reason}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:${bgColor};color:${h.color};font-weight:600;letter-spacing:0.5px">${h.icon} ${h.flag}</span>`;
+  return `<span title="${h.reason}" style="font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:${bgColor};color:${h.color};font-weight:600;letter-spacing:0.5px">${h.icon} ${h.flag}</span>`;
 }
 
 function vorpColor(v) {
@@ -1965,12 +2152,12 @@ function generateGMBrief() {
     priority = 'Monitor 2026 rookie draft for RB value at pick 1.11.';
   }
   var html = '<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">'
-    + '<div style="font-family:Bebas Neue,cursive;font-size:22px;letter-spacing:2px;color:' + ac + ';line-height:1">' + stateLabel + '</div>'
-    + '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#' + myRank + ' OF 12 · ' + win.label + ' · AGE ' + stats.avgAge.toFixed(1) + '</div>'
+    + '<div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:2px;color:' + ac + ';line-height:1">' + stateLabel + '</div>'
+    + '<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#' + myRank + ' OF 12 · ' + win.label + ' · AGE ' + stats.avgAge.toFixed(1) + '</div>'
     + '</div>'
     + '<div style="flex:1;border-left:1px solid var(--border);padding-left:20px;display:flex;flex-direction:column;gap:6px">'
     + '<div style="font-size:13px;color:var(--text);line-height:1.5">' + narrative + '</div>'
-    + '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:' + ac + '">&#9654; ' + priority + '</div>'
+    + '<div style="font-family:'DM Mono',monospace;font-size:10px;color:' + ac + '">&#9654; ' + priority + '</div>'
     + '</div>';
   inner.innerHTML = html;
   card.style.borderLeftColor = ac;
@@ -1988,16 +2175,16 @@ function renderRosterTable(tbodyId, players) {
     const taxi = isOnTaxi(p);
     const urgency = getSellUrgency(p.pos, p.age);
     const vorpStyle = `color:${vorpColor(p.vorp)}`;
-    const tepTag = p.pos === 'TE' ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
+    const tepTag = p.pos === 'TE' ? `<span style="font-family:'DM Mono',monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
     const injBadge = p.injuryFlag
-      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);margin-left:4px;vertical-align:middle">🏥 ${p.injuryFlag.label}</span>`
+      ? `<span style="font-family:'DM Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);margin-left:4px;vertical-align:middle">🏥 ${p.injuryFlag.label}</span>`
       : '';
     const valueDisplay = p.injuryFlag
       ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:10px">${fmt(p.value)}</span> <span style="color:var(--red)">${fmt(p.effectiveValue)}</span>`
       : `<span style="color:var(--accent)">${fmt(p.value)}</span>`;
     return `<tr>
       <td>${posPill(p.pos)}</td>
-      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : ''}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}${injBadge}</td>
+      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : ''}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:'DM Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}${injBadge}</td>
       <td class="mono dim" style="font-size:11px">${p.team||'—'}</td>
       <td class="mono" style="font-size:12px">${p.age||'—'}</td>
       <td class="mono" style="font-size:12px">${valueDisplay}</td>
@@ -2016,9 +2203,9 @@ function renderRosterTable(tbodyId, players) {
         const flexCounts    = {QB:1, RB:2, WR:2, TE:1};
         const s = starterCounts[p.pos]||2;
         const f = s + (flexCounts[p.pos]||2);
-        if (rank <= s) return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;font-weight:700;color:var(--green)">STARTER</span>';
-        if (rank <= f) return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;font-weight:600;color:var(--accent)">FLEX</span>';
-        return '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--text-muted)">DEPTH</span>';
+        if (rank <= s) return '<span style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;color:var(--green)">STARTER</span>';
+        if (rank <= f) return '<span style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:600;color:var(--accent)">FLEX</span>';
+        return '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text-muted)">DEPTH</span>';
       })()}</td>
     </tr>`;
   }).join('');
@@ -2144,8 +2331,8 @@ function renderPowerRankings() {
     const teamQBs = (STATE.allRosters[team.name] || []).filter(p => p.pos === 'QB').sort((a,b) => b.value - a.value);
     const qb1 = teamQBs[0];
     const qbAnchor = qb1
-      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted)">QB anchor: ${qb1.name} (${qb1.age}, <span style="color:${getArchetype('QB',qb1.age)?.cls === 'peak' ? 'var(--green)' : getArchetype('QB',qb1.age)?.cls === 'young' ? 'var(--blue)' : 'var(--yellow)'}">${getArchetype('QB',qb1.age)?.label.split(' ')[0] || '?'}</span>) — ×1.5 SF weight</span>`
-      : `<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--red)">⚠ No QB found</span>`;
+      ? `<span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted)">QB anchor: ${qb1.name} (${qb1.age}, <span style="color:${getArchetype('QB',qb1.age)?.cls === 'peak' ? 'var(--green)' : getArchetype('QB',qb1.age)?.cls === 'young' ? 'var(--blue)' : 'var(--yellow)'}">${getArchetype('QB',qb1.age)?.label.split(' ')[0] || '?'}</span>) — ×1.5 SF weight</span>`
+      : `<span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--red)">⚠ No QB found</span>`;
     return `
       <div class="team-rank-card ${isMe ? 'my-team' : ''}" onclick="toggleTeamRoster('${team.name}')" style="cursor:pointer;flex-direction:column;align-items:stretch;padding:0">
         <div style="display:flex;align-items:center;gap:16px;padding:16px">
@@ -2154,7 +2341,7 @@ function renderPowerRankings() {
             <div class="team-name">${isMe ? '⚔ ' : ''}${team.name}${isMe ? ' (You)' : ''} <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:4px">tap to expand</span></div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="team-archetype" style="color:${arch.color}">${arch.label}</div>
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,0.3);border:1px solid ${window.color};color:${window.color}">🏆 ${window.label}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,0.3);border:1px solid ${window.color};color:${window.color}">🏆 ${window.label}</span>
             </div>
             <div style="margin-top:4px">${qbAnchor}</div>
           </div>
@@ -2298,7 +2485,7 @@ function renderWaivers() {
     const a = getArchetype(p.pos, p.age);
     const rawVorp = p.value - (STATE.vorpBaselines[p.pos] || 0);
     const vorp = rawVorp * (p.pos === 'TE' ? CONFIG.TE_PREMIUM_MULT : 1);
-    const tepTag = p.pos === 'TE' ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
+    const tepTag = p.pos === 'TE' ? `<span style="font-family:'DM Mono',monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
     return `<tr>
       <td>${posPill(p.pos)}</td>
       <td>${p.name}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}</td>
@@ -2525,7 +2712,7 @@ function analyzeTrade() {
     return '<span style="display:inline-block;width:' + w + 'px;height:5px;background:' + color + ';border-radius:2px;vertical-align:middle;margin:0 3px"></span>';
   }
 
-  detail.innerHTML += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-family:\'IBM Plex Mono\',monospace;font-size:11px;line-height:2">'
+  detail.innerHTML += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-family:\'DM Mono\',monospace;font-size:11px;line-height:2">'
     + '<div style="color:var(--text-muted);font-size:9px;letter-spacing:1px;margin-bottom:2px">&#x1F4CA; VALUE TIMING (Ciely Method)</div>'
     + '<div><span style="color:var(--accent2)">IN &nbsp;</span><span style="color:var(--text-dim)">Now ' + inNowPct + '%</span>' + mkBar(inNowPct,'var(--accent2)') + '<span style="color:var(--text-muted)">Future ' + inFutPct + '%</span>' + mkBar(inFutPct,'var(--blue)') + '</div>'
     + '<div><span style="color:var(--accent)">OUT </span><span style="color:var(--text-dim)">Now ' + outNowPct + '%</span>' + mkBar(outNowPct,'var(--accent)') + '<span style="color:var(--text-muted)">Future ' + outFutPct + '%</span>' + mkBar(outFutPct,'var(--blue)') + '</div>'
@@ -2739,7 +2926,7 @@ function runTradeFinder() {
         container.innerHTML = '<div class="mono muted" style="text-align:center;padding:40px">No mutually beneficial deals found right now.</div>';
         return;
       }
-      container.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px">' + results.length + ' potential deals found — dismiss ones you\'re not interested in</div>' +
+      container.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px">' + results.length + ' potential deals found — dismiss ones you\'re not interested in</div>' +
         results.map(function(s, i) { return renderTradeCard(s, i); }).join('');
     } catch(e) {
       container.innerHTML = '<div class="error-msg">Error finding trades: ' + e.message + '</div>';
@@ -3062,7 +3249,7 @@ function renderLeagueIntel() {
       <div style="margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           ${posPill(pos)}
-          <span style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px">MOST DESPERATE</span>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px">MOST DESPERATE</span>
         </div>
         ${teams.map(t => `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface2);border-radius:6px;margin-bottom:4px">
@@ -3093,7 +3280,7 @@ function renderLeagueIntel() {
       <div style="margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           ${posPill(pos)}
-          <span style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px">MOST SURPLUS</span>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px">MOST SURPLUS</span>
         </div>
         ${teams.map(t => `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface2);border-radius:6px;margin-bottom:4px">
@@ -3127,17 +3314,17 @@ function renderLeagueIntel() {
           <div>
             <div style="font-weight:600;font-size:13px;margin-bottom:4px">${teamName}</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <span style="font-family:IBM Plex Mono,monospace;font-size:9px;color:${activityColor}">● ${profile?.activity || '?'} ACTIVITY</span>
-              <span style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--text-muted)">${profile?.style || 'Unknown'}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:${activityColor}">● ${profile?.activity || '?'} ACTIVITY</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted)">${profile?.style || 'Unknown'}</span>
             </div>
           </div>
           <div style="display:flex;gap:16px;text-align:right">
             <div>
-              <div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--red);letter-spacing:0.5px">NEEDS</div>
+              <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--red);letter-spacing:0.5px">NEEDS</div>
               ${posPill(biggestNeed)}
             </div>
             <div>
-              <div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--green);letter-spacing:0.5px">SURPLUS</div>
+              <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--green);letter-spacing:0.5px">SURPLUS</div>
               ${posPill(biggestSurplus)}
             </div>
           </div>
@@ -3337,12 +3524,12 @@ function renderRookieBoard() {
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;border-top:3px solid ${fitInfo.color}">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
         ${posPill(r.pos)}
-        <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:${fitInfo.color}">${fitInfo.label}</span>
+        <span style="font-size:11px;font-family:'DM Mono',monospace;color:${fitInfo.color}">${fitInfo.label}</span>
       </div>
       <div style="font-weight:600;font-size:13px;margin-bottom:4px">${r.name}</div>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent)">${fmt(r.value)}</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted)">Fit: ${r.fit}/100</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent)">${fmt(r.value)}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)">Fit: ${r.fit}/100</span>
       </div>
       <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${r.team || 'Pre-Draft'} · Age ${(r.age && r.age > 0) ? r.age : 'TBD'}</div>
     </div>`;
@@ -3355,9 +3542,9 @@ function renderRookieBoard() {
       const pickNum = estimatePickNumber(pick);
       const projectedRookie = pickNum ? rookies[pickNum - 1] : null;
       return `<div style="background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:10px 14px;min-width:160px">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:4px">${pick.label}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:4px">${pick.label}</div>
         <div style="font-size:12px;font-weight:600;margin-bottom:2px">${projectedRookie ? projectedRookie.name : 'Pick ~#' + pickNum}</div>
-        ${projectedRookie ? `<div style="display:flex;gap:4px;align-items:center">${posPill(projectedRookie.pos)}<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted)">${fmt(projectedRookie.value)}</span></div>` : ''}
+        ${projectedRookie ? `<div style="display:flex;gap:4px;align-items:center">${posPill(projectedRookie.pos)}<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)">${fmt(projectedRookie.value)}</span></div>` : ''}
       </div>`;
     }).join('');
   } else {
@@ -3390,7 +3577,7 @@ function renderRookieBoardTable(rookies) {
           <div style="width:40px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">
             <div style="width:${fit}%;height:100%;background:${fitInfo.color};border-radius:2px"></div>
           </div>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${fitInfo.color}">${fit}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:${fitInfo.color}">${fit}</span>
         </div>
       </td>
       <td class="mono" style="font-size:10px;color:var(--text-muted)">${pickRange}</td>
@@ -3446,7 +3633,7 @@ function renderProspectScorer() {
 
   function hitDot(pass, label) {
     const color = pass ? 'var(--green)' : 'var(--red)';
-    return `<span title="${label}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${pass ? 'rgba(76,255,145,0.15)' : 'rgba(255,68,68,0.1)'};border:1px solid ${color};font-size:8px;color:${color};font-family:'IBM Plex Mono',monospace;flex-shrink:0">${pass ? '✓' : '✗'}</span>`;
+    return `<span title="${label}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${pass ? 'rgba(76,255,145,0.15)' : 'rgba(255,68,68,0.1)'};border:1px solid ${color};font-size:8px;color:${color};font-family:'DM Mono',monospace;flex-shrink:0">${pass ? '✓' : '✗'}</span>`;
   }
 
   // Score bar using FIXED denominators (6 WR, 5 RB) so bars are comparable
@@ -3465,16 +3652,16 @@ function renderProspectScorer() {
       <div style="width:55px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden">
         <div style="width:${Math.round(pct*100)}%;height:100%;background:${color};border-radius:3px"></div>
       </div>
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${color};font-weight:700">${hits}/${maxPossible}</span>
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:${color}">${tierLabel}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:10px;color:${color};font-weight:700">${hits}/${maxPossible}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:9px;color:${color}">${tierLabel}</span>
       ${pendingHtml}
     </div>`;
   }
 
   function tierDivider(tier, color, count) {
     return `<tr><td colspan="10" style="padding:4px 8px 2px;background:rgba(0,0,0,0.3);border-top:1px solid ${color}40;border-bottom:none">
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:${color};letter-spacing:2px">${tier}</span>
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);margin-left:8px">${count} prospect${count!==1?'s':''}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:9px;font-weight:700;color:${color};letter-spacing:2px">${tier}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);margin-left:8px">${count} prospect${count!==1?'s':''}</span>
     </td></tr>`;
   }
 
@@ -3486,7 +3673,7 @@ function renderProspectScorer() {
   }
 
   function dcPendingBadge() {
-    return `<span style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;color:var(--gold);background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);border-radius:3px;padding:1px 4px;margin-left:4px">DC⚡</span>`;
+    return `<span style="display:inline-block;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;color:var(--gold);background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);border-radius:3px;padding:1px 4px;margin-left:4px">DC⚡</span>`;
   }
 
   const na = `<span style="color:var(--text-muted);font-size:9px">—</span>`;
@@ -3496,8 +3683,8 @@ function renderProspectScorer() {
   if (prospectShowWR && wrData.length) {
     html += `<div style="margin-bottom:24px">
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
-        <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;color:var(--blue)">WR ${prospectYear} Class</div>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-3 DC · 40≤4.59 · 10yd≤1.56 · WDOM≥25 · BOY Yr1-3 · RAS≥8</span>
+        <div style="font-family:'Barlow Condensed',cursive;font-size:18px;letter-spacing:2px;color:var(--blue)">WR ${prospectYear} Class</div>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-3 DC · 40≤4.59 · 10yd≤1.56 · WDOM≥25 · BOY Yr1-3 · RAS≥8</span>
         ${is2026 ? '<span style="font-family:monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
       </div>
       <div style="overflow-x:auto"><table class="data-table" style="font-size:12px"><thead><tr>
@@ -3559,8 +3746,8 @@ function renderProspectScorer() {
   if (prospectShowRB && rbData.length) {
     html += `<div>
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
-        <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;color:var(--green)">RB ${prospectYear} Class</div>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-2 DC · SpeedScore≥100 · Burst≥121 · CompBDR≥50 · ColYPA≥6.0</span>
+        <div style="font-family:'Barlow Condensed',cursive;font-size:18px;letter-spacing:2px;color:var(--green)">RB ${prospectYear} Class</div>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-2 DC · SpeedScore≥100 · Burst≥121 · CompBDR≥50 · ColYPA≥6.0</span>
         ${is2026 ? '<span style="font-family:monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
       </div>
       <div style="overflow-x:auto"><table class="data-table" style="font-size:12px"><thead><tr>
