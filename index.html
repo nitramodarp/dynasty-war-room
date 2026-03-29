@@ -43,6 +43,19 @@
     font-family: 'Barlow', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
+    padding-top: 56px;    /* fixed header height */
+    padding-bottom: 68px; /* fixed bottom nav height */
+  }
+
+  /* On desktop: restore top nav strip, hide bottom nav */
+  @media (min-width: 768px) {
+    body {
+      padding-top: 56px;
+      padding-bottom: 0;
+    }
+    .bottom-nav { display: none !important; }
+    .more-overlay, .more-drawer { display: none !important; }
+    .desktop-nav { display: flex !important; }
   }
 
   /* HEADER */
@@ -110,7 +123,52 @@
   }
 
   /* BOTTOM NAV */
-  .nav { display: none; } /* Hide legacy nav */
+  .nav { display: none; } /* Hidden on mobile, replaced by bottom nav */
+
+  /* DESKTOP NAV — shown at ≥768px */
+  .desktop-nav {
+    display: none; /* shown via media query above */
+    gap: 0;
+    padding: 0 16px;
+    background: rgba(12,17,32,0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .desktop-nav::-webkit-scrollbar { display: none; }
+
+  .desktop-nav-tab {
+    padding: 10px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    white-space: nowrap;
+    background: none;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .desktop-nav-tab:hover { color: var(--text); }
+  .desktop-nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  @media (min-width: 768px) {
+    body { padding-top: 108px; } /* header(56) + desktop nav(~44) */
+  }
 
   .bottom-nav {
     position: fixed;
@@ -888,6 +946,19 @@
     <div class="last-sync" id="lastSync">Never synced</div>
     <button class="sync-btn" id="syncBtn" onclick="syncAll()">⟳ Sync Data</button>
   </div>
+</div>
+
+<!-- DESKTOP NAV (visible ≥768px) -->
+<div class="desktop-nav" id="desktopNav">
+  <button class="desktop-nav-tab active" id="dtab-dashboard"       onclick="showTab('dashboard')">🏈 Field</button>
+  <button class="desktop-nav-tab"        id="dtab-my-roster"       onclick="showTab('my-roster')">👤 Roster</button>
+  <button class="desktop-nav-tab"        id="dtab-power-rankings"  onclick="showTab('power-rankings')">📊 Rankings</button>
+  <button class="desktop-nav-tab"        id="dtab-trade-analyzer"  onclick="showTab('trade-analyzer')">⚡ Trade</button>
+  <button class="desktop-nav-tab"        id="dtab-draft-picks"     onclick="showTab('draft-picks')">📅 Picks</button>
+  <button class="desktop-nav-tab"        id="dtab-waivers"         onclick="showTab('waivers')">📋 Waivers</button>
+  <button class="desktop-nav-tab"        id="dtab-trade-finder"    onclick="showTab('trade-finder')">🔍 Finder</button>
+  <button class="desktop-nav-tab"        id="dtab-league-intel"    onclick="showTab('league-intel')">🧠 Intel</button>
+  <button class="desktop-nav-tab"        id="dtab-rookie-board"    onclick="showTab('rookie-board')">🎓 Rookies</button>
 </div>
 
 <!-- BOTTOM NAV (replaces top nav) -->
