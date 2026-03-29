@@ -42,7 +42,6 @@
     color: var(--text);
     font-family: 'Barlow', sans-serif;
     min-height: 100vh;
-    overflow-x: hidden;
     padding-top: 56px;    /* fixed header height */
     padding-bottom: 68px; /* fixed bottom nav height */
   }
@@ -181,7 +180,7 @@
     -webkit-backdrop-filter: blur(16px);
     border-top: 1px solid var(--border);
     display: flex;
-    z-index: 100;
+    z-index: 9999;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
