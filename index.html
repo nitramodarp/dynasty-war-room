@@ -931,7 +931,7 @@
     <!-- GM BRIEF -->
     <div id="gmBriefCard" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:72px">
       <div id="gmBriefInner" style="display:flex;align-items:center;gap:20px;flex:1">
-        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">⧳ Generating brief...</div>
+        <div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">⧳ Generating brief...</div>
       </div>
     </div>
 
@@ -1065,7 +1065,7 @@
   <div class="tab-content" id="tab-trade-analyzer">
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">⚡ Trade Analyzer</div>
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:16px">
+      <div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text-dim);margin-bottom:16px">
         Accounts for stud factor, TE premium, age curves, and positional scarcity in your 12-team SF 0.5PPR 0.5TEP league. Applies the Ciely method: splits each asset into current vs. future value and flags alignment with your contention window.
       </div>
 
@@ -1134,7 +1134,7 @@
   <div class="tab-content" id="tab-draft-picks">
     <div class="card">
       <div class="card-title">📋 My Pick Capital</div>
-      <div id="pickValuesNotice" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:6px;border-left:2px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span>📅 Pick values: KTC SF scale, last updated <strong id="pickValuesDate" style="color:var(--text-dim)">—</strong></span><span style="color:var(--text-muted)">Update before NFL Draft (Apr) &amp; season start (Sep) — paste new values from <span style="color:var(--accent)">keeptradecut.com</span> → Superflex → picks</span></div>
+      <div id="pickValuesNotice" style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:6px;border-left:2px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span>📅 Pick values: KTC SF scale, last updated <strong id="pickValuesDate" style="color:var(--text-dim)">—</strong></span><span style="color:var(--text-muted)">Update before NFL Draft (Apr) &amp; season start (Sep) — paste new values from <span style="color:var(--accent)">keeptradecut.com</span> → Superflex → picks</span></div>
       <div id="myPicksContainer">Loading...</div>
     </div>
     <div class="card">
@@ -1146,7 +1146,7 @@
   <!-- TRADE FINDER TAB -->
   <div class="tab-content" id="tab-trade-finder">
     <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);flex:1">
+      <div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text-dim);flex:1">
         Finds mutually beneficial trades based on your roster needs vs league surplus. Applies the same mutual benefit filter we use manually.
       </div>
       <button class="sync-btn" onclick="runTradeFinder()">🔍 Find Trades</button>
@@ -1213,9 +1213,9 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin-bottom:0">🔬 Anatomy Prospect Scorer</div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)">Thresholds from 2011–2021 cohort · WR hit rate 50-57% on 3+ hits · RB 44-63%</div>
+          <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted)">Thresholds from 2011–2021 cohort · WR hit rate 50-57% on 3+ hits · RB 44-63%</div>
           <button class="sync-btn" style="font-size:10px;padding:4px 10px" onclick="fetchProspectData(false).then(()=>renderProspectScorer())">⟳ Refresh Sheet</button>
-          <span id="prospectLastFetch" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted)"></span>
+          <span id="prospectLastFetch" style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted)"></span>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -1564,7 +1564,7 @@ function healthBadge(player) {
   const bg = h.color.replace('var(--', '').replace(')', '');
   const bgMap = { green: 'rgba(76,255,145,0.15)', yellow: 'rgba(255,215,0,0.15)', red: 'rgba(255,68,68,0.15)', orange: 'rgba(255,140,66,0.15)' };
   const bgColor = bgMap[bg] || 'rgba(100,100,100,0.15)';
-  return `<span title="${h.reason}" style="font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:${bgColor};color:${h.color};font-weight:600;letter-spacing:0.5px">${h.icon} ${h.flag}</span>`;
+  return `<span title="${h.reason}" style="font-family:DM Mono,monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:${bgColor};color:${h.color};font-weight:600;letter-spacing:0.5px">${h.icon} ${h.flag}</span>`;
 }
 
 function vorpColor(v) {
@@ -2152,12 +2152,12 @@ function generateGMBrief() {
     priority = 'Monitor 2026 rookie draft for RB value at pick 1.11.';
   }
   var html = '<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">'
-    + '<div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:2px;color:' + ac + ';line-height:1">' + stateLabel + '</div>'
-    + '<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#' + myRank + ' OF 12 · ' + win.label + ' · AGE ' + stats.avgAge.toFixed(1) + '</div>'
+    + '<div style="font-family:Barlow Condensed,sans-serif;font-size:22px;letter-spacing:2px;color:' + ac + ';line-height:1">' + stateLabel + '</div>'
+    + '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">#' + myRank + ' OF 12 · ' + win.label + ' · AGE ' + stats.avgAge.toFixed(1) + '</div>'
     + '</div>'
     + '<div style="flex:1;border-left:1px solid var(--border);padding-left:20px;display:flex;flex-direction:column;gap:6px">'
     + '<div style="font-size:13px;color:var(--text);line-height:1.5">' + narrative + '</div>'
-    + '<div style="font-family:'DM Mono',monospace;font-size:10px;color:' + ac + '">&#9654; ' + priority + '</div>'
+    + '<div style="font-family:DM Mono,monospace;font-size:10px;color:' + ac + '">&#9654; ' + priority + '</div>'
     + '</div>';
   inner.innerHTML = html;
   card.style.borderLeftColor = ac;
@@ -2175,16 +2175,16 @@ function renderRosterTable(tbodyId, players) {
     const taxi = isOnTaxi(p);
     const urgency = getSellUrgency(p.pos, p.age);
     const vorpStyle = `color:${vorpColor(p.vorp)}`;
-    const tepTag = p.pos === 'TE' ? `<span style="font-family:'DM Mono',monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
+    const tepTag = p.pos === 'TE' ? `<span style="font-family:DM Mono,monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
     const injBadge = p.injuryFlag
-      ? `<span style="font-family:'DM Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);margin-left:4px;vertical-align:middle">🏥 ${p.injuryFlag.label}</span>`
+      ? `<span style="font-family:DM Mono,monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);margin-left:4px;vertical-align:middle">🏥 ${p.injuryFlag.label}</span>`
       : '';
     const valueDisplay = p.injuryFlag
       ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:10px">${fmt(p.value)}</span> <span style="color:var(--red)">${fmt(p.effectiveValue)}</span>`
       : `<span style="color:var(--accent)">${fmt(p.value)}</span>`;
     return `<tr>
       <td>${posPill(p.pos)}</td>
-      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : ''}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:'DM Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}${injBadge}</td>
+      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : ''}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:DM Mono,monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}${injBadge}</td>
       <td class="mono dim" style="font-size:11px">${p.team||'—'}</td>
       <td class="mono" style="font-size:12px">${p.age||'—'}</td>
       <td class="mono" style="font-size:12px">${valueDisplay}</td>
@@ -2331,8 +2331,8 @@ function renderPowerRankings() {
     const teamQBs = (STATE.allRosters[team.name] || []).filter(p => p.pos === 'QB').sort((a,b) => b.value - a.value);
     const qb1 = teamQBs[0];
     const qbAnchor = qb1
-      ? `<span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted)">QB anchor: ${qb1.name} (${qb1.age}, <span style="color:${getArchetype('QB',qb1.age)?.cls === 'peak' ? 'var(--green)' : getArchetype('QB',qb1.age)?.cls === 'young' ? 'var(--blue)' : 'var(--yellow)'}">${getArchetype('QB',qb1.age)?.label.split(' ')[0] || '?'}</span>) — ×1.5 SF weight</span>`
-      : `<span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--red)">⚠ No QB found</span>`;
+      ? `<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted)">QB anchor: ${qb1.name} (${qb1.age}, <span style="color:${getArchetype('QB',qb1.age)?.cls === 'peak' ? 'var(--green)' : getArchetype('QB',qb1.age)?.cls === 'young' ? 'var(--blue)' : 'var(--yellow)'}">${getArchetype('QB',qb1.age)?.label.split(' ')[0] || '?'}</span>) — ×1.5 SF weight</span>`
+      : `<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--red)">⚠ No QB found</span>`;
     return `
       <div class="team-rank-card ${isMe ? 'my-team' : ''}" onclick="toggleTeamRoster('${team.name}')" style="cursor:pointer;flex-direction:column;align-items:stretch;padding:0">
         <div style="display:flex;align-items:center;gap:16px;padding:16px">
@@ -2341,7 +2341,7 @@ function renderPowerRankings() {
             <div class="team-name">${isMe ? '⚔ ' : ''}${team.name}${isMe ? ' (You)' : ''} <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:4px">tap to expand</span></div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="team-archetype" style="color:${arch.color}">${arch.label}</div>
-              <span style="font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,0.3);border:1px solid ${window.color};color:${window.color}">🏆 ${window.label}</span>
+              <span style="font-family:DM Mono,monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,0.3);border:1px solid ${window.color};color:${window.color}">🏆 ${window.label}</span>
             </div>
             <div style="margin-top:4px">${qbAnchor}</div>
           </div>
@@ -2485,7 +2485,7 @@ function renderWaivers() {
     const a = getArchetype(p.pos, p.age);
     const rawVorp = p.value - (STATE.vorpBaselines[p.pos] || 0);
     const vorp = rawVorp * (p.pos === 'TE' ? CONFIG.TE_PREMIUM_MULT : 1);
-    const tepTag = p.pos === 'TE' ? `<span style="font-family:'DM Mono',monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
+    const tepTag = p.pos === 'TE' ? `<span style="font-family:DM Mono,monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
     return `<tr>
       <td>${posPill(p.pos)}</td>
       <td>${p.name}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}</td>
@@ -3249,7 +3249,7 @@ function renderLeagueIntel() {
       <div style="margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           ${posPill(pos)}
-          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px">MOST DESPERATE</span>
+          <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px">MOST DESPERATE</span>
         </div>
         ${teams.map(t => `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface2);border-radius:6px;margin-bottom:4px">
@@ -3280,7 +3280,7 @@ function renderLeagueIntel() {
       <div style="margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           ${posPill(pos)}
-          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px">MOST SURPLUS</span>
+          <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px">MOST SURPLUS</span>
         </div>
         ${teams.map(t => `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface2);border-radius:6px;margin-bottom:4px">
@@ -3314,17 +3314,17 @@ function renderLeagueIntel() {
           <div>
             <div style="font-weight:600;font-size:13px;margin-bottom:4px">${teamName}</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <span style="font-family:'DM Mono',monospace;font-size:9px;color:${activityColor}">● ${profile?.activity || '?'} ACTIVITY</span>
-              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted)">${profile?.style || 'Unknown'}</span>
+              <span style="font-family:DM Mono,monospace;font-size:9px;color:${activityColor}">● ${profile?.activity || '?'} ACTIVITY</span>
+              <span style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted)">${profile?.style || 'Unknown'}</span>
             </div>
           </div>
           <div style="display:flex;gap:16px;text-align:right">
             <div>
-              <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--red);letter-spacing:0.5px">NEEDS</div>
+              <div style="font-family:DM Mono,monospace;font-size:9px;color:var(--red);letter-spacing:0.5px">NEEDS</div>
               ${posPill(biggestNeed)}
             </div>
             <div>
-              <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--green);letter-spacing:0.5px">SURPLUS</div>
+              <div style="font-family:DM Mono,monospace;font-size:9px;color:var(--green);letter-spacing:0.5px">SURPLUS</div>
               ${posPill(biggestSurplus)}
             </div>
           </div>
@@ -3524,12 +3524,12 @@ function renderRookieBoard() {
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;border-top:3px solid ${fitInfo.color}">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
         ${posPill(r.pos)}
-        <span style="font-size:11px;font-family:'DM Mono',monospace;color:${fitInfo.color}">${fitInfo.label}</span>
+        <span style="font-size:11px;font-family:DM Mono,monospace;color:${fitInfo.color}">${fitInfo.label}</span>
       </div>
       <div style="font-weight:600;font-size:13px;margin-bottom:4px">${r.name}</div>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent)">${fmt(r.value)}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)">Fit: ${r.fit}/100</span>
+        <span style="font-family:DM Mono,monospace;font-size:11px;color:var(--accent)">${fmt(r.value)}</span>
+        <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted)">Fit: ${r.fit}/100</span>
       </div>
       <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${r.team || 'Pre-Draft'} · Age ${(r.age && r.age > 0) ? r.age : 'TBD'}</div>
     </div>`;
@@ -3542,9 +3542,9 @@ function renderRookieBoard() {
       const pickNum = estimatePickNumber(pick);
       const projectedRookie = pickNum ? rookies[pickNum - 1] : null;
       return `<div style="background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:10px 14px;min-width:160px">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:4px">${pick.label}</div>
+        <div style="font-family:DM Mono,monospace;font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:4px">${pick.label}</div>
         <div style="font-size:12px;font-weight:600;margin-bottom:2px">${projectedRookie ? projectedRookie.name : 'Pick ~#' + pickNum}</div>
-        ${projectedRookie ? `<div style="display:flex;gap:4px;align-items:center">${posPill(projectedRookie.pos)}<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)">${fmt(projectedRookie.value)}</span></div>` : ''}
+        ${projectedRookie ? `<div style="display:flex;gap:4px;align-items:center">${posPill(projectedRookie.pos)}<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted)">${fmt(projectedRookie.value)}</span></div>` : ''}
       </div>`;
     }).join('');
   } else {
@@ -3577,7 +3577,7 @@ function renderRookieBoardTable(rookies) {
           <div style="width:40px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">
             <div style="width:${fit}%;height:100%;background:${fitInfo.color};border-radius:2px"></div>
           </div>
-          <span style="font-family:'DM Mono',monospace;font-size:10px;color:${fitInfo.color}">${fit}</span>
+          <span style="font-family:DM Mono,monospace;font-size:10px;color:${fitInfo.color}">${fit}</span>
         </div>
       </td>
       <td class="mono" style="font-size:10px;color:var(--text-muted)">${pickRange}</td>
@@ -3633,7 +3633,7 @@ function renderProspectScorer() {
 
   function hitDot(pass, label) {
     const color = pass ? 'var(--green)' : 'var(--red)';
-    return `<span title="${label}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${pass ? 'rgba(76,255,145,0.15)' : 'rgba(255,68,68,0.1)'};border:1px solid ${color};font-size:8px;color:${color};font-family:'DM Mono',monospace;flex-shrink:0">${pass ? '✓' : '✗'}</span>`;
+    return `<span title="${label}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${pass ? 'rgba(76,255,145,0.15)' : 'rgba(255,68,68,0.1)'};border:1px solid ${color};font-size:8px;color:${color};font-family:DM Mono,monospace;flex-shrink:0">${pass ? '✓' : '✗'}</span>`;
   }
 
   // Score bar using FIXED denominators (6 WR, 5 RB) so bars are comparable
@@ -3652,16 +3652,16 @@ function renderProspectScorer() {
       <div style="width:55px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden">
         <div style="width:${Math.round(pct*100)}%;height:100%;background:${color};border-radius:3px"></div>
       </div>
-      <span style="font-family:'DM Mono',monospace;font-size:10px;color:${color};font-weight:700">${hits}/${maxPossible}</span>
-      <span style="font-family:'DM Mono',monospace;font-size:9px;color:${color}">${tierLabel}</span>
+      <span style="font-family:DM Mono,monospace;font-size:10px;color:${color};font-weight:700">${hits}/${maxPossible}</span>
+      <span style="font-family:DM Mono,monospace;font-size:9px;color:${color}">${tierLabel}</span>
       ${pendingHtml}
     </div>`;
   }
 
   function tierDivider(tier, color, count) {
     return `<tr><td colspan="10" style="padding:4px 8px 2px;background:rgba(0,0,0,0.3);border-top:1px solid ${color}40;border-bottom:none">
-      <span style="font-family:'DM Mono',monospace;font-size:9px;font-weight:700;color:${color};letter-spacing:2px">${tier}</span>
-      <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);margin-left:8px">${count} prospect${count!==1?'s':''}</span>
+      <span style="font-family:DM Mono,monospace;font-size:9px;font-weight:700;color:${color};letter-spacing:2px">${tier}</span>
+      <span style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted);margin-left:8px">${count} prospect${count!==1?'s':''}</span>
     </td></tr>`;
   }
 
@@ -3673,7 +3673,7 @@ function renderProspectScorer() {
   }
 
   function dcPendingBadge() {
-    return `<span style="display:inline-block;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;color:var(--gold);background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);border-radius:3px;padding:1px 4px;margin-left:4px">DC⚡</span>`;
+    return `<span style="display:inline-block;font-family:DM Mono,monospace;font-size:8px;font-weight:700;color:var(--gold);background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);border-radius:3px;padding:1px 4px;margin-left:4px">DC⚡</span>`;
   }
 
   const na = `<span style="color:var(--text-muted);font-size:9px">—</span>`;
@@ -3684,7 +3684,7 @@ function renderProspectScorer() {
     html += `<div style="margin-bottom:24px">
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
         <div style="font-family:'Barlow Condensed',cursive;font-size:18px;letter-spacing:2px;color:var(--blue)">WR ${prospectYear} Class</div>
-        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-3 DC · 40≤4.59 · 10yd≤1.56 · WDOM≥25 · BOY Yr1-3 · RAS≥8</span>
+        <span style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-3 DC · 40≤4.59 · 10yd≤1.56 · WDOM≥25 · BOY Yr1-3 · RAS≥8</span>
         ${is2026 ? '<span style="font-family:monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
       </div>
       <div style="overflow-x:auto"><table class="data-table" style="font-size:12px"><thead><tr>
@@ -3747,7 +3747,7 @@ function renderProspectScorer() {
     html += `<div>
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
         <div style="font-family:'Barlow Condensed',cursive;font-size:18px;letter-spacing:2px;color:var(--green)">RB ${prospectYear} Class</div>
-        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-2 DC · SpeedScore≥100 · Burst≥121 · CompBDR≥50 · ColYPA≥6.0</span>
+        <span style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">R1-2 DC · SpeedScore≥100 · Burst≥121 · CompBDR≥50 · ColYPA≥6.0</span>
         ${is2026 ? '<span style="font-family:monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
       </div>
       <div style="overflow-x:auto"><table class="data-table" style="font-size:12px"><thead><tr>
