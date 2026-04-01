@@ -3485,32 +3485,40 @@ function calcRookieFitScore(rookie) {
 
   let score = 0;
 
-  // Positional need drives the ceiling — no need, no score foundation
+  // Positional need: VORP-based (preferred) or count-based fallback
+  // needScore is abs(starterVORP) when negative — reflects true positional desperation
+  // count-based fallback fires when VORP data isn't available (pre-sync)
+  const hasVorpNeed = posNeed.needScore > 0;
+  const hasCountNeed = posNeed.surplus < 0; // fewer players than ideal count
+  const hasAnyNeed = hasVorpNeed || hasCountNeed;
+
   if (posNeed.needScore > 1000) score += 40;
   else if (posNeed.needScore > 500) score += 25;
   else if (posNeed.needScore > 200) score += 15;
+  else if (hasCountNeed) score += 10; // count-based fallback: under-rostered
 
   // Surplus penalties — deep positions get actively punished
   if (posNeed.surplus > 2) score -= 25;
-  else if (posNeed.surplus > 1 && posNeed.needScore === 0) score -= 15;
+  else if (posNeed.surplus > 1 && !hasVorpNeed) score -= 15;
 
-  // Age and value bonuses are ONLY applied when there is a real positional need.
+  // Age and value bonuses only apply when there is a real positional need.
   // This prevents upside inflating fit scores at positions where we're already stocked.
-  if (posNeed.needScore > 0) {
+  if (hasAnyNeed) {
     // Age bonus — younger = higher dynasty ceiling (0-15)
+    // age === -1 means KTC has no age data yet (pre-draft); treat as neutral, not penalized
     if (rookie.age && rookie.age > 17 && rookie.age < 21) score += 15;
-    else if (rookie.age > 17 && rookie.age < 22) score += 10;
-    else if (rookie.age > 17 && rookie.age < 23) score += 5;
+    else if (rookie.age && rookie.age > 17 && rookie.age < 22) score += 10;
+    else if (rookie.age && rookie.age > 17 && rookie.age < 23) score += 5;
 
     // Value bonus — higher KTC = more consensus upside (0-15)
     if (rookie.value > 5000) score += 15;
     else if (rookie.value > 3500) score += 10;
     else if (rookie.value > 2000) score += 5;
 
-    // SF format bonus for QBs — only if we need QB depth
+    // SF format bonus for QBs — only when QB depth is a real need
     if (rookie.pos === 'QB') score += 10;
 
-    // TE premium bonus — only if TE room has a real VORP deficit
+    // TE premium bonus — only when TE room has a deficit
     if (rookie.pos === 'TE') score += 8;
   }
 
