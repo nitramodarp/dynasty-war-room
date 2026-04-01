@@ -3476,40 +3476,43 @@ document.addEventListener('click', (e) => {
 
 function calcRookieFitScore(rookie) {
   // How well does this rookie fill a need on my roster?
+  // Base is 0 — score builds up from positional need, not down from a head start.
   const myNeeds = calcPositionalNeeds()[CONFIG.MY_TEAM_NAME];
   if (!myNeeds || !rookie.pos) return 0;
 
   const posNeed = myNeeds[rookie.pos];
   if (!posNeed) return 0;
 
-  let score = 50; // base
+  let score = 0;
 
-  // Positional need bonus (0-30) — higher VORP deficit = bigger bonus
-  if (posNeed.needScore > 1000) score += 30;
-  else if (posNeed.needScore > 500) score += 20;
-  else if (posNeed.needScore > 200) score += 10;
-  else if (posNeed.surplus > 2) score -= 15; // already deep, actively penalise
+  // Positional need drives the ceiling — no need, no score foundation
+  if (posNeed.needScore > 1000) score += 40;
+  else if (posNeed.needScore > 500) score += 25;
+  else if (posNeed.needScore > 200) score += 15;
 
-  // Positional surplus penalty — if we're well-stocked, reduce the score
-  // This prevents QBs/WRs from scoring high when we don't need them
-  if (posNeed.surplus > 1 && posNeed.needScore === 0) score -= 10;
+  // Surplus penalties — deep positions get actively punished
+  if (posNeed.surplus > 2) score -= 25;
+  else if (posNeed.surplus > 1 && posNeed.needScore === 0) score -= 15;
 
-  // Age bonus — younger = higher ceiling (0-15); guard against age -1/null from KTC
-  if (rookie.age && rookie.age > 17 && rookie.age < 21) score += 15;
-  else if (rookie.age > 17 && rookie.age < 22) score += 10;
-  else if (rookie.age > 17 && rookie.age < 23) score += 5;
+  // Age and value bonuses are ONLY applied when there is a real positional need.
+  // This prevents upside inflating fit scores at positions where we're already stocked.
+  if (posNeed.needScore > 0) {
+    // Age bonus — younger = higher dynasty ceiling (0-15)
+    if (rookie.age && rookie.age > 17 && rookie.age < 21) score += 15;
+    else if (rookie.age > 17 && rookie.age < 22) score += 10;
+    else if (rookie.age > 17 && rookie.age < 23) score += 5;
 
-  // Value bonus — higher KTC = more proven upside (0-15)
-  if (rookie.value > 5000) score += 15;
-  else if (rookie.value > 3500) score += 10;
-  else if (rookie.value > 2000) score += 5;
+    // Value bonus — higher KTC = more consensus upside (0-15)
+    if (rookie.value > 5000) score += 15;
+    else if (rookie.value > 3500) score += 10;
+    else if (rookie.value > 2000) score += 5;
 
-  // SF bonus for QBs — ONLY if we actually need QB depth
-  // (gated on needScore so entrenched QB rooms don't inflate QB rookies)
-  if (rookie.pos === 'QB' && posNeed.needScore > 200) score += 10;
+    // SF format bonus for QBs — only if we need QB depth
+    if (rookie.pos === 'QB') score += 10;
 
-  // TE premium bonus — ONLY if TE room has a real VORP deficit
-  if (rookie.pos === 'TE' && posNeed.needScore > 200) score += 8;
+    // TE premium bonus — only if TE room has a real VORP deficit
+    if (rookie.pos === 'TE') score += 8;
+  }
 
   return Math.min(100, Math.max(0, Math.round(score)));
 }
