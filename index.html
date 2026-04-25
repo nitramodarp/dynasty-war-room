@@ -1392,21 +1392,21 @@ const CONFIG = {
 
   // Pick values (KTC SF scale). Update twice yearly: before NFL Draft (April) and season start (Sep).
   // To update: paste fresh values from keeptradecut.com/dynasty-rankings (Superflex, no TEP, picks section).
-  PICK_VALUES_UPDATED: 'April 2026',
+  PICK_VALUES_UPDATED: 'March 2026',
   ANATOMY_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1DAhsc8wfNeit65ndDYUuxoON_rnbiHnbtFPi9aRpeEk/export?format=csv&gid=1279331920',
   PICK_VALUES: {
-    '2026 Early 1st': 5799, '2026 Mid 1st': 4676, '2026 Late 1st': 3925,
-    '2026 Early 2nd': 3317, '2026 Mid 2nd': 3014, '2026 Late 2nd': 2856,
-    '2026 Early 3rd': 2371, '2026 Mid 3rd': 2241, '2026 Late 3rd': 2117,
-    '2026 Early 4th': 1786, '2026 Mid 4th': 1658, '2026 Late 4th': 1522,
-    '2027 Early 1st': 6873, '2027 Mid 1st': 5622, '2027 Late 1st': 4812,
-    '2027 Early 2nd': 3788, '2027 Mid 2nd': 3421, '2027 Late 2nd': 3065,
-    '2027 Early 3rd': 2546, '2027 Mid 3rd': 2381, '2027 Late 3rd': 2239,
-    '2027 Early 4th': 1848, '2027 Mid 4th': 1775, '2027 Late 4th': 1670,
-    '2028 Early 1st': 5065, '2028 Mid 1st': 4523, '2028 Late 1st': 3894,
-    '2028 Early 2nd': 3122, '2028 Mid 2nd': 2920, '2028 Late 2nd': 2744,
-    '2028 Early 3rd': 2169, '2028 Mid 3rd': 2109, '2028 Late 3rd': 1964,
-    '2028 Early 4th': 1629, '2028 Mid 4th': 1534, '2028 Late 4th': 1298,
+    '2026 Early 1st': 7100, '2026 Mid 1st': 5400, '2026 Late 1st': 3979,
+    '2026 Early 2nd': 2800, '2026 Mid 2nd': 2400, '2026 Late 2nd': 2100,
+    '2026 Early 3rd': 1900, '2026 Mid 3rd': 1700, '2026 Late 3rd': 1500,
+    '2026 Early 4th': 1200, '2026 Mid 4th': 1000, '2026 Late 4th':  850,
+    '2027 Early 1st': 7400, '2027 Mid 1st': 5800, '2027 Late 1st': 4800,
+    '2027 Early 2nd': 3200, '2027 Mid 2nd': 2800, '2027 Late 2nd': 2400,
+    '2027 Early 3rd': 2000, '2027 Mid 3rd': 1800, '2027 Late 3rd': 1600,
+    '2027 Early 4th': 1300, '2027 Mid 4th': 1100, '2027 Late 4th':  900,
+    '2028 Early 1st': 6800, '2028 Mid 1st': 5200, '2028 Late 1st': 3987,
+    '2028 Early 2nd': 2900, '2028 Mid 2nd': 2500, '2028 Late 2nd': 2200,
+    '2028 Early 3rd': 1800, '2028 Mid 3rd': 1600, '2028 Late 3rd': 1400,
+    '2028 Early 4th': 1100, '2028 Mid 4th':  950, '2028 Late 4th':  800,
     '2029 Early 1st': 6500, '2029 Mid 1st': 4800, '2029 Late 1st': 3600,
     '2029 Early 2nd': 2800, '2029 Mid 2nd': 2400, '2029 Late 2nd': 2000,
     '2029 Early 3rd': 1700, '2029 Mid 3rd': 1500, '2029 Late 3rd': 1300,
@@ -2003,8 +2003,14 @@ function buildPickMap() {
     const slotMap = STATE.draftSlotMap?.[season] || {};
     const slot = slotMap[rosterId] || slotMap[parseInt(rosterId)];
 
-    const label = getPickLabel(yr, rd, orig, slot);
-    const value = getPickValue(yr, rd, orig, slot);
+    let label;
+    if (slot) {
+      label = `${rd}.${String(slot).padStart(2,'0')}`;
+    } else {
+      label = getPickLabel(yr, rd, orig);
+    }
+
+    const value = getPickValue(yr, rd, orig);
     myPicks.push({ year: yr, round: rd, orig, label, value, slot: slot || null });
   }
   myPicks.sort((a,b) => a.year - b.year || a.round - b.round);
@@ -2022,25 +2028,21 @@ function getPickPosition(teamName) {
   return idx + 1; // 1 = worst team = picks first
 }
 
-function getPickLabel(year, round, orig, slot) {
-  const currentYear = new Date().getFullYear();
-  // Use exact slot if known (from Sleeper draft data or traded pick slot)
-  if (slot) {
-    if (year === currentYear) return `${round}.${String(slot).padStart(2,'0')}`;
-    const posStr = slot <= 4 ? 'Early' : slot <= 8 ? 'Mid' : 'Late';
-    return `${year} ${posStr} ${round}${getOrdinal(round)}`;
-  }
+function getPickLabel(year, round, orig) {
   const pos = getPickPosition(orig);
+  const currentYear = new Date().getFullYear();
+  // For current year, standings are final — show exact slot (e.g. "1.11")
   if (year === currentYear) {
-    return `${round}.${String(pos).padStart(2, '0')}`;
+    const slot = String(pos).padStart(2, '0');
+    return `${round}.${slot}`;
   }
+  // For future years, use Early/Mid/Late
   const posStr = pos <= 4 ? 'Early' : pos <= 8 ? 'Mid' : 'Late';
   return `${year} ${posStr} ${round}${getOrdinal(round)}`;
 }
 
-function getPickValue(year, round, orig, slot) {
-  // Use exact slot if known for accurate Early/Mid/Late classification
-  const pos = slot || getPickPosition(orig);
+function getPickValue(year, round, orig) {
+  const pos = getPickPosition(orig);
   const posStr = pos <= 4 ? 'Early' : pos <= 8 ? 'Mid' : 'Late';
   const key = `${year} ${posStr} ${round}${getOrdinal(round)}`;
   return CONFIG.PICK_VALUES[key] || 0;
@@ -3217,10 +3219,8 @@ function findTrades() {
       var yr = parseInt(parts[0]), rd = parseInt(parts[1]), origRosterId = parts[2];
       if (yr < curYear || yr > curYear + 2) return;
       var origTeam = STATE.rosterIdMap ? (STATE.rosterIdMap[origRosterId] || STATE.rosterIdMap[parseInt(origRosterId)] || 'Unknown') : 'Unknown';
-      var slotMap2 = (STATE.draftSlotMap && STATE.draftSlotMap[String(yr)]) || {};
-      var slotForPick = slotMap2[origRosterId] || slotMap2[parseInt(origRosterId)] || null;
-      var label = getPickLabel(yr, rd, origTeam, slotForPick);
-      var val = getPickValue(yr, rd, origTeam, slotForPick);
+      var label = getPickLabel(yr, rd, origTeam);
+      var val = getPickValue(yr, rd, origTeam);
       if (val > 400) theirPicks.push({ label: label, value: val, year: yr, round: rd });
     });
     theirPicks.sort(function(a,b) { return b.value - a.value; });
@@ -3922,7 +3922,9 @@ async function fetchProspectData(showStatus) {
     }
     if (RB_NAME===-1) { const s=col(['speed score','speedscore'],5); if(s>0)RB_NAME=s-1; }
     const RS=Math.max(RB_NAME,5);
-    const RB_DC=col(['draft capital','dc'],RS+1), RB_SPD=col(['speed score','speedscore'],RS);
+    // Search for RB DC independently — name col may have no header, so DC search from WR_DC+1
+    const RB_DC_START = WR_DC >= 0 ? WR_DC + 1 : Math.max(RS, 5);
+    const RB_DC=col(["draft capital","dc"], RB_DC_START), RB_SPD=col(["speed score","speedscore"],RS);
     const RB_40=col(['40 yard','40t'],RS), RB_BURST=col(['burst'],RS);
     const RB_BDR=col(['comp bdr','compbdr','bdr'],RS), RB_YPA=col(['col ypa','colypa','ypa'],RS);
     console.log('Prospect cols WR:',{dc:WR_DC,t40:WR_40,split:WR_SPLIT,wdom:WR_WDOM,boy:WR_BOY,ras:WR_RAS},'RB:',{name:RB_NAME,dc:RB_DC,spd:RB_SPD,burst:RB_BURST,bdr:RB_BDR,ypa:RB_YPA});
