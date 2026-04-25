@@ -3916,15 +3916,20 @@ async function fetchProspectData(showStatus) {
     const WR_NAME=0, WR_DC=col(['draft capital','dc'],1), WR_40=col(['40 yard','40t','40-','40yd'],1);
     const WR_SPLIT=col(['10 yd','10yd','split'],1), WR_WDOM=col(['wdom','dom'],1);
     const WR_BOY=col(['boy','breakout'],1), WR_EARLY=col(['early'],1), WR_RAS=col(['ras'],1);
+    // RB section: name column has no header in sheet — find DC first, name is one col to left
     let RB_NAME=-1;
     for (const kw of ['player','name','rb name']) {
       const i=headers.findIndex((h,idx)=>idx>=5&&h.includes(kw)); if(i!==-1){RB_NAME=i;break;}
     }
+    // Find RB DC starting after WR section (after WR_DC column)
+    const RB_DC_SEARCH_START = WR_DC >= 0 ? WR_DC + 1 : 5;
+    const RB_DC=col(['draft capital','dc'], RB_DC_SEARCH_START);
+    // If name not found by header, derive it from DC position (name is one col left of DC)
+    if (RB_NAME===-1 && RB_DC > 0) { RB_NAME = RB_DC - 1; }
+    // Final fallback: use speed score col - 1
     if (RB_NAME===-1) { const s=col(['speed score','speedscore'],5); if(s>0)RB_NAME=s-1; }
-    const RS=Math.max(RB_NAME,5);
-    // Search for RB DC independently — name col may have no header, so DC search from WR_DC+1
-    const RB_DC_START = WR_DC >= 0 ? WR_DC + 1 : Math.max(RS, 5);
-    const RB_DC=col(["draft capital","dc"], RB_DC_START), RB_SPD=col(["speed score","speedscore"],RS);
+    const RS=Math.max(RB_NAME>=0?RB_NAME:0, 5);
+    const RB_SPD=col(['speed score','speedscore'],RS);
     const RB_40=col(['40 yard','40t'],RS), RB_BURST=col(['burst'],RS);
     const RB_BDR=col(['comp bdr','compbdr','bdr'],RS), RB_YPA=col(['col ypa','colypa','ypa'],RS);
     console.log('Prospect cols WR:',{dc:WR_DC,t40:WR_40,split:WR_SPLIT,wdom:WR_WDOM,boy:WR_BOY,ras:WR_RAS},'RB:',{name:RB_NAME,dc:RB_DC,spd:RB_SPD,burst:RB_BURST,bdr:RB_BDR,ypa:RB_YPA});
