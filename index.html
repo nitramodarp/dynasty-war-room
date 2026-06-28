@@ -4045,5 +4045,221 @@ window.addEventListener('load', () => {
   syncAll();
 });
 </script>
+
+<!-- ============================================================
+     PHASE 1 ADD-ON  ·  "MY CLASS — DRAFT CAPITAL RETURN"
+     Paste this ENTIRE block once, just before </body> in index.html.
+     No edits to existing functions required.
+     - Injects its own card at the top of the Rookies tab
+     - Hides the stale "Your Pick Projections" card
+     - Pulls your completed-draft selections live from Sleeper
+     - Joins each pick to current KTC value + VORP + health flag
+     - All values come from loaded KTC / live Sleeper — nothing estimated
+     ============================================================ -->
+<script>
+(function () {
+  // ---------- small helpers ----------
+  const pickTier  = s => (s <= 4 ? 'Early' : s <= 8 ? 'Mid' : 'Late');      // 12-team slots
+  const roundOrd  = r => (['1st','2nd','3rd','4th','5th','6th','7th'][r - 1] || (r + 'th'));
+  const pad2      = n => String(n).padStart(2, '0');
+
+  // ---------- fetch MY selections from the completed rookie draft ----------
+  async function fetchMyDraftPicks() {
+    try {
+      const dRes  = await fetch(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/drafts`);
+      const drafts = await dRes.json();
+      if (!Array.isArray(drafts) || !drafts.length) { STATE.myDraftPicks = []; return; }
+
+      // resolve my roster_id from the rosterIdMap the app already built
+      const myRosterId = Object.entries(STATE.rosterIdMap || {})
+        .find(([id, name]) => name === CONFIG.MY_TEAM_NAME)?.[0];
+
+      // prefer completed drafts (newest first), then fall back to anything with picks
+      const ordered = drafts.slice().sort((a, b) => {
+        const ac = a.status === 'complete' ? 1 : 0, bc = b.status === 'complete' ? 1 : 0;
+        return (bc - ac) || ((b.season || 0) - (a.season || 0)) || ((b.created || 0) - (a.created || 0));
+      });
+
+      let mine = [], season = null;
+      for (const draft of ordered) {
+        const pRes  = await fetch(`https://api.sleeper.app/v1/draft/${draft.draft_id}/picks`);
+        const picks = await pRes.json();
+        if (!Array.isArray(picks) || !picks.length) continue;
+        const got = picks.filter(p => String(p.roster_id) === String(myRosterId));
+        if (got.length) { mine = got; season = draft.season; break; }   // first draft where I have picks wins
+      }
+
+      STATE.myDraftSeason = season;
+      STATE.myDraftPicks = mine
+        .map(p => ({
+          round:  p.round,
+          slot:   p.draft_slot,
+          pickNo: p.pick_no,
+          playerId: p.player_id,
+          name: ((p.metadata ? ((p.metadata.first_name || '') + ' ' + (p.metadata.last_name || '')) : '').trim())
+                || (STATE.sleeperPlayers[p.player_id] && STATE.sleeperPlayers[p.player_id].name) || 'Unknown',
+          pos:  (p.metadata && p.metadata.position) || (STATE.sleeperPlayers[p.player_id] && STATE.sleeperPlayers[p.player_id].pos) || ''
+        }))
+        .sort((a, b) => a.pickNo - b.pickNo);
+    } catch (e) {
+      console.warn('fetchMyDraftPicks failed:', e);
+      STATE.myDraftPicks = STATE.myDraftPicks || [];
+    }
+  }
+
+  // ---------- look up the KTC value of the pick that was spent ----------
+  function pickValueOf(season, round, slot) {
+    if (!season || !CONFIG.PICK_VALUES) return null;
+    const k1 = `${season} ${pickTier(slot)} ${roundOrd(round)}`;  // e.g. "2026 Late 1st"
+    const k2 = `${season} ${roundOrd(round)}`;                    // e.g. "2026 1st" (round-only fallback)
+    if (CONFIG.PICK_VALUES[k1] != null) return CONFIG.PICK_VALUES[k1];
+    if (CONFIG.PICK_VALUES[k2] != null) return CONFIG.PICK_VALUES[k2];
+    return null;
+  }
+
+  // ---------- render ----------
+  function renderDraftClassReport() {
+    const el = document.getElementById('draftClassReport');
+    if (!el) return;
+
+    const picks = STATE.myDraftPicks || [];
+    if (!picks.length) {
+      el.innerHTML = '<div class="mono muted" style="font-size:12px;padding:8px">No completed draft found yet — hit Sync Data, then reopen this tab.</div>';
+      return;
+    }
+
+    const season = STATE.myDraftSeason || '';
+    let totalSpent = 0, totalNow = 0, spentKnown = false;
+
+    const cards = picks.map(pk => {
+      const label   = pk.round + '.' + pad2(pk.slot);                 // 1.11
+      const pickVal = pickValueOf(season, pk.round, pk.slot);
+
+      const onRoster = (STATE.myRoster || []).find(p => String(p.sleeperId) === String(pk.playerId));
+      const ktc      = onRoster || resolvePlayer(pk.name);
+      const nowVal   = onRoster ? onRoster.value : (ktc ? ktc.value : null);
+      const moved    = !onRoster;
+      const taxi     = STATE.taxiPlayerIds && STATE.taxiPlayerIds.has(pk.playerId);
+      const health   = onRoster ? getRosterHealthFlag(onRoster) : null;
+
+      const delta    = (pickVal != null && nowVal != null) ? (nowVal - pickVal) : null;
+      if (pickVal != null) { totalSpent += pickVal; spentKnown = true; }
+      if (nowVal  != null && !moved) totalNow += nowVal;
+
+      const dColor = (delta == null) ? 'var(--text-muted)' : (delta >= 0 ? 'var(--green)' : 'var(--red)');
+      const dTxt   = (delta == null) ? '—' : ((delta >= 0 ? '+' : '') + fmt(delta));
+
+      const taxiBadge = taxi
+        ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(0,212,255,0.12);color:var(--accent);margin-left:auto">🚕 TAXI</span>'
+        : '';
+
+      const statusLine = moved
+        ? '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">⟲ No longer on roster</div>'
+        : (health
+            ? `<div style="display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+                 <span style="font-size:11px">${health.icon}</span>
+                 <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:${health.color};letter-spacing:0.5px">${health.flag}</span>
+                 <span style="font-size:10px;color:var(--text-muted)">${health.reason}</span>
+               </div>`
+            : '');
+
+      const vorpLine = (onRoster && onRoster.vorp != null)
+        ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted)">VORP ${onRoster.vorp >= 0 ? '+' : ''}${fmt(onRoster.vorp)}</span>`
+        : '';
+
+      return `
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);background:rgba(0,212,255,0.08);border:1px solid var(--accent);border-radius:4px;padding:1px 6px">${label}</span>
+            ${typeof posPill === 'function' ? posPill(pk.pos) : ''}
+            ${taxiBadge}
+          </div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px">${pk.name}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+            <div style="text-align:left">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:0.5px">PICK WORTH</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-muted)">${pickVal != null ? fmt(pickVal) : '—'}</div>
+            </div>
+            <div style="color:var(--text-muted)">→</div>
+            <div style="text-align:right">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:0.5px">VALUE NOW</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent)">${nowVal != null ? fmt(nowVal) : '—'}</div>
+            </div>
+            <div style="text-align:right;min-width:64px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:0.5px">CAPITAL Δ</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:${dColor}">${dTxt}</div>
+            </div>
+          </div>
+          ${vorpLine ? `<div style="margin-bottom:2px">${vorpLine}</div>` : ''}
+          ${statusLine}
+        </div>`;
+    }).join('');
+
+    const netDelta = spentKnown ? (totalNow - totalSpent) : null;
+    const netColor = (netDelta == null) ? 'var(--text-muted)' : (netDelta >= 0 ? 'var(--green)' : 'var(--red)');
+    const summary = `
+      <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+        <div><span style="font-size:18px;font-weight:700">${picks.length}</span>
+             <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.5px;margin-left:4px">PICKS USED</span></div>
+        <div><span style="font-size:18px;font-weight:700;color:var(--text-muted)">${spentKnown ? fmt(totalSpent) : '—'}</span>
+             <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.5px;margin-left:4px">CAPITAL SPENT</span></div>
+        <div><span style="font-size:18px;font-weight:700;color:var(--accent)">${fmt(totalNow)}</span>
+             <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.5px;margin-left:4px">VALUE NOW</span></div>
+        <div><span style="font-size:18px;font-weight:700;color:${netColor}">${netDelta == null ? '—' : (netDelta >= 0 ? '+' : '') + fmt(netDelta)}</span>
+             <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.5px;margin-left:4px">NET RETURN</span></div>
+      </div>`;
+
+    el.innerHTML = summary +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">' + cards + '</div>';
+  }
+
+  // ---------- inject the card at the top of the Rookies tab (no HTML edit) ----------
+  function injectCard() {
+    if (document.getElementById('draftClassReportCard')) return;
+    const tab = document.getElementById('tab-rookie-board');
+    if (!tab) return;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'draftClassReportCard';
+    card.style.cssText = 'border:1px solid var(--accent);margin-bottom:16px';
+    card.innerHTML =
+      '<div class="card-title">🎓 My ' + (STATE.myDraftSeason || '') + ' Class — Draft Capital Return</div>' +
+      '<div id="draftClassReport" style="padding-top:4px">Loading…</div>';
+    tab.insertBefore(card, tab.firstChild);
+  }
+
+  // ---------- hide the now-stale "Your Pick Projections" card ----------
+  function hideStaleProjections() {
+    const old = document.getElementById('rookiePickProjections');
+    const card = old && old.closest ? old.closest('.card') : null;
+    if (card) card.style.display = 'none';
+  }
+
+  // ---------- wrap renderRookieBoard so this renders whenever the tab opens ----------
+  const _renderRookieBoard = window.renderRookieBoard;
+  window.renderRookieBoard = function () {
+    if (typeof _renderRookieBoard === 'function') _renderRookieBoard.apply(this, arguments);
+    injectCard();
+    hideStaleProjections();
+    if (!STATE.myDraftPicks) {
+      fetchMyDraftPicks().then(() => { injectCard(); renderDraftClassReport(); });
+    } else {
+      renderDraftClassReport();
+    }
+  };
+
+  // ---------- capture taxi player IDs (for the 🚕 badge) — safe if it fails ----------
+  (async function loadTaxi() {
+    try {
+      const r  = await fetch(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/rosters`);
+      const rs = await r.json();
+      const me = rs.find(x => CONFIG.OWNER_MAP[x.owner_id] === CONFIG.MY_TEAM_NAME);
+      STATE.taxiPlayerIds = new Set((me && me.taxi) || []);
+    } catch (e) {
+      STATE.taxiPlayerIds = new Set();
+    }
+  })();
+})();
+</script>
 </body>
 </html>
