@@ -1273,10 +1273,15 @@
     </div>
   </div>
   <div class="tab-content" id="tab-rookie-board">
-    <!-- Best Fits For You -->
+    <!-- 2027 Pick Capital -->
     <div class="card" style="border:1px solid var(--accent);margin-bottom:16px">
+      <div class="card-title">🎯 2027 Pick Capital</div>
+      <div id="pickCapital2027" style="padding-top:4px">Loading...</div>
+    </div>
+    <!-- Best Fits For You (collapsed in offseason) -->
+    <div class="card" style="margin-bottom:16px">
       <div class="card-title">⭐ Best Rookie Fits For Your Roster</div>
-      <div id="rookieFits" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding-top:4px">Loading...</div>
+      <div id="rookieFits" style="padding-top:4px">Loading...</div>
     </div>
     <!-- Anatomy Prospect Scorer -->
     <div class="card" style="margin-bottom:16px;border:1px solid rgba(255,215,0,0.3)">
@@ -1291,21 +1296,17 @@
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <button class="filter-btn active" id="psYear2025" onclick="switchProspectYear('2025',this)">2025 Class</button>
         <button class="filter-btn" id="psYear2026" onclick="switchProspectYear('2026',this)">2026 Class</button>
+        <button class="filter-btn" id="psYear2027" onclick="switchProspectYear('2027',this)">2027 Class</button>
         <button class="filter-btn active" id="psWR" onclick="toggleProspectPos('WR',this)">WR</button>
         <button class="filter-btn active" id="psRB" onclick="toggleProspectPos('RB',this)">RB</button>
       </div>
       <div id="prospectScorerContent">Loading...</div>
     </div>
 
-    <!-- Your Pick Projections -->
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-title">🎯 Your Pick Projections</div>
-      <div id="rookiePickProjections" style="display:flex;flex-wrap:wrap;gap:10px;padding-top:4px">Loading...</div>
-    </div>
-    <!-- Full Board -->
+    <!-- Full Board (collapsed in offseason) -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin-bottom:0">📋 2026 Rookie Board</div>
+        <div class="card-title" style="margin-bottom:0">📋 2027 Rookie Board</div>
         <div class="filter-row" style="margin:0">
           <button class="filter-btn active" onclick="filterRookieBoard('ALL', this)">All</button>
           <button class="filter-btn" onclick="filterRookieBoard('QB', this)">QB</button>
@@ -1373,6 +1374,9 @@ const CONFIG = {
   // RB/WR: 2 dedicated + ~1.5 FLEX avg × 12 = ~42 → rank 43
   // TE: 1 dedicated + ~0.5 FLEX (TE premium) × 12 = ~18 → rank 19
   VORP_RANKS: { QB: 25, RB: 43, WR: 43, TE: 19 },
+  // Which draft class the live Anatomy sheet currently holds. Bump to '2027'
+  // once you repopulate the sheet with 2027 names, then hit Refresh Sheet.
+  PROSPECT_CLASS_YEAR: '2026',
   // TE VORP multiplier: amplifies TE surplus to reflect 0.5 TEP scoring bump
   // KTC SF TE+ partially prices this in, but VORP gap vs. starter is still understated
   TE_PREMIUM_MULT: 1.15,
@@ -1479,7 +1483,11 @@ const PROSPECT_PROFILES = {
     { name:'Darius Taylor',      dc:null, speed:null,  t40:null, burst:null,   comp_bdr:59.35, col_ypa:5.1, hits:1, comp:'Alexander Mattison', note:'Strong BDR but missing all athleticism data — needs combine' },
     { name:'J Mari Taylor',      dc:null, speed:null,  t40:null, burst:116.2,  comp_bdr:69.05, col_ypa:5.1, hits:1, comp:'Dameon Pierce', note:'Elite BDR — burst just misses 121; speed/40 TBD' },
     { name:'Jonah Coleman',      dc:null, speed:null,  t40:null, burst:null,   comp_bdr:61.65, col_ypa:5.5, hits:1, comp:'Eno Benjamin', note:'Solid BDR and ColYPA — missing all athleticism data yet' },
-  ]
+  ],
+  // 2027 Draft Class — populated live from the Anatomy sheet once
+  // CONFIG.PROSPECT_CLASS_YEAR = '2027' and you hit Refresh Sheet.
+  WR_2027: [],
+  RB_2027: []
 };
 
 // ============================================================
@@ -3561,80 +3569,88 @@ function estimatePickNumber(pick) {
 }
 
 function renderRookieBoard() {
-  let rookies = STATE.ktcPlayers
-    .filter(p => p.rookie === true && p.value > 100)
-    .sort((a, b) => b.value - a.value);
+  // The 2026 rookie class is drafted, and KTC won't price the 2027 college class
+  // until the season plays out — so the stale KTC rookie board is collapsed behind a
+  // note. The Draft Capital Return card (top), 2027 Pick Capital, and the 2027-ready
+  // Anatomy Prospect Scorer carry the tab in the offseason.
+  const fitsEl = document.getElementById('rookieFits');
+  if (fitsEl) fitsEl.innerHTML =
+    '<div class="mono muted" style="font-size:12px;padding:12px;line-height:1.6">' +
+    '🎓 2026 class is drafted — see <b>Draft Capital Return</b> up top for how those picks cashed out.<br>' +
+    '2027 names populate here after the college season, once KTC prices the incoming class. ' +
+    'Until then use the <b>2027 Pick Capital</b> card above and the <b>Anatomy Prospect Scorer → 2027 tab</b> for forward scouting.' +
+    '</div>';
+  const boardEl = document.getElementById('rookieBoardBody');
+  if (boardEl) boardEl.innerHTML =
+    '<tr><td colspan="8" class="text-center muted" style="padding:22px">2027 board populates after the college season — KTC has no 2027 names yet.</td></tr>';
 
-  // Fallback: if KTC rookie flag not parsed, use age-based detection
-  // 2026 rookies are typically 21-23 years old with no established NFL history
-  if (rookies.length < 5) {
-    // Find players who are young AND not on any Sleeper roster (likely undrafted/rookies)
-    const ownedNames = new Set();
-    Object.values(STATE.allRosters || {}).forEach(roster => {
-      roster.forEach(p => ownedNames.add(p.name?.toLowerCase().trim()));
-    });
-    rookies = STATE.ktcPlayers
-      .filter(p => {
-        if (p.value < 100) return false;
-        if (!['QB','RB','WR','TE'].includes(p.pos)) return false;
-        // Age 20-23 and not currently on any roster = likely rookie
-        if (p.age >= 20 && p.age <= 23 && !ownedNames.has(p.name?.toLowerCase().trim())) return true;
-        // Or explicitly flagged
-        if (p.rookie === true) return true;
-        return false;
-      })
-      .sort((a, b) => b.value - a.value);
-  }
+  renderPickCapital2027();
+  renderProspectScorer();
+}
 
-  if (!rookies.length) {
-    const noData = '<div class="mono muted" style="font-size:12px;padding:12px">No rookie data available — sync and try again</div>';
-    document.getElementById('rookieFits').innerHTML = noData;
-    document.getElementById('rookiePickProjections').innerHTML = noData;
-    document.getElementById('rookieBoardBody').innerHTML = '<tr><td colspan="8" class="text-center muted" style="padding:24px">No rookie data loaded — sync first</td></tr>';
+// ============================================================
+// 2027 PICK CAPITAL — your forward draft haul, slots projected
+// from each pick-origin team's current power ranking.
+// ============================================================
+function renderPickCapital2027() {
+  const el = document.getElementById('pickCapital2027');
+  if (!el) return;
+  const TARGET = 2027;
+  const me = CONFIG.MY_TEAM_NAME;
+  const pr = STATE.powerRankings || [];
+  const nTeams = pr.length || 12;
+  const rankIdx = {};
+  pr.forEach((s, i) => { rankIdx[s.name] = i; }); // 0 = strongest roster ... n-1 = weakest
+
+  const picks = [];
+  Object.entries(STATE.pickMap || {}).forEach(([key, owner]) => {
+    if (owner !== me) return;
+    const parts = key.split('_');
+    if (parseInt(parts[0]) !== TARGET) return;
+    const round = parseInt(parts[1]);
+    const origRosterId = parts[2];
+    const origTeam = (STATE.rosterIdMap || {})[origRosterId] || ('Roster' + origRosterId);
+    // weakest roster picks earliest (slot 1); strongest picks last (slot nTeams)
+    let slot = 6;
+    if (rankIdx[origTeam] != null) slot = nTeams - rankIdx[origTeam];
+    const tier = slot <= 4 ? 'Early' : slot <= 8 ? 'Mid' : 'Late';
+    const valueKey = TARGET + ' ' + tier + ' ' + round + getOrdinal(round);
+    const value = (CONFIG.PICK_VALUES && CONFIG.PICK_VALUES[valueKey] != null) ? CONFIG.PICK_VALUES[valueKey] : null;
+    picks.push({ round: round, origTeam: origTeam, isMine: origTeam === me, slot: slot, tier: tier, value: value });
+  });
+  picks.sort((a, b) => a.round - b.round || (b.value || 0) - (a.value || 0));
+
+  if (!picks.length) {
+    el.innerHTML = '<div class="mono muted" style="font-size:12px;padding:10px">No 2027 picks found — hit Sync Data.</div>';
     return;
   }
 
-  // Render best fits section
-  const topFits = rookies
-    .map(r => ({ ...r, fit: calcRookieFitScore(r) }))
-    .sort((a, b) => b.fit - a.fit || b.value - a.value)
-    .slice(0, 5);
+  const total  = picks.reduce((s, p) => s + (p.value || 0), 0);
+  const firsts = picks.filter(p => p.round === 1).length;
 
-  document.getElementById('rookieFits').innerHTML = topFits.map(r => {
-    const fitInfo = getFitLabel(r.fit);
-    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;border-top:3px solid ${fitInfo.color}">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-        ${posPill(r.pos)}
-        <span style="font-size:11px;font-family:DM Mono,monospace;color:${fitInfo.color}">${fitInfo.label}</span>
-      </div>
-      <div style="font-weight:600;font-size:13px;margin-bottom:4px">${r.name}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-family:DM Mono,monospace;font-size:11px;color:var(--accent)">${fmt(r.value)}</span>
-        <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted)">Fit: ${r.fit}/100</span>
-      </div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${r.team || 'Pre-Draft'} · Age ${(r.age && r.age > 0) ? r.age : 'TBD'}</div>
-    </div>`;
+  const summary =
+    '<div style="display:flex;gap:22px;align-items:baseline;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">' +
+      '<div><span style="font-size:18px;font-weight:700">' + picks.length + '</span> <span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.5px">2027 PICKS</span></div>' +
+      '<div><span style="font-size:18px;font-weight:700;color:var(--green)">' + firsts + '</span> <span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.5px">FIRSTS</span></div>' +
+      '<div><span style="font-size:18px;font-weight:700;color:var(--accent)">' + fmt(total) + '</span> <span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.5px">PROJECTED VALUE</span></div>' +
+    '</div>' +
+    '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">Slots projected from each pick-origin team\'s current power ranking — weakest rosters pick earliest. Tightens as the season plays out.</div>';
+
+  const cards = picks.map(function (p) {
+    const tierColor = p.tier === 'Early' ? 'var(--green)' : p.tier === 'Mid' ? 'var(--accent)' : 'var(--text-muted)';
+    const origin = p.isMine ? 'your own' : ('via ' + String(p.origTeam).replace(/\d+$/, ''));
+    const projSlot = p.round + '.' + String(p.slot).padStart(2, '0');
+    return '<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid ' + tierColor + ';border-radius:10px;padding:12px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+        '<span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700">2027 ' + p.round + getOrdinal(p.round) + '</span>' +
+        '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:' + tierColor + ';letter-spacing:1px">' + p.tier.toUpperCase() + '</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">' + origin + ' · proj ~' + projSlot + '</div>' +
+      '<div style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--accent)">' + (p.value != null ? fmt(p.value) : '—') + '</div>' +
+    '</div>';
   }).join('');
 
-  // Render pick projections
-  const myPicks = getMyPicksForRookieDraft();
-  if (myPicks.length) {
-    document.getElementById('rookiePickProjections').innerHTML = myPicks.map(pick => {
-      const pickNum = estimatePickNumber(pick);
-      const projectedRookie = pickNum ? rookies[pickNum - 1] : null;
-      return `<div style="background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:10px 14px;min-width:160px">
-        <div style="font-family:DM Mono,monospace;font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:4px">${pick.label}</div>
-        <div style="font-size:12px;font-weight:600;margin-bottom:2px">${projectedRookie ? projectedRookie.name : 'Pick ~#' + pickNum}</div>
-        ${projectedRookie ? `<div style="display:flex;gap:4px;align-items:center">${posPill(projectedRookie.pos)}<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted)">${fmt(projectedRookie.value)}</span></div>` : ''}
-      </div>`;
-    }).join('');
-  } else {
-    document.getElementById('rookiePickProjections').innerHTML = '<div class="mono muted" style="font-size:12px;padding:8px">No 2026 picks found on your roster</div>';
-  }
-
-  // Render full board
-  renderRookieBoardTable(rookies);
-  renderProspectScorer();
+  el.innerHTML = summary + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">' + cards + '</div>';
 }
 
 function renderRookieBoardTable(rookies) {
@@ -3677,7 +3693,7 @@ let prospectShowRB = true;
 
 function switchProspectYear(year, btn) {
   prospectYear = year;
-  document.querySelectorAll('#psYear2025,#psYear2026').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#psYear2025,#psYear2026,#psYear2027').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderProspectScorer();
 }
@@ -3694,8 +3710,8 @@ function renderProspectScorer() {
   if (!container) return;
   if (!STATE.aiComps) STATE.aiComps = {};
   // Pre-seed AI comp cache from static comps so they survive fetch overwrites
-  [...(PROSPECT_PROFILES.WR_2025||[]), ...(PROSPECT_PROFILES.WR_2026||[]),
-   ...(PROSPECT_PROFILES.RB_2025||[]), ...(PROSPECT_PROFILES.RB_2026||[])].forEach(p => {
+  [...(PROSPECT_PROFILES.WR_2025||[]), ...(PROSPECT_PROFILES.WR_2026||[]), ...(PROSPECT_PROFILES.WR_2027||[]),
+   ...(PROSPECT_PROFILES.RB_2025||[]), ...(PROSPECT_PROFILES.RB_2026||[]), ...(PROSPECT_PROFILES.RB_2027||[])].forEach(p => {
     if (p && p.comp && !STATE.aiComps[p.name]) STATE.aiComps[p.name] = { comp: p.comp, rationale: '' };
   });
   const lastFetchEl = document.getElementById('prospectLastFetch');
@@ -3705,7 +3721,18 @@ function renderProspectScorer() {
   const rbData = PROSPECT_PROFILES['RB_' + prospectYear] || [];
   const wrThresh = PROSPECT_PROFILES.WR_THRESHOLDS;
   const rbThresh = PROSPECT_PROFILES.RB_THRESHOLDS;
-  const is2026 = prospectYear === '2026';
+  const is2026 = parseInt(prospectYear) >= 2026; // pending-class flag (2026+): DC/combine data still filling in
+
+  // Forward class selected but not yet loaded from the sheet
+  if (!wrData.length && !rbData.length && parseInt(prospectYear) > parseInt(CONFIG.PROSPECT_CLASS_YEAR || '2026')) {
+    container.innerHTML =
+      '<div class="mono muted" style="font-size:12px;padding:14px;line-height:1.6">' +
+      'The ' + prospectYear + ' class loads once you (1) repopulate the Anatomy sheet with ' + prospectYear + ' names, ' +
+      '(2) set <b>CONFIG.PROSPECT_CLASS_YEAR = \'' + prospectYear + '\'</b>, then (3) hit <b>⟳ Refresh Sheet</b>.<br>' +
+      'The threshold model grades on production (WDOM/BOY) now; combine metrics (40/RAS/burst/DC) fill in through the offseason.' +
+      '</div>';
+    return;
+  }
 
   function getKtcValue(name) {
     const p = STATE.ktcPlayers.find(k => cleanName(k.name) === cleanName(name));
@@ -3894,6 +3921,7 @@ function renderProspectScorer() {
 // ============================================================
 async function fetchProspectData(showStatus) {
   const url = CONFIG.ANATOMY_SHEET_URL;
+  const cls = CONFIG.PROSPECT_CLASS_YEAR || '2026'; // which class the live sheet holds
   if (showStatus) setLoadingProgress(50, 'FETCHING PROSPECT DATA...');
   try {
     const resp = await fetch(url);
@@ -3941,7 +3969,7 @@ async function fetchProspectData(showStatus) {
         const split=WR_SPLIT>=0?parseNum(row[WR_SPLIT]):null, wdom=WR_WDOM>=0?parseNum(row[WR_WDOM]):null;
         const boy=WR_BOY>=0?parseNum(row[WR_BOY]):null, early=WR_EARLY>=0?parseStr(row[WR_EARLY]):null, ras=WR_RAS>=0?parseNum(row[WR_RAS]):null;
         const hits=wrHits(dc,t40,split,wdom,boy,ras);
-        const ex=(PROSPECT_PROFILES.WR_2026||[]).find(x=>x.name===wn);
+        const ex=(PROSPECT_PROFILES["WR_"+cls]||[]).find(x=>x.name===wn);
         newWR.push({name:wn,dc,t40,split,wdom:wdom!=null?Math.round(wdom):null,boy:boy!=null?Math.round(boy):null,early,ras,hits,note:'',comp:ex?(ex.comp||null):null});
       }
       if (RB_NAME<0) continue;
@@ -3951,14 +3979,14 @@ async function fetchProspectData(showStatus) {
         const t40=RB_40>=0?parseNum(row[RB_40]):null, burst=RB_BURST>=0?parseNum(row[RB_BURST]):null;
         const bdr=RB_BDR>=0?parseNum(row[RB_BDR]):null, ypa=RB_YPA>=0?parseNum(row[RB_YPA]):null;
         const hits=rbHits(dc,spd,burst,bdr,ypa);
-        const ex=(PROSPECT_PROFILES.RB_2026||[]).find(x=>x.name===rn);
+        const ex=(PROSPECT_PROFILES["RB_"+cls]||[]).find(x=>x.name===rn);
         newRB.push({name:rn,dc,speed:spd,t40,burst,comp_bdr:bdr,col_ypa:ypa,hits,note:'',comp:ex?(ex.comp||null):null});
       }
     }
     newWR.sort((a,b)=>b.hits-a.hits||(a.dc||99)-(b.dc||99));
     newRB.sort((a,b)=>b.hits-a.hits);
-    if (newWR.length>0) PROSPECT_PROFILES.WR_2026=newWR;
-    if (newRB.length>0) PROSPECT_PROFILES.RB_2026=newRB;
+    if (newWR.length>0) PROSPECT_PROFILES["WR_"+cls]=newWR;
+    if (newRB.length>0) PROSPECT_PROFILES["RB_"+cls]=newRB;
     STATE.prospectLastFetch=new Date().toLocaleString();
     console.log('Prospect loaded: '+newWR.length+' WRs, '+newRB.length+' RBs');
     if (showStatus) setLoadingProgress(100,'PROSPECT DATA LOADED');
@@ -4030,13 +4058,13 @@ async function triggerAiComp(playerName, pos, profileData, btnEl) {
 
 
 function filterRookieBoard(filter, btn) {
+  // Board is collapsed in the offseason — filters are inert until the 2027 class lands in KTC.
   STATE.rookieFilter = filter;
   document.querySelectorAll('#tab-rookie-board .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const rookies = STATE.ktcPlayers
-    .filter(p => p.rookie === true && p.value > 100)
-    .sort((a, b) => b.value - a.value);
-  renderRookieBoardTable(rookies);
+  if (btn) btn.classList.add('active');
+  const boardEl = document.getElementById('rookieBoardBody');
+  if (boardEl) boardEl.innerHTML =
+    '<tr><td colspan="8" class="text-center muted" style="padding:22px">2027 board populates after the college season — KTC has no 2027 names yet.</td></tr>';
 }
 
 // Init
@@ -4135,16 +4163,20 @@ window.addEventListener('load', () => {
       const label   = pk.round + '.' + pad2(pk.slot);                 // 1.11
       const pickVal = pickValueOf(season, pk.round, pk.slot);
 
-      const onRoster = (STATE.myRoster || []).find(p => String(p.sleeperId) === String(pk.playerId));
-      const ktc      = onRoster || resolvePlayer(pk.name);
-      const nowVal   = onRoster ? onRoster.value : (ktc ? ktc.value : null);
-      const moved    = !onRoster;
-      const taxi     = STATE.taxiPlayerIds && STATE.taxiPlayerIds.has(pk.playerId);
-      const health   = onRoster ? getRosterHealthFlag(onRoster) : null;
+      const onRoster  = (STATE.myRoster || []).find(p => String(p.sleeperId) === String(pk.playerId));
+      // raw Sleeper IDs on MY roster (players + taxi) — survives KTC name mismatches
+      const myRawIds  = STATE._myRawIds || (STATE._myRawIds = new Set(STATE.rosters[CONFIG.MY_OWNER_ID] || []));
+      const stillMine = myRawIds.has(pk.playerId);
+      const ktc       = onRoster || resolvePlayer(pk.name);
+      const nowVal    = onRoster ? onRoster.value : (ktc ? ktc.value : null);
+      const moved     = !stillMine;              // genuinely traded/dropped
+      const unpriced  = stillMine && !onRoster;   // still mine, KTC just has no value yet
+      const taxi      = STATE.taxiPlayerIds && STATE.taxiPlayerIds.has(pk.playerId);
+      const health    = onRoster ? getRosterHealthFlag(onRoster) : null;
 
       const delta    = (pickVal != null && nowVal != null) ? (nowVal - pickVal) : null;
       if (pickVal != null) { totalSpent += pickVal; spentKnown = true; }
-      if (nowVal  != null && !moved) totalNow += nowVal;
+      if (nowVal  != null && stillMine) totalNow += nowVal;
 
       const dColor = (delta == null) ? 'var(--text-muted)' : (delta >= 0 ? 'var(--green)' : 'var(--red)');
       const dTxt   = (delta == null) ? '—' : ((delta >= 0 ? '+' : '') + fmt(delta));
@@ -4155,6 +4187,8 @@ window.addEventListener('load', () => {
 
       const statusLine = moved
         ? '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">⟲ No longer on roster</div>'
+        : unpriced
+        ? '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">🚕 Rostered stash — KTC has no value yet (name unmatched)</div>'
         : (health
             ? `<div style="display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
                  <span style="font-size:11px">${health.icon}</span>
