@@ -2863,6 +2863,29 @@ const OWNER_PROFILES = {
   'derekangl15':      { activity: 'LOW', style: 'The Silent Bystander', buys: [], sells: [], notes: 'Inactive — zero trades, zero FAAB. Approach with simple, possibly-lopsided offers; may ignore entirely.' },
 };
 
+// ============================================================
+// CAPITAL-AWARE TRADE HELPERS
+// Encodes Joe's filter: turn aging/sell vets into 2027-2028 capital.
+// Reads the (now-accurate) OWNER_PROFILES buys/sells arrays.
+// ============================================================
+function ownerSellsPicks(profile) {
+  return !!(profile && (profile.sells || []).some(function(s) { return /pick|capital|1st|2nd|first|future/i.test(s); }));
+}
+function ownerBuysVets(profile) {
+  return !!(profile && (profile.buys || []).some(function(b) { return /aging|proven|veteran|star/i.test(b); }));
+}
+function pickYearWeight(yr) { return yr === 2027 ? 1.6 : yr === 2028 ? 1.4 : yr === 2029 ? 1.1 : yr === 2026 ? 0.7 : 0.9; }
+function pickRoundWeight(rd) { return rd === 1 ? 2.0 : rd === 2 ? 1.4 : rd === 3 ? 1.0 : 0.7; }
+function capitalWeight(pk) { return (pk.value || 0) * pickYearWeight(pk.year) * pickRoundWeight(pk.round); }
+function capitalInWindow(pk) { return !!(pk && (pk.year === 2027 || pk.year === 2028)); }
+function windowBonus(pk) {
+  if (!pk) return 0;
+  var b = 0;
+  if (pk.year === 2027 || pk.year === 2028) b += 400; else if (pk.year === 2029) b += 150;
+  if (pk.round === 1) b += 300; else if (pk.round === 2) b += 120;
+  return b;
+}
+
 function calcPositionalNeeds() {
   // For each team, calculate surplus/deficit by position
   // Based on lineup: 1QB + 1SF(QB) = need 2 QBs, 2RB+3FLEX = need ~3.5 RBs, 2WR+3FLEX = need ~3.5 WRs, 1TE = need 1-2 TEs
@@ -2961,7 +2984,7 @@ function renderTradeCard(s, i) {
 
   var typeBadge = s.type === 'age-swap'    ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,165,0,0.15);color:var(--gold)">Age upgrade swap</span>'
                 : s.type === 'sweetened'   ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,215,0,0.12);color:var(--gold)">+ Pick sweetener</span>'
-                : s.type === 'pick-for-player' ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(180,76,255,0.15);color:var(--purple)">Sell for picks</span>'
+                : s.type === 'pick-for-player' ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(180,76,255,0.15);color:var(--purple)">★ Capital-in (picks)</span>'
                 : '';
 
   var html = '<div id="trade-card-' + s.id + '" style="background:var(--surface2);border:1px solid ' + (isTop ? 'var(--accent)' : 'var(--border)') + ';border-radius:12px;padding:16px;margin-bottom:12px;position:relative">';
@@ -3209,60 +3232,68 @@ function findTrades() {
     });
   }
 
-  // ── Pick-for-player: sell aging player for picks ────────────────────────
+  // ── Capital extraction: convert aging/sell vets into 2027-2028 picks ──────
+  // GATED to owners who actually SELL picks AND BUY veterans (per profile) —
+  // for this league that's wazimo (★) and NateDawg726 (★). Pitching this at
+  // pick-hoarders (Saturn75, demon44, mikelanta, Cristina, bnesmithhicks) is
+  // off-tone: they want picks FROM you, so we skip them entirely here.
+  var curYear = new Date().getFullYear();
   for (var t2 = 0; t2 < allTeams.length; t2++) {
     var tName = allTeams[t2];
     if (tName === CONFIG.MY_TEAM_NAME) continue;
     var tProfile = OWNER_PROFILES[tName];
+    if (!ownerSellsPicks(tProfile) || !ownerBuysVets(tProfile)) continue; // capital-in gate
     var tNeeds = teamNeeds[tName];
 
-    // Their picks we could target
-    // Get picks owned by this team from STATE.pickMap ("year_round_rosterId" => teamName)
+    // Their future picks we could pry loose (this year through +3)
     var theirPicks = [];
-    var curYear = new Date().getFullYear();
     Object.entries(STATE.pickMap || {}).forEach(function(entry) {
       var key = entry[0], owner = entry[1];
       if (owner !== tName) return;
       var parts = key.split('_');
       var yr = parseInt(parts[0]), rd = parseInt(parts[1]), origRosterId = parts[2];
-      if (yr < curYear || yr > curYear + 2) return;
+      if (yr < curYear || yr > curYear + 3) return;
       var origTeam = STATE.rosterIdMap ? (STATE.rosterIdMap[origRosterId] || STATE.rosterIdMap[parseInt(origRosterId)] || 'Unknown') : 'Unknown';
       var label = getPickLabel(yr, rd, origTeam);
       var val = getPickValue(yr, rd, origTeam);
       if (val > 400) theirPicks.push({ label: label, value: val, year: yr, round: rd });
     });
-    theirPicks.sort(function(a,b) { return b.value - a.value; });
+    // sort by window-weighted capital value so 2027-2028 firsts come first
+    theirPicks.sort(function(a, b) { return capitalWeight(b) - capitalWeight(a); });
 
     var mySellPlayers = (STATE.myRoster || []).filter(function(pl) {
       if (CONFIG.PROTECTED.indexOf(pl.name) >= 0) return false;
       var arch = getArchetype(pl.pos, pl.age);
       return arch && (arch.cls === 'sell' || arch.cls === 'aging') && pl.value > 1500;
-    }).sort(function(a,b) { return b.value - a.value; });
+    }).sort(function(a, b) { return b.value - a.value; });
+
+    var actBonus = tProfile && tProfile.activity === 'HIGH' ? 300 : tProfile && tProfile.activity === 'MEDIUM' ? 150 : 0;
 
     for (var spi = 0; spi < Math.min(mySellPlayers.length, 3); spi++) {
       var sellPl = mySellPlayers[spi];
-      // Find 1 or 2 picks that roughly match player value
+      var sHealth = getRosterHealthFlag(sellPl);
+      var healthBonus = sHealth && (sHealth.flag === 'SELL' || sHealth.flag === 'CUT') ? 600 : 0;
+
       for (var pi2 = 0; pi2 < Math.min(theirPicks.length, 3); pi2++) {
         var pk1 = theirPicks[pi2];
         var singleDiff = Math.abs(pk1.value - sellPl.value);
         if (singleDiff < sellPl.value * 0.35) {
-          // Single pick deal
-          var tNeed = tNeeds[sellPl.pos];
+          // Single-pick deal — base 700 puts capital-in above pure swaps; buysVets gate adds 300
           suggestions.push({
             id: 'trade-' + (idCounter++),
             team: tName,
             iGet: null, iGetPick: pk1,
             iGive: sellPl,
             iGetPos: 'PICK', iGivePos: sellPl.pos,
-            score: 400 + (tNeed ? tNeed.needScore * 0.3 : 0) + (tProfile && tProfile.activity === 'HIGH' ? 300 : 0),
+            score: 700 + windowBonus(pk1) + healthBonus + actBonus + 300 - singleDiff * 0.2,
             valueDiff: singleDiff,
+            capitalGain: capitalInWindow(pk1) ? pk1.value : 0,
             profile: tProfile,
             type: 'pick-for-player',
-            whyTheyAccept: tName + ' gets ' + sellPl.pos + ' help (' + sellPl.name + ', value ' + fmt(sellPl.value) + ')',
-            whyYouAccept: 'Sell high on aging asset — ' + pk1.label + ' (' + fmt(pk1.value) + ') for ' + sellPl.name
+            whyTheyAccept: tName + ' (' + (tProfile ? tProfile.style : '') + ') buys proven vets — ' + sellPl.name + ' fills a real hole',
+            whyYouAccept: 'Capital-in: turn ' + sellPl.name + ' into ' + pk1.label + ' (' + fmt(pk1.value) + ')' + (capitalInWindow(pk1) ? ' — lands in your 2027-2028 window' : '')
           });
         } else if (pi2 + 1 < theirPicks.length) {
-          // Two-pick deal
           var pk2 = theirPicks[pi2 + 1];
           var twoDiff = Math.abs(pk1.value + pk2.value - sellPl.value);
           if (twoDiff < sellPl.value * 0.4) {
@@ -3272,12 +3303,13 @@ function findTrades() {
               iGet: null, iGetPick: pk1, iGetPick2: pk2,
               iGive: sellPl,
               iGetPos: 'PICK', iGivePos: sellPl.pos,
-              score: 350 + (tProfile && tProfile.activity === 'HIGH' ? 300 : 0),
+              score: 650 + windowBonus(pk1) + windowBonus(pk2) + healthBonus + actBonus - twoDiff * 0.2,
               valueDiff: twoDiff,
+              capitalGain: (capitalInWindow(pk1) ? pk1.value : 0) + (capitalInWindow(pk2) ? pk2.value : 0),
               profile: tProfile,
               type: 'pick-for-player',
-              whyTheyAccept: tName + ' gets proven ' + sellPl.pos,
-              whyYouAccept: 'Convert ' + sellPl.name + ' into ' + pk1.label + ' + ' + pk2.label
+              whyTheyAccept: tName + ' gets proven ' + sellPl.pos + ' help (' + sellPl.name + ')',
+              whyYouAccept: 'Capital-in: convert ' + sellPl.name + ' into ' + pk1.label + ' + ' + pk2.label
             });
           }
         }
@@ -3303,7 +3335,15 @@ function findTrades() {
     var gap = Math.abs(getVal - giveVal);
     return gap / total <= 0.20; // within 20% = fair enough to propose
   });
-  balanced.sort(function(a,b) { return b.score - a.score; });
+  var typeRank = { 'pick-for-player': 3, 'sweetened': 2, 'age-swap': 1, 'standard': 1 };
+  balanced.sort(function(a, b) {
+    // capital-in (pick-for-player) leads when scores are within range
+    if (Math.abs(b.score - a.score) < 150) {
+      var tr = (typeRank[b.type] || 0) - (typeRank[a.type] || 0);
+      if (tr !== 0) return tr;
+    }
+    return b.score - a.score;
+  });
   return balanced;
 }
 // ============================================================
