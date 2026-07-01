@@ -3163,8 +3163,14 @@ function findTrades() {
     });
 
     var theyNeed = ['QB','RB','WR','TE'].filter(function(pos) {
-      return mySurplus.indexOf(pos) >= 0 &&
-        (theirNeeds[pos].needScore > 200 || theirNeeds[pos].count < 3 || theirNeeds[pos].starterVORP < 500);
+      if (mySurplus.indexOf(pos) < 0) return false;
+      var n = theirNeeds[pos];
+      var minStart = { QB: 2, RB: 3, WR: 3, TE: 2 }[pos];
+      // A real need = weak starters. A low count only counts if production ISN'T
+      // already strong (e.g. 2 elite TEs at VORP 1803 is set, not a need).
+      return n.needScore > 200                                   // starters below replacement
+          || n.starterVORP < 500                                 // weak starters
+          || (n.count < minStart && n.starterVORP < 1200);       // thin AND not already strong
     });
 
     // Standard positional swap deals
