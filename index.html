@@ -2076,7 +2076,19 @@ function calcTeamStats(ownerName) {
   const totalRosterValue = players.reduce((s,p) => s+p.value, 0);
   const totalPickValue = myPicksForTeam.reduce((s,p) => s+p.value, 0);
   const totalValue = totalRosterValue + totalPickValue;
-  const totalVORP = players.reduce((s,p) => s+p.vorp, 0);
+  // Starters-only VORP: the startable core (top slots per position), NOT the whole
+  // 29-man roster — so bench depth and youth-stash farming can't pad the score.
+  // Slots mirror calcPositionalNeeds so the power ranking and the need math agree.
+  const STARTER_SLOTS = { QB: 2, RB: 3.5, WR: 3.5, TE: 1.5 };
+  const vorpByPos = { QB: [], RB: [], WR: [], TE: [] };
+  for (const p of players) { if (vorpByPos[p.pos]) vorpByPos[p.pos].push(p); }
+  let totalVORP = 0;
+  for (const pos in vorpByPos) {
+    totalVORP += vorpByPos[pos]
+      .sort((a, b) => b.value - a.value)
+      .slice(0, Math.ceil(STARTER_SLOTS[pos]))
+      .reduce((s, p) => s + p.vorp, 0);
+  }
   const avgAge = players.length ? players.reduce((s,p) => s+(p.age||0), 0) / players.filter(p=>p.age).length : 0;
   const posValues = { QB:0, RB:0, WR:0, TE:0 };
   for (const p of players) { if (posValues[p.pos] !== undefined) posValues[p.pos] += p.value; }
@@ -2102,7 +2114,7 @@ function calcPowerRankings() {
   for (const s of stats) {
     const valZ = (s.totalValue - valMean) / (valStd || 1);
     const vorpZ = (s.totalVORP - vorpMean) / (vorpStd || 1);
-    s.powerScore = (valZ * 0.6 + vorpZ * 0.4);
+    s.powerScore = (valZ * 0.7 + vorpZ * 0.3);
     // roster-only strength (what they can field NOW) + how pick-rich vs the league
     const rosterValZ = (s.totalRosterValue - rvMean) / (rvStd || 1);
     s.rosterScore = (rosterValZ * 0.6 + vorpZ * 0.4);
