@@ -1215,6 +1215,10 @@
 
   <!-- TRADE FINDER TAB -->
   <div class="tab-content" id="tab-trade-finder">
+    <div class="card" style="border:1px solid var(--accent);margin-bottom:16px">
+      <div class="card-title">📌 Priority Moves</div>
+      <div id="priorityMoves" style="padding-top:4px">Loading…</div>
+    </div>
     <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
       <div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text-dim);flex:1">
         Finds mutually beneficial trades based on your roster needs vs league surplus. Applies the same mutual benefit filter we use manually.
@@ -2823,6 +2827,7 @@ function showTab(tabId) {
   if (tabId === 'waivers') renderWaivers();
   if (tabId === 'trade-analyzer') populatePickDropdowns();
   if (tabId === 'rookie-board') renderRookieBoard();
+  if (tabId === 'trade-finder') renderPriorityMoves();
   if (tabId === 'league-intel') renderLeagueIntel();
 }
 
@@ -3015,8 +3020,93 @@ function renderTradeCard(s, i) {
   return html;
 }
 
+// ============================================================
+// PRIORITY MOVES — a live checklist at the top of the Finder.
+// Auto-derives sell-now / gated-hold items from roster health +
+// injury flags, then appends manually-tracked externally-gated levers.
+// ============================================================
+var MANUAL_LEVERS = [
+  {
+    label: "Swift \u2192 future capital", asset: "D'Andre Swift", status: 'GATED',
+    trigger: 'Bears confirm his role (re-sign / extension)',
+    note: "Locked-in RB1 commands full value. NOTE: Saturn75 is no longer the buyer \u2014 fresh data has him hoarding picks. Route to a proven-RB buyer or hold for value."
+  },
+  {
+    label: "Mowens54's distant firsts", asset: '2028-2029 1st', status: 'MANUAL',
+    trigger: 'Offer youth + closer mid-round picks',
+    note: 'Mowens sheds distant 2028-2029 firsts for roster quantity \u2014 a manual path to more window-adjacent capital.'
+  }
+];
+
+function renderPriorityMoves() {
+  var el = document.getElementById('priorityMoves');
+  if (!el) return;
+  var partners = Object.keys(OWNER_PROFILES).filter(function(n) {
+    return ownerSellsPicks(OWNER_PROFILES[n]) && ownerBuysVets(OWNER_PROFILES[n]);
+  });
+  var partnerStr = partners.length ? partners.join(' / ') : 'a proven-vet buyer';
+  var roster = STATE.myRoster || [];
+  var items = [];
+
+  // Auto SELL-NOW — sell-flagged, healthy, valuable assets
+  roster.forEach(function(p) {
+    if (CONFIG.PROTECTED.indexOf(p.name) >= 0) return;
+    if (!p.value || p.value < 1500) return;
+    if (p.injuryFlag) return; // handled as a gated hold below
+    var h = getRosterHealthFlag(p);
+    var arch = getArchetype(p.pos, p.age);
+    var isSell = (h && h.flag === 'SELL') || (arch && arch.cls === 'sell');
+    if (!isSell) return;
+    items.push({
+      status: 'SELL NOW', color: 'var(--red)', icon: '\uD83D\uDD34', sort: 0 + (10000 - p.value) / 100000,
+      title: 'Sell ' + p.name + ' (' + p.pos + (p.age ? ', ' + p.age : '') + ')',
+      detail: 'Route to ' + partnerStr + ' for a 2027-2028 pick.' + (h && h.reason ? ' ' + h.reason : '')
+    });
+  });
+
+  // Auto GATED — injured value assets (hold through recovery)
+  roster.forEach(function(p) {
+    if (!p.injuryFlag) return;
+    if (!p.value || p.value < 1500) return;
+    items.push({
+      status: 'GATED', color: 'var(--gold)', icon: '\uD83D\uDFE1', sort: 1,
+      title: 'Hold ' + p.name + ' (' + p.pos + ') \u2014 injury',
+      detail: 'Injury discount is live \u2014 hold through recovery, don\'t sell into uncertainty. Reassess value on return to field.'
+    });
+  });
+
+  // Manually-tracked, externally-gated levers
+  MANUAL_LEVERS.forEach(function(m) {
+    items.push({
+      status: m.status, color: m.status === 'GATED' ? 'var(--gold)' : 'var(--accent)',
+      icon: m.status === 'GATED' ? '\uD83D\uDFE1' : '\uD83D\uDD35', sort: 2,
+      title: m.label + ' (' + m.asset + ')',
+      detail: 'Trigger: ' + m.trigger + '. ' + m.note
+    });
+  });
+
+  if (!items.length) {
+    el.innerHTML = '<div class="mono muted" style="font-size:12px;padding:10px">No live priority moves \u2014 Sync Data, or your sell-flagged assets are already moved.</div>';
+    return;
+  }
+  items.sort(function(a, b) { return a.sort - b.sort; });
+
+  el.innerHTML = items.map(function(it) {
+    return '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:var(--surface2);border-left:3px solid ' + it.color + ';border-radius:8px;margin-bottom:8px">'
+      + '<span style="font-size:12px;margin-top:1px">' + it.icon + '</span>'
+      + '<div style="flex:1">'
+        + '<div style="display:flex;gap:8px;align-items:center;margin-bottom:3px;flex-wrap:wrap">'
+          + '<span style="font-weight:600;font-size:13px">' + it.title + '</span>'
+          + '<span class="mono" style="font-size:8px;letter-spacing:1px;color:' + it.color + ';border:1px solid ' + it.color + ';border-radius:3px;padding:1px 5px">' + it.status + '</span>'
+        + '</div>'
+        + '<div style="font-size:11px;color:var(--text-muted);line-height:1.5">' + it.detail + '</div>'
+      + '</div></div>';
+  }).join('');
+}
+
 function runTradeFinder() {
   const container = document.getElementById('tradeFinderResults');
+  renderPriorityMoves();
   DISMISSED_TRADES.clear();
   container.innerHTML = '<div class="mono" style="color:var(--accent);padding:20px;text-align:center">🔍 Scanning league...</div>';
   
