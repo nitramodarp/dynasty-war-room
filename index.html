@@ -2105,14 +2105,37 @@ function calcPowerRankings() {
 }
 
 function getTeamArchetype(stats) {
-  const avgAge = stats.avgAge;
-  const ps = stats.powerScore;
-  if (avgAge < 26 && ps > 0.5) return { label: '🚀 The Dynasty', color: 'var(--green)' };
-  if (avgAge < 26 && ps <= 0) return { label: '🧱 The Rebuilder', color: 'var(--blue)' };
-  if (avgAge >= 26 && ps > 0.5) return { label: '🏆 Win-Now Juggernaut', color: 'var(--gold)' };
-  if (avgAge >= 27 && ps > 0) return { label: '⏳ Aging & Underperforming', color: 'var(--orange)' };
-  if (avgAge < 26 && ps > 0) return { label: '🔥 The Overachiever', color: 'var(--accent)' };
-  return { label: '🤔 Stuck in the Middle', color: 'var(--text-muted)' };
+  var ps = stats.powerScore;
+
+  // Value-weighted "core age" — where the roster's VALUE actually sits, so a stack
+  // of taxi rookies can't disguise an old core (and elite young studs aren't buried
+  // under cheap veteran depth).
+  var wSum = 0, aSum = 0;
+  (stats.players || []).forEach(function(p) { if (p.age && p.value) { wSum += p.value; aSum += p.age * p.value; } });
+  var coreAge = wSum ? (aSum / wSum) : (stats.avgAge || 27);
+
+  // Future pick capital as a share of total value — a high share signals a team
+  // building THROUGH picks (intentional rebuild) rather than just being old and bad.
+  var pickShare = stats.totalValue ? ((stats.totalPickValue || 0) / stats.totalValue) : 0;
+  var capitalRich = pickShare >= 0.18; // ~a fifth of value tied up in future picks (tunable)
+
+  var young  = coreAge < 26.5;
+  var strong = ps > 0.5;
+  var weak   = ps < -0.5;
+
+  // Intentional rebuild: below-average roster AND stockpiling future capital
+  if (weak && capitalRich) return { label: '🧱 Rebuilding (Stockpiling)', color: 'var(--blue)' };
+
+  if (strong) return young
+    ? { label: '🚀 The Dynasty', color: 'var(--green)' }          // young + dominant
+    : { label: '🏆 Win-Now Juggernaut', color: 'var(--gold)' };   // old + dominant
+  if (weak) return young
+    ? { label: '🧱 The Rebuilder', color: 'var(--blue)' }         // young + weak = building
+    : { label: '💀 Aging & Declining', color: 'var(--red)' };     // old + weak = teardown
+  // middle band (-0.5 .. 0.5)
+  return young
+    ? { label: '🔥 Ascending', color: 'var(--accent)' }           // young + average = window opening
+    : { label: '⚖️ Fading / Retooling', color: 'var(--orange)' }; // old + average = window closing
 }
 
 function isOnTaxi(player) {
