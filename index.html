@@ -2115,34 +2115,33 @@ function calcPowerRankings() {
 }
 
 function getTeamArchetype(stats) {
-  // Strength axis = current ROSTER (picks excluded) so a pick hoard can't disguise
-  // itself as win-now dominance. Capital axis = pick value RELATIVE to the league.
-  var strength = (stats.rosterScore != null) ? stats.rosterScore : stats.powerScore;
+  // Strength tier = total assets (matches the power ranking, so the #1 franchise
+  // never reads as a "rebuilder"). Pick capital vs the league adds build-vs-contend
+  // flavor. Value-weighted core age splits young builds from old declines.
+  var ps = stats.powerScore;
   var pickZ = stats.pickZ || 0;
 
-  // Value-weighted "core age" — robust to a stack of taxi rookies.
   var wSum = 0, aSum = 0;
   (stats.players || []).forEach(function(p) { if (p.age && p.value) { wSum += p.value; aSum += p.age * p.value; } });
   var coreAge = wSum ? (aSum / wSum) : (stats.avgAge || 27);
 
-  var young       = coreAge < 26.5;
-  var strong      = strength > 0.5;
-  var weak        = strength < -0.5;
-  var stockpiling = pickZ > 0.75;   // notably more future capital than the league
+  var young     = coreAge < 26.5;
+  var pickHeavy = pickZ > 0.75;   // notably more future capital than the league
 
-  // Capital-aware labels first — pick hoard is the defining trait
-  if (strong && stockpiling) return { label: '🚀 Loaded (Now + Future)', color: 'var(--green)' };
-  if (!strong && stockpiling) return { label: '🧱 Rebuilding (Stockpiling)', color: 'var(--blue)' };
-
-  if (strong) return young
-    ? { label: '🚀 The Dynasty', color: 'var(--green)' }          // young + strong roster
-    : { label: '🏆 Win-Now Juggernaut', color: 'var(--gold)' };   // old + strong roster
-  if (weak) return young
-    ? { label: '🧱 The Rebuilder', color: 'var(--blue)' }         // young + weak = building
-    : { label: '💀 Aging & Declining', color: 'var(--red)' };     // old + weak = teardown
-  return young
-    ? { label: '🔥 Ascending', color: 'var(--accent)' }           // young + average = window opening
-    : { label: '⚖️ Fading / Retooling', color: 'var(--orange)' }; // old + average = window closing
+  if (ps > 0.5) {
+    if (pickHeavy) return { label: '🚀 Loaded (Building)', color: 'var(--green)' };   // strong AND hoarding picks (Saturn)
+    return young ? { label: '🚀 The Dynasty', color: 'var(--green)' }
+                 : { label: '🏆 Win-Now Juggernaut', color: 'var(--gold)' };
+  }
+  if (ps < -0.5) {
+    if (pickHeavy) return { label: '🧱 Rebuilding (Stockpiling)', color: 'var(--blue)' };
+    return young ? { label: '🧱 The Rebuilder', color: 'var(--blue)' }
+                 : { label: '💀 Aging & Declining', color: 'var(--red)' };
+  }
+  // middle tier
+  if (pickHeavy) return { label: '🧱 Stockpiling', color: 'var(--blue)' };
+  return young ? { label: '🔥 Ascending', color: 'var(--accent)' }
+               : { label: '⚖️ Fading / Retooling', color: 'var(--orange)' };
 }
 
 function isOnTaxi(player) {
