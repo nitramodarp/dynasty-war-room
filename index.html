@@ -2093,10 +2093,20 @@ function calcPowerRankings() {
   const std = arr => { const m = mean(arr); return Math.sqrt(arr.reduce((a,b)=>a+(b-m)**2,0)/arr.length); };
   const valMean = mean(vals), valStd = std(vals);
   const vorpMean = mean(vorps), vorpStd = std(vorps);
+  // Separate axes for archetype: current roster strength (picks excluded) and
+  // future pick capital measured RELATIVE to the league.
+  const rosterVals = stats.map(s => s.totalRosterValue);
+  const pickVals   = stats.map(s => s.totalPickValue);
+  const rvMean = mean(rosterVals), rvStd = std(rosterVals);
+  const pkMean = mean(pickVals),   pkStd = std(pickVals);
   for (const s of stats) {
     const valZ = (s.totalValue - valMean) / (valStd || 1);
     const vorpZ = (s.totalVORP - vorpMean) / (vorpStd || 1);
     s.powerScore = (valZ * 0.6 + vorpZ * 0.4);
+    // roster-only strength (what they can field NOW) + how pick-rich vs the league
+    const rosterValZ = (s.totalRosterValue - rvMean) / (rvStd || 1);
+    s.rosterScore = (rosterValZ * 0.6 + vorpZ * 0.4);
+    s.pickZ = (s.totalPickValue - pkMean) / (pkStd || 1);
     s.archetype = getTeamArchetype(s);
   }
   stats.sort((a,b) => b.powerScore - a.powerScore);
@@ -2105,34 +2115,31 @@ function calcPowerRankings() {
 }
 
 function getTeamArchetype(stats) {
-  var ps = stats.powerScore;
+  // Strength axis = current ROSTER (picks excluded) so a pick hoard can't disguise
+  // itself as win-now dominance. Capital axis = pick value RELATIVE to the league.
+  var strength = (stats.rosterScore != null) ? stats.rosterScore : stats.powerScore;
+  var pickZ = stats.pickZ || 0;
 
-  // Value-weighted "core age" — where the roster's VALUE actually sits, so a stack
-  // of taxi rookies can't disguise an old core (and elite young studs aren't buried
-  // under cheap veteran depth).
+  // Value-weighted "core age" — robust to a stack of taxi rookies.
   var wSum = 0, aSum = 0;
   (stats.players || []).forEach(function(p) { if (p.age && p.value) { wSum += p.value; aSum += p.age * p.value; } });
   var coreAge = wSum ? (aSum / wSum) : (stats.avgAge || 27);
 
-  // Future pick capital as a share of total value — a high share signals a team
-  // building THROUGH picks (intentional rebuild) rather than just being old and bad.
-  var pickShare = stats.totalValue ? ((stats.totalPickValue || 0) / stats.totalValue) : 0;
-  var capitalRich = pickShare >= 0.18; // ~a fifth of value tied up in future picks (tunable)
+  var young       = coreAge < 26.5;
+  var strong      = strength > 0.5;
+  var weak        = strength < -0.5;
+  var stockpiling = pickZ > 0.75;   // notably more future capital than the league
 
-  var young  = coreAge < 26.5;
-  var strong = ps > 0.5;
-  var weak   = ps < -0.5;
-
-  // Intentional rebuild: below-average roster AND stockpiling future capital
-  if (weak && capitalRich) return { label: '🧱 Rebuilding (Stockpiling)', color: 'var(--blue)' };
+  // Capital-aware labels first — pick hoard is the defining trait
+  if (strong && stockpiling) return { label: '🚀 Loaded (Now + Future)', color: 'var(--green)' };
+  if (!strong && stockpiling) return { label: '🧱 Rebuilding (Stockpiling)', color: 'var(--blue)' };
 
   if (strong) return young
-    ? { label: '🚀 The Dynasty', color: 'var(--green)' }          // young + dominant
-    : { label: '🏆 Win-Now Juggernaut', color: 'var(--gold)' };   // old + dominant
+    ? { label: '🚀 The Dynasty', color: 'var(--green)' }          // young + strong roster
+    : { label: '🏆 Win-Now Juggernaut', color: 'var(--gold)' };   // old + strong roster
   if (weak) return young
     ? { label: '🧱 The Rebuilder', color: 'var(--blue)' }         // young + weak = building
     : { label: '💀 Aging & Declining', color: 'var(--red)' };     // old + weak = teardown
-  // middle band (-0.5 .. 0.5)
   return young
     ? { label: '🔥 Ascending', color: 'var(--accent)' }           // young + average = window opening
     : { label: '⚖️ Fading / Retooling', color: 'var(--orange)' }; // old + average = window closing
