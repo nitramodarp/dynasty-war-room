@@ -3042,16 +3042,20 @@ function renderPriorityMoves() {
   var el = document.getElementById('priorityMoves');
   if (!el) return;
   var partners = Object.keys(OWNER_PROFILES).filter(function(n) {
-    return ownerSellsPicks(OWNER_PROFILES[n]) && ownerBuysVets(OWNER_PROFILES[n]);
+    return n !== CONFIG.MY_TEAM_NAME && ownerSellsPicks(OWNER_PROFILES[n]) && ownerBuysVets(OWNER_PROFILES[n]);
   });
   var partnerStr = partners.length ? partners.join(' / ') : 'a proven-vet buyer';
   var roster = STATE.myRoster || [];
+  // Players already covered by a manual lever — don't duplicate them in the auto lists
+  var manualNames = MANUAL_LEVERS.map(function(m) { return (m.asset || '').toLowerCase(); });
+  function coveredByManual(name) { return manualNames.indexOf((name || '').toLowerCase()) >= 0; }
   var items = [];
 
   // Auto SELL-NOW — sell-flagged, healthy, valuable assets
   roster.forEach(function(p) {
     if (CONFIG.PROTECTED.indexOf(p.name) >= 0) return;
     if (!p.value || p.value < 1500) return;
+    if (coveredByManual(p.name)) return; // shown as a manual lever instead
     if (p.injuryFlag) return; // handled as a gated hold below
     var h = getRosterHealthFlag(p);
     var arch = getArchetype(p.pos, p.age);
@@ -3068,6 +3072,7 @@ function renderPriorityMoves() {
   roster.forEach(function(p) {
     if (!p.injuryFlag) return;
     if (!p.value || p.value < 1500) return;
+    if (coveredByManual(p.name)) return; // shown as a manual lever instead
     items.push({
       status: 'GATED', color: 'var(--gold)', icon: '\uD83D\uDFE1', sort: 1,
       title: 'Hold ' + p.name + ' (' + p.pos + ') \u2014 injury',
@@ -3353,8 +3358,12 @@ function findTrades() {
 
     var mySellPlayers = (STATE.myRoster || []).filter(function(pl) {
       if (CONFIG.PROTECTED.indexOf(pl.name) >= 0) return false;
+      if (!pl.value || pl.value <= 1500) return false;
       var arch = getArchetype(pl.pos, pl.age);
-      return arch && (arch.cls === 'sell' || arch.cls === 'aging') && pl.value > 1500;
+      var h = getRosterHealthFlag(pl);
+      // Match Priority Moves: eligible if health-flagged SELL OR aging/sell archetype
+      // (catches WRs like Metcalf who are "peak" by age band but SELL by VORP)
+      return (h && h.flag === 'SELL') || (arch && (arch.cls === 'sell' || arch.cls === 'aging'));
     }).sort(function(a, b) { return b.value - a.value; });
 
     var actBonus = tProfile && tProfile.activity === 'HIGH' ? 300 : tProfile && tProfile.activity === 'MEDIUM' ? 150 : 0;
