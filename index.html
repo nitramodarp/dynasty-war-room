@@ -1974,7 +1974,13 @@ function buildAllRosters() {
 
 function buildPickMap() {
   const currentYear = new Date().getFullYear();
-  const years = [currentYear, currentYear+1, currentYear+2, currentYear+3];
+  // The current-year rookie draft is spent once it completes, so those picks are no
+  // longer future capital. Use the detected completed-draft season if we have it,
+  // else fall back to a post-draft date cutoff (~June 1).
+  const completedThrough = STATE.myDraftSeason ? parseInt(STATE.myDraftSeason)
+    : (new Date() >= new Date(currentYear, 5, 1) ? currentYear : currentYear - 1);
+  const years = [];
+  for (let y = completedThrough + 1; y <= currentYear + 3; y++) years.push(y);
   const rounds = [1,2,3,4,5];
 
   // Start: every team owns their own picks
@@ -2549,7 +2555,10 @@ function renderDraftPicks() {
 
   // League pick map
   const currentYear = new Date().getFullYear();
-  const years = [currentYear, currentYear+1, currentYear+2, currentYear+3];
+  const completedThrough = STATE.myDraftSeason ? parseInt(STATE.myDraftSeason)
+    : (new Date() >= new Date(currentYear, 5, 1) ? currentYear : currentYear - 1);
+  const years = [];
+  for (let y = completedThrough + 1; y <= currentYear + 3; y++) years.push(y);
   const rounds = [1,2,3,4];
   const allTeams = Object.values(CONFIG.OWNER_MAP);
 
