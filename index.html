@@ -2031,13 +2031,20 @@ function buildPickMap() {
 }
 
 function getPickPosition(teamName) {
-  // Worst record picks first (1.01), best record picks last (1.12)
-  const s = STATE.standings[teamName];
-  if (!s) return 6;
-  // Sort worst to best — worst record = position 1 = earliest pick
-  const allStandings = Object.values(STATE.standings).sort((a,b) => a.wins - b.wins || a.pf - b.pf);
-  const idx = allStandings.findIndex(x => x === s);
-  return idx + 1; // 1 = worst team = picks first
+  // Draft order = worst finish picks first (slot 1), best finish picks last.
+  // Use real standings once games are played; in the preseason (all 0-0), project
+  // from the roster power ranking so slots aren't a flat field of ties.
+  const standings = STATE.standings || {};
+  const played = Object.values(standings).some(s => ((s.wins || 0) + (s.losses || 0) + (s.ties || 0)) > 0);
+  if (played && standings[teamName]) {
+    const all = Object.values(standings).sort((a, b) => a.wins - b.wins || a.pf - b.pf);
+    return all.findIndex(x => x === standings[teamName]) + 1; // 1 = worst = picks first
+  }
+  // Preseason projection: strongest roster projected to finish best → picks last.
+  const pr = STATE.powerRankings || [];
+  const idx = pr.findIndex(s => s.name === teamName); // 0 = strongest
+  if (idx >= 0) return pr.length - idx;               // strongest → highest slot (late)
+  return 6;
 }
 
 function getPickLabel(year, round, orig) {
@@ -2521,8 +2528,9 @@ function renderDraftPicks() {
         <tbody>
           ${STATE.myPicks.map(p => {
             const traded = p.orig !== CONFIG.MY_TEAM_NAME;
-            return `<tr>
-              <td class="mono">${p.year}</td>
+            const inWindow = p.year === 2027 || p.year === 2028;
+            return `<tr style="${inWindow ? 'background:rgba(0,212,255,0.05)' : ''}">
+              <td class="mono">${p.year}${inWindow ? ' <span style="font-family:DM Mono,monospace;font-size:8px;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:0 4px;margin-left:4px">WINDOW</span>' : ''}</td>
               <td class="mono">${p.round}${getOrdinal(p.round)}</td>
               <td>${traded ? `<span style="color:var(--accent)">${p.orig}</span>` : '<span class="dim">Own pick</span>'}</td>
               <td class="text-right mono" style="color:var(--accent)">${fmt(p.value)}</td>
