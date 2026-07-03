@@ -2561,6 +2561,9 @@ function renderDraftPicks() {
   for (let y = completedThrough + 1; y <= currentYear + 3; y++) years.push(y);
   const rounds = [1,2,3,4];
   const allTeams = Object.values(CONFIG.OWNER_MAP);
+  // pickMap is keyed by original roster_id, so resolve each column's name back to its id
+  const nameToRosterId = {};
+  for (const [rid, name] of Object.entries(STATE.rosterIdMap || {})) nameToRosterId[name] = rid;
 
   let mapHtml = '';
   for (const year of years) {
@@ -2573,7 +2576,7 @@ function renderDraftPicks() {
           ${rounds.map(r => `
             <div class="picks-grid-round">R${r}</div>
             ${allTeams.map(t => {
-              const key = `${year}_${r}_${t}`;
+              const key = `${year}_${r}_${nameToRosterId[t]}`;
               const owner = STATE.pickMap?.[key] || t;
               const isMe = owner === CONFIG.MY_TEAM_NAME;
               const isMeOrig = t === CONFIG.MY_TEAM_NAME;
