@@ -1969,7 +1969,7 @@ function buildAllRosters() {
   STATE.allRosters = allRosters;
   STATE.myRoster = allRosters[CONFIG.MY_TEAM_NAME] || [];
   STATE.rosterPicksFromPlayers = rosterPicksFromPlayers;
-  console.log('Picks parsed from roster:', rosterPicksFromPlayers[CONFIG.MY_TEAM_NAME]);
+  STATE._draftOrderCache = null; // rebuild draft-order projection from fresh roster values
 }
 
 function buildPickMap() {
@@ -2039,19 +2039,25 @@ function buildPickMap() {
 
 function getPickPosition(teamName) {
   // Draft order = worst finish picks first (slot 1), best finish picks last.
-  // Use real standings once games are played; in the preseason (all 0-0), project
-  // from the roster power ranking so slots aren't a flat field of ties.
   const standings = STATE.standings || {};
   const played = Object.values(standings).some(s => ((s.wins || 0) + (s.losses || 0) + (s.ties || 0)) > 0);
   if (played && standings[teamName]) {
     const all = Object.values(standings).sort((a, b) => a.wins - b.wins || a.pf - b.pf);
     return all.findIndex(x => x === standings[teamName]) + 1; // 1 = worst = picks first
   }
-  // Preseason projection: strongest roster projected to finish best → picks last.
-  const pr = STATE.powerRankings || [];
-  const idx = pr.findIndex(s => s.name === teamName); // 0 = strongest
-  if (idx >= 0) return pr.length - idx;               // strongest → highest slot (late)
-  return 6;
+  // Preseason: worst ROSTER picks first. Deterministic and pick-INDEPENDENT (roster
+  // value excludes picks), so it can't create a circular dependency with pick values
+  // — that circularity is what made the ledger and power ranking disagree. Cached per
+  // sync (cache is cleared in buildAllRosters).
+  if (!STATE._draftOrderCache) {
+    const order = {};
+    Object.entries(STATE.allRosters || {})
+      .map(([name, players]) => ({ name, val: (players || []).reduce((s, p) => s + (p.value || 0), 0) }))
+      .sort((a, b) => a.val - b.val)                    // weakest roster first
+      .forEach((t, i) => { order[t.name] = i + 1; });   // slot 1 = weakest = picks first
+    STATE._draftOrderCache = order;
+  }
+  return STATE._draftOrderCache[teamName] || 6;
 }
 
 function getPickLabel(year, round, orig) {
@@ -3805,10 +3811,6 @@ function renderPickCapital2027() {
   if (!el) return;
   const TARGET = 2027;
   const me = CONFIG.MY_TEAM_NAME;
-  const pr = STATE.powerRankings || [];
-  const nTeams = pr.length || 12;
-  const rankIdx = {};
-  pr.forEach((s, i) => { rankIdx[s.name] = i; }); // 0 = strongest roster ... n-1 = weakest
 
   const picks = [];
   Object.entries(STATE.pickMap || {}).forEach(([key, owner]) => {
@@ -3817,10 +3819,9 @@ function renderPickCapital2027() {
     if (parseInt(parts[0]) !== TARGET) return;
     const round = parseInt(parts[1]);
     const origRosterId = parts[2];
-    const origTeam = (STATE.rosterIdMap || {})[origRosterId] || ('Roster' + origRosterId);
-    // weakest roster picks earliest (slot 1); strongest picks last (slot nTeams)
-    let slot = 6;
-    if (rankIdx[origTeam] != null) slot = nTeams - rankIdx[origTeam];
+    const origTeam = (STATE.rosterIdMap || {})[parseInt(origRosterId)] || (STATE.rosterIdMap || {})[origRosterId] || ('Roster' + origRosterId);
+    // Same deterministic draft-order projection the ledger + power ranking use.
+    const slot = getPickPosition(origTeam);
     const tier = slot <= 4 ? 'Early' : slot <= 8 ? 'Mid' : 'Late';
     const valueKey = TARGET + ' ' + tier + ' ' + round + getOrdinal(round);
     const value = (CONFIG.PICK_VALUES && CONFIG.PICK_VALUES[valueKey] != null) ? CONFIG.PICK_VALUES[valueKey] : null;
