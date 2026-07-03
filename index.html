@@ -2000,8 +2000,9 @@ function buildPickMap() {
     `${tp.season} R${tp.round}: orig=${tp.roster_id}(${STATE.rosterIdMap?.[tp.roster_id]}) → curr=${tp.owner_id}(${STATE.rosterIdMap?.[tp.owner_id]})`
   ));
 
-  // Apply trades
+  // Apply trades (skip spent draft years — those picks are already used)
   for (const tp of STATE.tradedPicks) {
+    if (parseInt(tp.season) <= completedThrough) continue;
     const curr = STATE.rosterIdMap?.[tp.owner_id];
     if (curr) picks[`${tp.season}_${tp.round}_${tp.roster_id}`] = curr;
   }
