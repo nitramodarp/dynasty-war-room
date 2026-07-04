@@ -1384,6 +1384,9 @@ const CONFIG = {
   // TE VORP multiplier: amplifies TE surplus to reflect 0.5 TEP scoring bump
   // KTC SF TE+ partially prices this in, but VORP gap vs. starter is still understated
   TE_PREMIUM_MULT: 1.15,
+  // KTC exports 4pt-PassTD values; our league is 6pt. Bump QB values only (PassTD
+  // scoring doesn't affect RB/WR/TE). Tunable — calibrate against live 6pt comps.
+  QB_PASSTD_MULT: 1.12,
   // Core assets never to be suggested in Trade Finder
   PROTECTED: [
     'Patrick Mahomes', 'Jalen Hurts', 'Marvin Harrison Jr.', 'Marvin Harrison',
@@ -1688,14 +1691,19 @@ async function fetchKTC() {
     if (!cols[0]) continue;
     const name = cols[0]?.trim() || '';
     if (!name || name.startsWith('Updated') || name === 'Name' || name.startsWith('KTC') || name.startsWith('Fantasy')) continue;
-    const value = parseFloat(cols[4]) || 0;
-    if (!value) continue;
+    const rawValue = parseFloat(cols[4]) || 0;
+    if (!rawValue) continue;
     if (/^\d{4}\s+(Early|Mid|Late)\s+\d(st|nd|rd|th)$/i.test(name)) continue; // skip picks
+
+    const pos = cols[2]?.trim() || '';
+    // Correct KTC's 4pt-PassTD values up to our 6pt league — QB only. Single source
+    // of the fix: everything downstream (VORP, baselines, rankings, trade evals) inherits it.
+    const value = pos === 'QB' ? Math.round(rawValue * CONFIG.QB_PASSTD_MULT) : rawValue;
 
     players.push({
       name,
       posRank: cols[1]?.trim() || '',
-      pos: cols[2]?.trim() || '',
+      pos,
       team: cols[3]?.trim() || '',
       value,
       age: parseFloat(cols[5]) || 0,
