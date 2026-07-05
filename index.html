@@ -1255,15 +1255,15 @@
   <!-- QB ARBITRAGE TAB -->
   <div class="tab-content" id="tab-qb-arbitrage">
     <div class="card">
-      <div class="card-title">💹 QB Arbitrage — 6pt vs KTC 4pt</div>
+      <div class="card-title">💹 QB Arbitrage — 6pt vs 4pt Passing-TD Edge</div>
       <div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">
-        Your league scores passing TDs at 6pts; KTC prices them at 4. The gap (app 6pt value − raw KTC 4pt value) is the mispricing. <span style="color:var(--green)">Large +gap</span> = market underpays (elite pocket passers → BUY-FROM others / HOLD yours). <span style="color:var(--red)">Flat/–gap</span> = fair or overpaid (pure rushers → SELL yours to KTC believers). Mispricing rank, not a talent rank; the edge decays once a leaguemate wises up to 6pt scoring.
+        Your league pays 6 per passing TD; KTC's model pays 4. The points KTC ignores = <b>2 × projected passing TDs</b> (from Ciely). <b>Edge %</b> = those hidden points as a share of the QB's 4pt output — i.e. how much of his value lives in the currency the market underprices. <span style="color:var(--green)">High Edge %</span> = pure pocket passers the KTC-4pt market underprices → BUY-FROM others / HOLD yours. <span style="color:var(--text-dim)">Low Edge %</span> = rush-tilted QBs KTC already prices fully → selling yours at KTC market is fair. Dual-threats (Allen/Lamar) land mid — much of their value is rushing, which KTC prices correctly.
       </div>
       <div class="filter-row" id="qbArbFilter">
         <button class="filter-btn active" onclick="qbArbSetFilter('ALL', this)">All QBs</button>
         <button class="filter-btn" onclick="qbArbSetFilter('MINE', this)">⚔ Mine</button>
         <button class="filter-btn" onclick="qbArbSetFilter('OTHERS', this)">League</button>
-        <button class="sync-btn" style="font-size:10px;padding:4px 10px;margin-left:auto" onclick="fetchKTCRawValues(true).then(()=>renderQBArbitrage())">⟳ Refresh KTC</button>
+        <button class="sync-btn" style="font-size:10px;padding:4px 10px;margin-left:auto" onclick="fetchProjections(true).then(()=>renderQBArbitrage())">⟳ Refresh Proj</button>
       </div>
       <div id="qbArbMeta" style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted);margin-bottom:8px"></div>
       <div style="overflow-x:auto">
@@ -1273,15 +1273,16 @@
               <th onclick="qbArbSetSort('name')">QB</th>
               <th onclick="qbArbSetSort('age')">Age</th>
               <th onclick="qbArbSetSort('owner')">Owner</th>
-              <th class="text-right" onclick="qbArbSetSort('appVal')">App 6pt</th>
-              <th class="text-right" onclick="qbArbSetSort('ktcVal')">KTC 4pt</th>
-              <th class="text-right" onclick="qbArbSetSort('gap')">Gap $ ↓</th>
-              <th class="text-right" onclick="qbArbSetSort('gapPct')">Gap %</th>
+              <th class="text-right" onclick="qbArbSetSort('appVal')">App 6pt Val</th>
+              <th class="text-right" onclick="qbArbSetSort('fps')">Proj FPS</th>
+              <th class="text-right" onclick="qbArbSetSort('passTD')">Pass TD</th>
+              <th class="text-right" onclick="qbArbSetSort('edge')">Edge pts</th>
+              <th class="text-right" onclick="qbArbSetSort('edgePct')">Edge % ↓</th>
               <th>Signal / Action</th>
             </tr>
           </thead>
           <tbody id="qbArbBody">
-            <tr><td colspan="8" class="text-center muted" style="padding:24px">Open to scan…</td></tr>
+            <tr><td colspan="9" class="text-center muted" style="padding:24px">Open to scan…</td></tr>
           </tbody>
         </table>
       </div>
@@ -4377,41 +4378,19 @@ window.addEventListener('load', () => {
 });
 
 // ============================================================
-// QB ARBITRAGE — 6pt (app) vs 4pt (KTC) TD mispricing scanner
-// App value = player.value (your 6pt sheet). KTC 4pt = leaguemate.fyi
-// superflexValue (KTC's public values are 4pt-TD based; TE+ doesn't touch QBs).
+// QB ARBITRAGE — 6pt vs 4pt passing-TD scoring edge (projection-based)
+// Your league pays 6 per passing TD; KTC's model pays 4. Hidden points = 2 ×
+// projected passing TDs (Ciely). Edge % = hidden points / 4pt output — high for
+// pocket passers the KTC market underprices, low for rush-tilted QBs KTC prices fully.
 // ============================================================
-STATE.ktcRawMap = STATE.ktcRawMap || null;
-STATE.qbArbSort = { key: 'gap', asc: false };
+STATE.qbArbSort = { key: 'edgePct', asc: false };
 STATE.qbArbFilter = 'ALL';
 
-async function fetchKTCRawValues(force) {
-  if (STATE.ktcRawMap && !force) return STATE.ktcRawMap;
-  const map = {};
-  try {
-    const resp = await fetchWithTimeout('https://leaguemate.fyi/api/ktc', {}, 8000);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    for (const p of data) {
-      if (p.position === 'QB' && p.playerName) {
-        const v = p.superflexValue || p.value || 0;   // KTC SF = 4pt TD baseline
-        if (v > 0) map[cleanName(p.playerName)] = v;
-      }
-    }
-    STATE.ktcRawMap = map;
-  } catch (e) {
-    console.warn('fetchKTCRawValues failed:', e.message);
-    STATE.ktcRawMap = map; // may be empty; UI shows dashes
-  }
-  return STATE.ktcRawMap;
-}
-
-function qbArbSignal(gapPct) {
-  if (gapPct == null || isNaN(gapPct)) return null;
-  if (gapPct > 0.25)   return { key:'under',  label:'MARKET UNDERPAYS', color:'var(--green)' };
-  if (gapPct > 0.10)   return { key:'under2', label:'MILD UNDERPAY',    color:'var(--blue)' };
-  if (gapPct >= -0.10) return { key:'fair',   label:'FAIRLY PRICED',    color:'var(--text-dim)' };
-  return { key:'over', label:'MARKET OVERPAYS', color:'var(--red)' };
+function qbArbSignal(edgePct) {
+  if (edgePct == null || isNaN(edgePct)) return null;
+  if (edgePct >= 18) return { key:'under',  label:'MARKET UNDERPAYS', color:'var(--green)' };
+  if (edgePct >= 14) return { key:'under2', label:'MILD UNDERPAY',    color:'var(--blue)' };
+  return { key:'fair', label:'KTC-FAIR', color:'var(--text-dim)' };
 }
 
 function qbArbAction(sig, isMine) {
@@ -4419,28 +4398,29 @@ function qbArbAction(sig, isMine) {
   if (sig.key === 'under' || sig.key === 'under2')
     return isMine ? '<span style="color:var(--green)"> · HOLD/LEVERAGE</span>'
                   : '<span style="color:var(--green)"> · BUY-FROM</span>';
-  if (sig.key === 'over')
-    return isMine ? '<span style="color:var(--red)"> · SELL-TO KTC BELIEVER</span>'
-                  : '<span style="color:var(--text-muted)"> · avoid</span>';
+  if (sig.key === 'fair')
+    return isMine ? '<span style="color:var(--text-dim)"> · sell at KTC market OK</span>' : '';
   return '';
 }
 
 async function renderQBArbitrage() {
   const host = document.getElementById('qbArbBody');
   if (!host) return;
-  host.innerHTML = '<tr><td colspan="8" class="text-center muted" style="padding:24px">Fetching raw KTC (4pt) values…</td></tr>';
-  const ktcRaw = await fetchKTCRawValues(false);
+  host.innerHTML = '<tr><td colspan="9" class="text-center muted" style="padding:24px">Loading Ciely projections…</td></tr>';
+  await fetchProjections(false);
 
   let rows = [];
   for (const [owner, players] of Object.entries(STATE.allRosters || {})) {
     for (const p of players) {
       if (p.pos !== 'QB') continue;
-      const appVal = p.value;                              // 6pt (your sheet)
-      const ktcVal = ktcRaw[cleanName(p.name)] || null;    // 4pt (KTC raw)
-      const gap = (ktcVal != null) ? appVal - ktcVal : null;
-      const gapPct = (ktcVal != null && ktcVal > 0) ? gap / ktcVal : null;
+      const pr = projFor(p.name, 'QB');
+      const passTD = pr ? pr.passTD : null;
+      const fps = pr ? pr.fps : null;
+      const edge = (passTD != null) ? +(passTD * 2).toFixed(1) : null;      // hidden points (6pt − 4pt)
+      const fps4 = (fps != null && edge != null) ? fps - edge : null;
+      const edgePct = (fps4 != null && fps4 > 0) ? +(edge / fps4 * 100).toFixed(1) : null;
       rows.push({ name:p.name, age:p.age, owner, isMine: owner === CONFIG.MY_TEAM_NAME,
-        injured: !!p.injuryFlag, appVal, ktcVal, gap, gapPct, signal: qbArbSignal(gapPct) });
+        appVal: p.value || 0, fps, passTD, edge, edgePct, signal: qbArbSignal(edgePct) });
     }
   }
 
@@ -4457,24 +4437,24 @@ async function renderQBArbitrage() {
     return asc ? av - bv : bv - av;
   });
 
-  if (!rows.length) { host.innerHTML = '<tr><td colspan="8" class="text-center muted" style="padding:24px">No QBs found.</td></tr>'; return; }
+  if (!rows.length) { host.innerHTML = '<tr><td colspan="9" class="text-center muted" style="padding:24px">No QBs found.</td></tr>'; return; }
 
-  const matched = rows.filter(r => r.ktcVal != null).length;
+  const matched = rows.filter(r => r.edgePct != null).length;
   const meta = document.getElementById('qbArbMeta');
-  if (meta) meta.textContent = matched + ' of ' + rows.length + ' QBs matched · KTC 4pt from leaguemate.fyi · injured QBs (🏥) show inflated gaps (app value is pre-injury)';
+  if (meta) meta.textContent = matched + ' of ' + rows.length + ' QBs have projections · Edge pts = 2 × proj passing TDs (points KTC 4pt ignores) · Edge % = edge ÷ 4pt output';
 
   host.innerHTML = rows.map(r => {
     const sig = r.signal;
-    const gapCol = r.gap == null ? 'var(--text-muted)' : r.gap > 0 ? 'var(--green)' : r.gap < 0 ? 'var(--red)' : 'var(--text-dim)';
-    const pct = r.gapPct == null ? '—' : (r.gapPct > 0 ? '+' : '') + (r.gapPct * 100).toFixed(0) + '%';
+    const eCol = r.edgePct == null ? 'var(--text-muted)' : r.edgePct >= 18 ? 'var(--green)' : r.edgePct >= 14 ? 'var(--blue)' : 'var(--text-dim)';
     return '<tr style="' + (r.isMine ? 'background:rgba(255,107,26,0.06)' : '') + '">'
-      + '<td style="font-weight:' + (r.isMine?'600':'400') + '">' + (r.isMine ? '⚔ ' : '') + r.name + (r.injured ? ' <span title="App value is pre-injury; gap inflated" style="color:var(--red);font-size:10px">🏥</span>' : '') + '</td>'
+      + '<td style="font-weight:' + (r.isMine?'600':'400') + '">' + (r.isMine ? '⚔ ' : '') + r.name + '</td>'
       + '<td class="mono" style="font-size:12px">' + (r.age||'—') + '</td>'
       + '<td class="mono dim" style="font-size:11px">' + (r.isMine ? 'You' : r.owner) + '</td>'
       + '<td class="text-right mono" style="font-size:12px;color:var(--accent)">' + fmt(r.appVal) + '</td>'
-      + '<td class="text-right mono" style="font-size:12px;color:var(--text-dim)">' + (r.ktcVal==null?'—':fmt(r.ktcVal)) + '</td>'
-      + '<td class="text-right mono" style="font-size:12px;color:' + gapCol + ';font-weight:600">' + (r.gap==null?'—':(r.gap>0?'+':'')+fmt(r.gap)) + '</td>'
-      + '<td class="text-right mono" style="font-size:12px;color:' + gapCol + '">' + pct + '</td>'
+      + '<td class="text-right mono" style="font-size:12px">' + (r.fps==null?'—':r.fps.toFixed(1)) + '</td>'
+      + '<td class="text-right mono dim" style="font-size:11px">' + (r.passTD==null?'—':r.passTD.toFixed(1)) + '</td>'
+      + '<td class="text-right mono" style="font-size:12px;color:' + eCol + '">' + (r.edge==null?'—':'+'+r.edge.toFixed(0)) + '</td>'
+      + '<td class="text-right mono" style="font-size:12px;color:' + eCol + ';font-weight:600">' + (r.edgePct==null?'—':r.edgePct.toFixed(0)+'%') + '</td>'
       + '<td>' + (sig ? '<span class="badge" style="background:rgba(0,0,0,0.25);border:1px solid ' + sig.color + ';color:' + sig.color + '">' + sig.label + '</span>' + qbArbAction(sig, r.isMine) : '—') + '</td>'
       + '</tr>';
   }).join('');
@@ -4519,12 +4499,12 @@ async function fetchProjections(force) {
     const text = await resp.text();
     const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
     const H = lines[0].split(',').map(h => h.trim().toUpperCase());
-    const iN = H.indexOf('PLAYER'), iP = H.indexOf('POS'), iF = H.indexOf('FPS'), iV = H.indexOf('VORP'), iR = H.indexOf('POS_RANK');
+    const iN = H.indexOf('PLAYER'), iP = H.indexOf('POS'), iF = H.indexOf('FPS'), iV = H.indexOf('VORP'), iR = H.indexOf('POS_RANK'), iT = H.indexOf('PASS_TD');
     for (let k = 1; k < lines.length; k++) {
       const c = lines[k].split(',');
       const name = (c[iN] || '').trim(); if (!name) continue;
       const pos = (c[iP] || '').trim();
-      map[projClean(name) + '|' + pos] = { name, pos, fps: parseFloat(c[iF]) || 0, vorp: parseFloat(c[iV]) || 0, posRank: parseInt(c[iR]) || null };
+      map[projClean(name) + '|' + pos] = { name, pos, fps: parseFloat(c[iF]) || 0, vorp: parseFloat(c[iV]) || 0, posRank: parseInt(c[iR]) || null, passTD: iT >= 0 ? (parseFloat(c[iT]) || 0) : 0 };
     }
     STATE.projMap = map;
   } catch (e) {
