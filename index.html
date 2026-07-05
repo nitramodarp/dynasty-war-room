@@ -4611,7 +4611,15 @@ async function renderValueProd() {
 
   host.innerHTML = rows.map(r => {
     const sig = r.signal;
-    const divCol = r.div == null ? 'var(--text-muted)' : r.div >= 25 ? 'var(--green)' : r.div <= -25 ? 'var(--red)' : 'var(--text-dim)';
+    // Continuous gradient: neutral at Div 0, ramping to full green/red as |Div| approaches ±25.
+    // A +24 reads ~96% green (nearly as loud as a flagged +26) so near-edge leans stand out.
+    let divCol;
+    if (r.div == null) divCol = 'var(--text-muted)';
+    else {
+      const t = Math.min(Math.abs(r.div) / 25, 1);
+      const hue = r.div >= 0 ? 'var(--green)' : 'var(--red)';
+      divCol = 'color-mix(in srgb, ' + hue + ' ' + Math.round(t * 100) + '%, var(--text-dim))';
+    }
     const divTxt = r.div == null ? '—' : (r.div > 0 ? '+' : '') + r.div;
     return '<tr style="' + (r.isMine ? 'background:rgba(255,107,26,0.06)' : '') + '">'
       + '<td style="font-weight:' + (r.isMine ? '600' : '400') + '">' + (r.isMine ? '⚔ ' : '') + r.name + '</td>'
