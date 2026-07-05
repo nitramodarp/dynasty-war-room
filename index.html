@@ -958,6 +958,7 @@
   <button class="desktop-nav-tab"        id="dtab-trade-finder"    onclick="showTab('trade-finder')">🔍 Finder</button>
   <button class="desktop-nav-tab"        id="dtab-league-intel"    onclick="showTab('league-intel')">🧠 Intel</button>
   <button class="desktop-nav-tab"        id="dtab-qb-arbitrage"    onclick="showTab('qb-arbitrage');renderQBArbitrage()">💹 QB Arb</button>
+  <button class="desktop-nav-tab"        id="dtab-value-prod"      onclick="showTab('value-prod');renderValueProd()">📊 Val/Prod</button>
   <button class="desktop-nav-tab"        id="dtab-rookie-board"    onclick="showTab('rookie-board')">🎓 Rookies</button>
 </div>
 
@@ -970,6 +971,7 @@
     <button class="drawer-item" id="drawer-trade-finder" onclick="showTab('trade-finder');closeMoreDrawer()"><span class="drawer-icon">🔍</span><span class="drawer-label">Finder</span></button>
     <button class="drawer-item" id="drawer-league-intel" onclick="showTab('league-intel');closeMoreDrawer()"><span class="drawer-icon">🧠</span><span class="drawer-label">Intel</span></button>
     <button class="drawer-item" id="drawer-qb-arbitrage" onclick="showTab('qb-arbitrage');renderQBArbitrage();closeMoreDrawer()"><span class="drawer-icon">💹</span><span class="drawer-label">QB Arb</span></button>
+    <button class="drawer-item" id="drawer-value-prod" onclick="showTab('value-prod');renderValueProd();closeMoreDrawer()"><span class="drawer-icon">📊</span><span class="drawer-label">Val/Prod</span></button>
     <button class="drawer-item" id="drawer-waivers" onclick="showTab('waivers');closeMoreDrawer()"><span class="drawer-icon">📋</span><span class="drawer-label">Waivers</span></button>
     <button class="drawer-item" id="drawer-rookie-board" onclick="showTab('rookie-board');closeMoreDrawer()"><span class="drawer-icon">🎓</span><span class="drawer-label">Rookies</span></button>
   </div>
@@ -1280,6 +1282,49 @@
           </thead>
           <tbody id="qbArbBody">
             <tr><td colspan="8" class="text-center muted" style="padding:24px">Open to scan…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- VALUE vs PRODUCTION TAB -->
+  <div class="tab-content" id="tab-value-prod">
+    <div class="card">
+      <div class="card-title">📊 Value vs Production — Market Price vs Ciely 2026 Projections</div>
+      <div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">
+        Two axes: <span style="color:var(--accent)">market value</span> (app 6pt dynasty price) vs <span style="color:var(--green)">production</span> (Ciely projected points/VORP, your exact 6pt/TEP scoring). <b>Div</b> = production %ile − market %ile within position. <span style="color:var(--green)">Big +Div</span> = out-produces its price → BUY. <span style="color:var(--red)">Big −Div</span> = priced above production → SELL. Age-aware: production leads, but a light year-1 projection on a <b>young</b> player is expected and won't fire a sell (Stowers/Klein/rookies). Value is dynasty (multi-year); production is 2026 only — read RB with age in mind.
+      </div>
+      <div class="filter-row" id="vpFilter">
+        <button class="filter-btn active" onclick="vpSetFilter('ALL', this)">All</button>
+        <button class="filter-btn" onclick="vpSetFilter('MINE', this)">⚔ Mine</button>
+        <button class="filter-btn" onclick="vpSetFilter('OTHERS', this)">League</button>
+        <button class="filter-btn" onclick="vpSetFilter('QB', this)">QB</button>
+        <button class="filter-btn" onclick="vpSetFilter('RB', this)">RB</button>
+        <button class="filter-btn" onclick="vpSetFilter('WR', this)">WR</button>
+        <button class="filter-btn" onclick="vpSetFilter('TE', this)">TE</button>
+        <button class="sync-btn" style="font-size:10px;padding:4px 10px;margin-left:auto" onclick="fetchProjections(true).then(()=>renderValueProd())">⟳ Refresh Proj</button>
+      </div>
+      <div id="vpMeta" style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted);margin-bottom:8px"></div>
+      <div style="overflow-x:auto">
+        <table class="data-table" id="vpTable">
+          <thead>
+            <tr>
+              <th onclick="vpSetSort('name')">Player</th>
+              <th onclick="vpSetSort('pos')">Pos</th>
+              <th onclick="vpSetSort('age')">Age</th>
+              <th onclick="vpSetSort('owner')">Owner</th>
+              <th class="text-right" onclick="vpSetSort('mkt')">Mkt Val</th>
+              <th class="text-right" onclick="vpSetSort('mktPct')">Mkt %</th>
+              <th class="text-right" onclick="vpSetSort('fps')">Proj FPS</th>
+              <th class="text-right" onclick="vpSetSort('vorp')">Prod VORP</th>
+              <th class="text-right" onclick="vpSetSort('prodPct')">Prod %</th>
+              <th class="text-right" onclick="vpSetSort('absdiv')">Div ↓</th>
+              <th>Signal</th>
+            </tr>
+          </thead>
+          <tbody id="vpBody">
+            <tr><td colspan="11" class="text-center muted" style="padding:24px">Open to scan…</td></tr>
           </tbody>
         </table>
       </div>
@@ -4446,6 +4491,152 @@ function qbArbSetFilter(f, btn) {
   if (btn) btn.classList.add('active');
   renderQBArbitrage();
 }
+
+// ============================================================
+// VALUE vs PRODUCTION — Ciely 2026 projections vs app market value
+// Market value = player.value (6pt dynasty). Production = Ciely FPS/VORP
+// (your 6pt/TEP scoring, single-season). Age-aware: production leads, but a
+// light year-1 number on a YOUNG player does not fire a sell flag.
+// ============================================================
+STATE.projMap = STATE.projMap || null;
+STATE.vpSort = { key: 'absdiv', asc: false };
+STATE.vpFilter = 'ALL';
+
+function projClean(n) {
+  n = (n || '').toLowerCase();
+  n = n.replace(/\b(jr|sr|ii|iii|iv|v)\b/g, '');   // strip suffixes (Ciely omits them)
+  n = n.replace(/[^a-z0-9]/g, '');
+  return n;
+}
+
+async function fetchProjections(force) {
+  if (STATE.projMap && !force) return STATE.projMap;
+  const map = {};
+  try {
+    const resp = await fetchWithTimeout('./ciely_projections_2026.csv?v=' + Date.now(), {}, 8000);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+    const H = lines[0].split(',').map(h => h.trim().toUpperCase());
+    const iN = H.indexOf('PLAYER'), iP = H.indexOf('POS'), iF = H.indexOf('FPS'), iV = H.indexOf('VORP'), iR = H.indexOf('POS_RANK');
+    for (let k = 1; k < lines.length; k++) {
+      const c = lines[k].split(',');
+      const name = (c[iN] || '').trim(); if (!name) continue;
+      const pos = (c[iP] || '').trim();
+      map[projClean(name) + '|' + pos] = { name, pos, fps: parseFloat(c[iF]) || 0, vorp: parseFloat(c[iV]) || 0, posRank: parseInt(c[iR]) || null };
+    }
+    STATE.projMap = map;
+  } catch (e) {
+    console.warn('fetchProjections failed:', e.message);
+    STATE.projMap = map; // may be empty; UI shows dashes
+  }
+  return STATE.projMap;
+}
+
+function vpAgeClass(pos, age) { const b = getArchetype(pos, age); return b ? b.cls : null; }
+
+function pctRank(arr, v) {
+  if (arr.length <= 1) return 50;
+  let below = 0; for (const x of arr) if (x < v) below++;
+  return Math.round(below / (arr.length - 1) * 100);
+}
+
+// div = prodPct - mktPct (percentile points). Age-aware signal.
+function vpSignal(div, cls) {
+  const T = 25;
+  if (div == null) return null;
+  if (div <= -T) { // market pays more than production warrants
+    if (cls === 'aging' || cls === 'sell') return { label: 'SELL', color: 'var(--red)', note: 'market sticky vs declining production' };
+    if (cls === 'peak') return { label: 'SELL LEAN', color: 'var(--red)', note: 'priced above production' };
+    return { label: 'HOLD', color: 'var(--blue)', note: 'young — light year-1 is expected' };
+  }
+  if (div >= T) { // out-produces its market price
+    if (cls === 'young' || cls === 'peak') return { label: 'BUY', color: 'var(--green)', note: 'out-produces market price' };
+    return { label: 'WIN-NOW BUY', color: 'var(--green)', note: 'produces now, age-discounted' };
+  }
+  return { label: 'ALIGNED', color: 'var(--text-dim)', note: '' };
+}
+
+async function renderValueProd() {
+  const host = document.getElementById('vpBody');
+  if (!host) return;
+  host.innerHTML = '<tr><td colspan="11" class="text-center muted" style="padding:24px">Loading Ciely projections…</td></tr>';
+  const proj = await fetchProjections(false);
+
+  let all = [];
+  const unmatched = [];
+  for (const [owner, players] of Object.entries(STATE.allRosters || {})) {
+    for (const p of players) {
+      if (!['QB', 'RB', 'WR', 'TE'].includes(p.pos)) continue;
+      const pr = proj[projClean(p.name) + '|' + p.pos] || null;
+      all.push({ name: p.name, pos: p.pos, age: p.age, owner, isMine: owner === CONFIG.MY_TEAM_NAME,
+        mkt: p.value || 0, fps: pr ? pr.fps : null, vorp: pr ? pr.vorp : null, posRank: pr ? pr.posRank : null });
+      if (!pr && owner === CONFIG.MY_TEAM_NAME) unmatched.push(p.name);
+    }
+  }
+
+  const byPos = {};
+  for (const r of all) (byPos[r.pos] = byPos[r.pos] || []).push(r);
+  for (const pos in byPos) {
+    const mkts = byPos[pos].map(r => r.mkt).filter(v => v > 0);
+    const fpss = byPos[pos].map(r => r.fps).filter(v => v != null);
+    for (const r of byPos[pos]) {
+      r.mktPct = r.mkt > 0 ? pctRank(mkts, r.mkt) : null;
+      r.prodPct = r.fps != null ? pctRank(fpss, r.fps) : null;
+      r.div = (r.mktPct != null && r.prodPct != null) ? (r.prodPct - r.mktPct) : null;
+      r.absdiv = r.div != null ? Math.abs(r.div) : -1;
+      r.cls = vpAgeClass(r.pos, r.age);
+      r.signal = (r.div != null) ? vpSignal(r.div, r.cls) : null;
+    }
+  }
+
+  let rows = all;
+  if (STATE.vpFilter === 'MINE') rows = rows.filter(r => r.isMine);
+  else if (STATE.vpFilter === 'OTHERS') rows = rows.filter(r => !r.isMine);
+  else if (['QB', 'RB', 'WR', 'TE'].includes(STATE.vpFilter)) rows = rows.filter(r => r.pos === STATE.vpFilter);
+
+  const { key, asc } = STATE.vpSort;
+  rows.sort((a, b) => {
+    let av = a[key], bv = b[key];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === 'string') return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+    return asc ? av - bv : bv - av;
+  });
+
+  if (!rows.length) { host.innerHTML = '<tr><td colspan="11" class="text-center muted" style="padding:24px">No players.</td></tr>'; return; }
+
+  const meta = document.getElementById('vpMeta');
+  if (meta) {
+    const matched = all.filter(r => r.fps != null).length;
+    let m = matched + ' of ' + all.length + ' league players matched to Ciely · Div = production %ile − market %ile (within position)';
+    if (unmatched.length) m += ' · your unmatched: ' + unmatched.join(', ');
+    meta.textContent = m;
+  }
+
+  host.innerHTML = rows.map(r => {
+    const sig = r.signal;
+    const divCol = r.div == null ? 'var(--text-muted)' : r.div >= 25 ? 'var(--green)' : r.div <= -25 ? 'var(--red)' : 'var(--text-dim)';
+    const divTxt = r.div == null ? '—' : (r.div > 0 ? '+' : '') + r.div;
+    return '<tr style="' + (r.isMine ? 'background:rgba(255,107,26,0.06)' : '') + '">'
+      + '<td style="font-weight:' + (r.isMine ? '600' : '400') + '">' + (r.isMine ? '⚔ ' : '') + r.name + '</td>'
+      + '<td class="mono" style="font-size:11px">' + r.pos + '</td>'
+      + '<td class="mono" style="font-size:12px">' + (r.age || '—') + '</td>'
+      + '<td class="mono dim" style="font-size:11px">' + (r.isMine ? 'You' : r.owner) + '</td>'
+      + '<td class="text-right mono" style="font-size:12px;color:var(--accent)">' + fmt(r.mkt) + '</td>'
+      + '<td class="text-right mono dim" style="font-size:11px">' + (r.mktPct == null ? '—' : r.mktPct) + '</td>'
+      + '<td class="text-right mono" style="font-size:12px">' + (r.fps == null ? '—' : r.fps.toFixed(1)) + (r.posRank ? ' <span class="dim" style="font-size:9px">' + r.pos + r.posRank + '</span>' : '') + '</td>'
+      + '<td class="text-right mono dim" style="font-size:11px">' + (r.vorp == null ? '—' : r.vorp.toFixed(0)) + '</td>'
+      + '<td class="text-right mono dim" style="font-size:11px">' + (r.prodPct == null ? '—' : r.prodPct) + '</td>'
+      + '<td class="text-right mono" style="font-size:12px;color:' + divCol + ';font-weight:600">' + divTxt + '</td>'
+      + '<td>' + (sig ? '<span class="badge" style="background:rgba(0,0,0,0.25);border:1px solid ' + sig.color + ';color:' + sig.color + '">' + sig.label + '</span>' + (sig.note ? ' <span class="dim" style="font-size:9px">' + sig.note + '</span>' : '') : '—') + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+function vpSetSort(key) { const s = STATE.vpSort; s.asc = (s.key === key) ? !s.asc : false; s.key = key; renderValueProd(); }
+function vpSetFilter(f, btn) { STATE.vpFilter = f; document.querySelectorAll('#vpFilter .filter-btn').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active'); renderValueProd(); }
 </script>
 
 <!-- ============================================================
