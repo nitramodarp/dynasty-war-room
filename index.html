@@ -2333,67 +2333,89 @@ function renderDashboard() {
   }).join('');
   document.getElementById('posBreakdown').innerHTML = posHtml;
 
-  // Action items — use health flags for precise recommendations
+  // ============ ACTION ITEMS — triaged briefing (health + Ciely production) ============
+  // Tiers: 0 lineup summary · 1 SELLs · 2 QB holds · 3 monitors · 4 roster notes · 5 routine cuts (collapsed)
   const actions = [];
-  for (const p of STATE.myRoster) {
-    const h = getRosterHealthFlag(p);
-    if (!h) continue;
-    if (h.flag === 'SELL') {
-      actions.push({ type: 'sell', _name: p.name, msg: `${h.icon} <strong>SELL</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
-    } else if (h.flag === 'CUT') {
-      actions.push({ type: 'cut', _name: p.name, msg: `${h.icon} <strong>CUT/DROP</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
-    } else if (h.flag === 'MONITOR') {
-      actions.push({ type: 'monitor', _name: p.name, msg: `${h.icon} <strong>MONITOR</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
-    }
-  }
-  // --- Projection-driven advice (Ciely 2026 · your 6pt/TEP scoring) ---
-  if (STATE.projMap && Object.keys(STATE.projMap).length) {
-    const alreadyFlagged = new Set(actions.filter(a => a._name).map(a => a._name));
-    // league-wide within-position distributions (market value vs projected production)
-    const posVals = {}, posFps = {};
+  const hasProj = STATE.projMap && Object.keys(STATE.projMap).length;
+
+  // Precompute league-wide within-position distributions (market value vs projected production)
+  const posVals = {}, posFps = {};
+  if (hasProj) {
     for (const players of Object.values(STATE.allRosters || {})) for (const p of players) {
       if (!['QB','RB','WR','TE'].includes(p.pos)) continue;
       (posVals[p.pos] = posVals[p.pos] || []).push(p.value || 0);
       const pr = projFor(p.name, p.pos);
       if (pr) (posFps[p.pos] = posFps[p.pos] || []).push(pr.fps);
     }
-    // Production-divergence SELLs (age-aware): market %ile >> production %ile on peak/aging
-    for (const p of STATE.myRoster) {
-      if (!['QB','RB','WR','TE'].includes(p.pos) || alreadyFlagged.has(p.name)) continue;
-      const pr = projFor(p.name, p.pos); if (!pr) continue;
-      const div = pctRank(posFps[p.pos] || [], pr.fps) - pctRank(posVals[p.pos] || [], p.value || 0);
-      const cls = (getArchetype(p.pos, p.age) || {}).cls;
-      if (div <= -25 && (cls === 'peak' || cls === 'aging' || cls === 'sell')) {
-        actions.push({ type: 'prod-sell', _name: p.name, color: 'var(--red)',
-          msg: `📉 <strong>SELL</strong> ${p.name} (${p.pos}, ${p.age}) — market prices him ${Math.abs(div)} %ile above his 2026 production (Ciely ${p.pos}${pr.posRank || '?'}); sticky value on a fading producer` });
-      }
+  }
+  // Production rationale if this player is a market-sticky fading producer (else null)
+  function prodSellReason(p) {
+    if (!hasProj || !['QB','RB','WR','TE'].includes(p.pos)) return null;
+    const pr = projFor(p.name, p.pos); if (!pr) return null;
+    const div = pctRank(posFps[p.pos] || [], pr.fps) - pctRank(posVals[p.pos] || [], p.value || 0);
+    const cls = (getArchetype(p.pos, p.age) || {}).cls;
+    if (div <= -25 && (cls === 'peak' || cls === 'aging' || cls === 'sell'))
+      return `market prices him ${Math.abs(div)} %ile above his 2026 production (Ciely ${p.pos}${pr.posRank || '?'})`;
+    return null;
+  }
+
+  // Health-flag actions — SELLs enriched with the production rationale when it applies
+  for (const p of STATE.myRoster) {
+    const h = getRosterHealthFlag(p);
+    if (!h) continue;
+    if (h.flag === 'SELL') {
+      const pr = prodSellReason(p);
+      actions.push({ tier: 1, _name: p.name, color: h.color,
+        msg: `${h.icon} <strong>SELL</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}${pr ? ` · <span style="color:var(--red)">📉 ${pr}</span>` : ''}` });
+    } else if (h.flag === 'CUT') {
+      actions.push({ tier: 5, _name: p.name, color: h.color,
+        msg: `${h.icon} <strong>CUT/DROP</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}` });
+    } else if (h.flag === 'MONITOR') {
+      actions.push({ tier: 3, _name: p.name, color: h.color,
+        msg: `${h.icon} <strong>MONITOR</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}` });
     }
-    // QB format-edge HOLDs: high 6pt-vs-4pt passing-TD edge → don't sell at a KTC-even price
+  }
+  const flaggedNames = new Set(actions.map(a => a._name).filter(Boolean));
+
+  if (hasProj) {
+    // Production-only SELLs (fading producers not already health-flagged)
+    for (const p of STATE.myRoster) {
+      if (flaggedNames.has(p.name)) continue;
+      const pr = prodSellReason(p);
+      if (pr) actions.push({ tier: 1, _name: p.name, color: 'var(--red)',
+        msg: `📉 <strong>SELL</strong> ${p.name} (${p.pos}, ${p.age}) — ${pr}; sticky value on a fading producer` });
+    }
+    // QB format-edge HOLDs (don't sell an underpriced pocket passer at a KTC-even price)
     for (const p of STATE.myRoster) {
       if (p.pos !== 'QB') continue;
       const pr = projFor(p.name, 'QB'); if (!pr || !pr.passTD) continue;
       const edge = pr.passTD * 2, fps4 = pr.fps - edge, edgePct = fps4 > 0 ? edge / fps4 * 100 : 0;
-      if (edgePct >= 18) {
-        actions.push({ type: 'qb-hold', _name: p.name, color: 'var(--green)',
-          msg: `💹 <strong>HOLD</strong> ${p.name} (QB) — high 6pt format edge (${edgePct.toFixed(0)}%); KTC's 4pt model underprices him, don't sell at a KTC-even price` });
-      }
+      if (edgePct >= 18) actions.push({ tier: 2, _name: p.name, color: 'var(--green)',
+        msg: `💹 <strong>HOLD</strong> ${p.name} (QB) — high 6pt format edge (${edgePct.toFixed(0)}%); KTC's 4pt model underprices him, don't sell at a KTC-even price` });
     }
-    // Lineup production summary + league rank (optimal SF starters)
+    // Lineup production summary (leads the briefing)
     const teamProj = Object.entries(STATE.allRosters || {}).map(([name, players]) => ({ name, pts: teamProjStarters(players) })).sort((a, b) => b.pts - a.pts);
     const rk = teamProj.findIndex(t => t.name === CONFIG.MY_TEAM_NAME) + 1;
     const mine = teamProj.find(t => t.name === CONFIG.MY_TEAM_NAME);
-    if (mine && rk > 0) {
-      actions.push({ type: 'lineup', color: 'var(--purple)',
-        msg: `📊 Your optimal starters project <strong>${fmt(mine.pts)} pts</strong> — league <strong>#${rk}</strong> by 2026 production` });
-    }
+    if (mine && rk > 0) actions.push({ tier: 0, color: 'var(--purple)',
+      msg: `📊 Your optimal starters project <strong>${fmt(mine.pts)} pts</strong> — league <strong>#${rk}</strong> by 2026 production` });
   }
-  if (STATE.myPicks?.length < 4) actions.push({ type: 'picks', msg: `⚠️ Low pick capital — only ${STATE.myPicks?.length || 0} picks`, color: 'var(--yellow)' });
-  const teVORP = STATE.myRoster.filter(p=>p.pos==='TE').reduce((s,p)=>s+p.vorp,0);
-  if (teVORP < -2000) actions.push({ type: 'te', msg: `📍 TE room VORP is weak (${fmt(teVORP)}) — consider upgrading`, color: 'var(--orange)' });
 
-  document.getElementById('actionItems').innerHTML = actions.length
-    ? actions.map(a => `<div style="padding:10px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:12px;border-left:3px solid ${a.color}">${a.msg}</div>`).join('')
-    : '<div class="mono muted" style="font-size:12px;padding:12px">No urgent actions — roster looks healthy</div>';
+  if (STATE.myPicks?.length < 4) actions.push({ tier: 4, color: 'var(--yellow)', msg: `⚠️ Low pick capital — only ${STATE.myPicks?.length || 0} picks` });
+  const teVORP = STATE.myRoster.filter(p => p.pos === 'TE').reduce((s, p) => s + p.vorp, 0);
+  if (teVORP < -2000) actions.push({ tier: 4, color: 'var(--orange)', msg: `📍 TE room VORP is weak (${fmt(teVORP)}) — consider upgrading` });
+
+  // Sort by priority tier; render tiers 0–4, collapse routine cuts (tier 5) behind a toggle
+  actions.sort((a, b) => a.tier - b.tier);
+  const itemHtml = a => `<div style="padding:10px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:12px;border-left:3px solid ${a.color}">${a.msg}</div>`;
+  const visible = actions.filter(a => a.tier < 5);
+  const cuts = actions.filter(a => a.tier === 5);
+  let html = visible.map(itemHtml).join('');
+  if (cuts.length) {
+    const cutLabel = cuts.length + ' roster-clog cut' + (cuts.length > 1 ? 's' : '');
+    html += `<button onclick="var e=document.getElementById('clogCuts');var s=e.style.display==='none';e.style.display=s?'block':'none';this.textContent=(s?'▾ Hide ':'▸ ')+'${cutLabel}'" style="width:100%;text-align:left;padding:8px 12px;margin-bottom:6px;background:transparent;border:1px dashed var(--border);border-radius:6px;color:var(--text-dim);font-size:11px;font-family:DM Mono,monospace;cursor:pointer">▸ ${cutLabel}</button><div id="clogCuts" style="display:none">${cuts.map(itemHtml).join('')}</div>`;
+  }
+  document.getElementById('actionItems').innerHTML = html || '<div class="mono muted" style="font-size:12px;padding:12px">No urgent actions — roster looks healthy</div>';
 
   // Roster overview table
   renderRosterTable('rosterOverviewBody', STATE.myRoster);
