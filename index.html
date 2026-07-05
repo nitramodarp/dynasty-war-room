@@ -2289,6 +2289,7 @@ function isOnTaxi(player) {
 // RENDER FUNCTIONS
 // ============================================================
 function renderDashboard() {
+  if (!STATE.projMap) fetchProjections().then(() => { const t = document.getElementById('tab-dashboard'); if (t && t.classList.contains('active')) renderDashboard(); }).catch(() => {});
   const stats = calcTeamStats(CONFIG.MY_TEAM_NAME);
   const rankings = STATE.powerRankings || calcPowerRankings();
   const myRank = rankings.findIndex(r => r.name === CONFIG.MY_TEAM_NAME) + 1;
@@ -2321,6 +2322,7 @@ function renderDashboard() {
               <span style="flex:1;font-size:12px">${p.name}</span>
               <span class="mono" style="font-size:10px;color:var(--text-dim)">${p.age||'?'}</span>
               <span class="mono" style="font-size:11px;color:var(--accent)">${fmt(p.value)}</span>
+              ${(() => { const pr = projFor(p.name, p.pos); return pr ? `<span class="mono" style="font-size:9px;color:var(--green)">${pr.fps.toFixed(0)}fps</span>` : ''; })()}
               ${a ? `<span class="badge badge-${a.cls}" style="font-size:8px">${a.label.split(' ')[0]}</span>` : ''}
             </div>`;
           }).join('')}
@@ -2337,11 +2339,52 @@ function renderDashboard() {
     const h = getRosterHealthFlag(p);
     if (!h) continue;
     if (h.flag === 'SELL') {
-      actions.push({ type: 'sell', msg: `${h.icon} <strong>SELL</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
+      actions.push({ type: 'sell', _name: p.name, msg: `${h.icon} <strong>SELL</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
     } else if (h.flag === 'CUT') {
-      actions.push({ type: 'cut', msg: `${h.icon} <strong>CUT/DROP</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
+      actions.push({ type: 'cut', _name: p.name, msg: `${h.icon} <strong>CUT/DROP</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
     } else if (h.flag === 'MONITOR') {
-      actions.push({ type: 'monitor', msg: `${h.icon} <strong>MONITOR</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
+      actions.push({ type: 'monitor', _name: p.name, msg: `${h.icon} <strong>MONITOR</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}`, color: h.color });
+    }
+  }
+  // --- Projection-driven advice (Ciely 2026 · your 6pt/TEP scoring) ---
+  if (STATE.projMap && Object.keys(STATE.projMap).length) {
+    const alreadyFlagged = new Set(actions.filter(a => a._name).map(a => a._name));
+    // league-wide within-position distributions (market value vs projected production)
+    const posVals = {}, posFps = {};
+    for (const players of Object.values(STATE.allRosters || {})) for (const p of players) {
+      if (!['QB','RB','WR','TE'].includes(p.pos)) continue;
+      (posVals[p.pos] = posVals[p.pos] || []).push(p.value || 0);
+      const pr = projFor(p.name, p.pos);
+      if (pr) (posFps[p.pos] = posFps[p.pos] || []).push(pr.fps);
+    }
+    // Production-divergence SELLs (age-aware): market %ile >> production %ile on peak/aging
+    for (const p of STATE.myRoster) {
+      if (!['QB','RB','WR','TE'].includes(p.pos) || alreadyFlagged.has(p.name)) continue;
+      const pr = projFor(p.name, p.pos); if (!pr) continue;
+      const div = pctRank(posFps[p.pos] || [], pr.fps) - pctRank(posVals[p.pos] || [], p.value || 0);
+      const cls = (getArchetype(p.pos, p.age) || {}).cls;
+      if (div <= -25 && (cls === 'peak' || cls === 'aging' || cls === 'sell')) {
+        actions.push({ type: 'prod-sell', _name: p.name, color: 'var(--red)',
+          msg: `📉 <strong>SELL</strong> ${p.name} (${p.pos}, ${p.age}) — market prices him ${Math.abs(div)} %ile above his 2026 production (Ciely ${p.pos}${pr.posRank || '?'}); sticky value on a fading producer` });
+      }
+    }
+    // QB format-edge HOLDs: high 6pt-vs-4pt passing-TD edge → don't sell at a KTC-even price
+    for (const p of STATE.myRoster) {
+      if (p.pos !== 'QB') continue;
+      const pr = projFor(p.name, 'QB'); if (!pr || !pr.passTD) continue;
+      const edge = pr.passTD * 2, fps4 = pr.fps - edge, edgePct = fps4 > 0 ? edge / fps4 * 100 : 0;
+      if (edgePct >= 18) {
+        actions.push({ type: 'qb-hold', _name: p.name, color: 'var(--green)',
+          msg: `💹 <strong>HOLD</strong> ${p.name} (QB) — high 6pt format edge (${edgePct.toFixed(0)}%); KTC's 4pt model underprices him, don't sell at a KTC-even price` });
+      }
+    }
+    // Lineup production summary + league rank (optimal SF starters)
+    const teamProj = Object.entries(STATE.allRosters || {}).map(([name, players]) => ({ name, pts: teamProjStarters(players) })).sort((a, b) => b.pts - a.pts);
+    const rk = teamProj.findIndex(t => t.name === CONFIG.MY_TEAM_NAME) + 1;
+    const mine = teamProj.find(t => t.name === CONFIG.MY_TEAM_NAME);
+    if (mine && rk > 0) {
+      actions.push({ type: 'lineup', color: 'var(--purple)',
+        msg: `📊 Your optimal starters project <strong>${fmt(mine.pts)} pts</strong> — league <strong>#${rk}</strong> by 2026 production` });
     }
   }
   if (STATE.myPicks?.length < 4) actions.push({ type: 'picks', msg: `⚠️ Low pick capital — only ${STATE.myPicks?.length || 0} picks`, color: 'var(--yellow)' });
