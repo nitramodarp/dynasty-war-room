@@ -843,8 +843,16 @@
   @media (max-width: 768px) {
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
     .team-stats { gap: 12px; }
-    .main { padding: 16px; }
+    .main { padding: 10px 10px 8px; }
+    .card { padding: 12px; margin-bottom: 10px; }
+    .card-title { font-size: 15px; }
+    .data-table { font-size: 12px; }
+    .data-table th { padding: 6px 8px; font-size: 8px; }
+    .data-table td { padding: 7px 8px; white-space: nowrap; }
+    .stat-value { font-size: 32px; }
   }
+  /* Smooth momentum horizontal scroll on every table wrapper */
+  [style*="overflow-x:auto"] { -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 
   .error-msg {
     background: rgba(255,68,68,0.1);
@@ -2561,6 +2569,11 @@ function calcContentionWindow(players) {
 function renderPowerRankings() {
   if (!STATE.projMap) fetchProjections().then(() => { const t = document.getElementById('tab-power-rankings'); if (t && t.classList.contains('active')) renderPowerRankings(); }).catch(() => {});
   const rankings = STATE.powerRankings || calcPowerRankings();
+  // Optimal-lineup projected points per team + production rank (1 = best), reused by cards + table
+  const projByTeam = {};
+  if (STATE.projMap && Object.keys(STATE.projMap).length) rankings.forEach(t => { projByTeam[t.name] = teamProjStarters(t.players); });
+  const prodRankMap = {};
+  Object.keys(projByTeam).sort((a, b) => projByTeam[b] - projByTeam[a]).forEach((name, i) => { prodRankMap[name] = i + 1; });
   const container = document.getElementById('powerRankingsContainer');
   container.innerHTML = rankings.map((team, i) => {
     const rank = i + 1;
@@ -2591,6 +2604,10 @@ function renderPowerRankings() {
               <div class="team-stat-lbl">Total Value</div>
             </div>
             <div class="team-stat">
+              <div class="team-stat-val" style="color:var(--purple)">${projByTeam[team.name] != null ? fmt(projByTeam[team.name]) : '—'}</div>
+              <div class="team-stat-lbl">Proj Pts${prodRankMap[team.name] ? ' #' + prodRankMap[team.name] : ''}</div>
+            </div>
+            <div class="team-stat">
               <div class="team-stat-val" style="color:${team.totalVORP >= 0 ? 'var(--green)' : 'var(--red)'}">${team.totalVORP > 0 ? '+' : ''}${fmtK(team.totalVORP)}</div>
               <div class="team-stat-lbl">VORP</div>
             </div>
@@ -2612,11 +2629,12 @@ function renderPowerRankings() {
   const tbody = document.getElementById('leagueBreakdownBody');
   tbody.innerHTML = rankings.map(team => {
     const isMe = team.name === CONFIG.MY_TEAM_NAME;
-    const projStarters = (STATE.projMap && Object.keys(STATE.projMap).length) ? teamProjStarters(team.players) : null;
+    const projStarters = projByTeam[team.name] != null ? projByTeam[team.name] : null;
+    const prodRank = prodRankMap[team.name];
     return `<tr style="${isMe ? 'background:rgba(0,212,255,0.04)' : ''}">
       <td style="font-weight:${isMe?'600':'400'}">${isMe ? '⚔ ' : ''}${team.name}</td>
       <td class="text-right mono" style="color:var(--accent)">${fmt(team.totalValue)}</td>
-      <td class="text-right mono" style="font-size:11px;color:var(--purple);font-weight:600">${projStarters != null ? fmt(projStarters) : '—'}</td>
+      <td class="text-right mono" style="font-size:11px;color:var(--purple);font-weight:600">${projStarters != null ? fmt(projStarters) + '<span style="color:var(--text-muted);font-weight:400;font-size:9px;margin-left:4px">#' + prodRank + '</span>' : '—'}</td>
       <td class="text-right mono" style="font-size:11px;color:var(--accent2)">${fmt(team.posValues.QB)}</td>
       <td class="text-right mono" style="font-size:11px;color:var(--green)">${fmt(team.posValues.RB)}</td>
       <td class="text-right mono" style="font-size:11px;color:var(--blue)">${fmt(team.posValues.WR)}</td>
