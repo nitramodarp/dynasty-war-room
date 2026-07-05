@@ -1118,6 +1118,7 @@
             <tr>
               <th>Team</th>
               <th class="text-right">Total Value</th>
+              <th class="text-right">Proj Pts</th>
               <th class="text-right">QB Val</th>
               <th class="text-right">RB Val</th>
               <th class="text-right">WR Val</th>
@@ -2558,6 +2559,7 @@ function calcContentionWindow(players) {
 }
 
 function renderPowerRankings() {
+  if (!STATE.projMap) fetchProjections().then(() => { const t = document.getElementById('tab-power-rankings'); if (t && t.classList.contains('active')) renderPowerRankings(); }).catch(() => {});
   const rankings = STATE.powerRankings || calcPowerRankings();
   const container = document.getElementById('powerRankingsContainer');
   container.innerHTML = rankings.map((team, i) => {
@@ -2610,9 +2612,11 @@ function renderPowerRankings() {
   const tbody = document.getElementById('leagueBreakdownBody');
   tbody.innerHTML = rankings.map(team => {
     const isMe = team.name === CONFIG.MY_TEAM_NAME;
+    const projStarters = (STATE.projMap && Object.keys(STATE.projMap).length) ? teamProjStarters(team.players) : null;
     return `<tr style="${isMe ? 'background:rgba(0,212,255,0.04)' : ''}">
       <td style="font-weight:${isMe?'600':'400'}">${isMe ? '⚔ ' : ''}${team.name}</td>
       <td class="text-right mono" style="color:var(--accent)">${fmt(team.totalValue)}</td>
+      <td class="text-right mono" style="font-size:11px;color:var(--purple);font-weight:600">${projStarters != null ? fmt(projStarters) : '—'}</td>
       <td class="text-right mono" style="font-size:11px;color:var(--accent2)">${fmt(team.posValues.QB)}</td>
       <td class="text-right mono" style="font-size:11px;color:var(--green)">${fmt(team.posValues.RB)}</td>
       <td class="text-right mono" style="font-size:11px;color:var(--blue)">${fmt(team.posValues.WR)}</td>
@@ -4525,6 +4529,29 @@ function tradeProdLine(a) {
   const pr = projFor(a.name, a.pos);
   if (!pr) return '';
   return '<div class="mono" style="font-size:10px;color:var(--green);margin-top:3px">Proj ' + pr.fps.toFixed(1) + ' FPS · ' + a.pos + pr.posRank + '</div>';
+}
+// Optimal Superflex starting lineup (1QB,2RB,2WR,1TE,2FLEX,1SF) projected season points
+function teamProjStarters(players) {
+  const pools = { QB: [], RB: [], WR: [], TE: [] };
+  for (const p of players) {
+    if (!pools[p.pos]) continue;
+    const pr = projFor(p.name, p.pos);
+    pools[p.pos].push(pr ? pr.fps : 0);
+  }
+  for (const k in pools) pools[k].sort((a, b) => b - a);
+  const used = { QB: 0, RB: 0, WR: 0, TE: 0 };
+  let total = 0;
+  const take = (pos, n) => { for (let i = 0; i < n; i++) if (used[pos] < pools[pos].length) total += pools[pos][used[pos]++]; };
+  const best = (positions) => {
+    let bv = -1, bp = null;
+    for (const pos of positions) if (used[pos] < pools[pos].length && pools[pos][used[pos]] > bv) { bv = pools[pos][used[pos]]; bp = pos; }
+    if (bp) { used[bp]++; return bv; } return 0;
+  };
+  take('QB', 1); take('RB', 2); take('WR', 2); take('TE', 1);       // dedicated slots
+  total += best(['RB', 'WR', 'TE']);                                 // FLEX 1
+  total += best(['RB', 'WR', 'TE']);                                 // FLEX 2
+  total += best(['QB', 'RB', 'WR', 'TE']);                           // SUPERFLEX
+  return Math.round(total);
 }
 
 function vpAgeClass(pos, age) { const b = getArchetype(pos, age); return b ? b.cls : null; }
