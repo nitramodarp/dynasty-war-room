@@ -957,6 +957,7 @@
   <button class="desktop-nav-tab"        id="dtab-waivers"         onclick="showTab('waivers')">📋 Waivers</button>
   <button class="desktop-nav-tab"        id="dtab-trade-finder"    onclick="showTab('trade-finder')">🔍 Finder</button>
   <button class="desktop-nav-tab"        id="dtab-league-intel"    onclick="showTab('league-intel')">🧠 Intel</button>
+  <button class="desktop-nav-tab"        id="dtab-qb-arbitrage"    onclick="showTab('qb-arbitrage');renderQBArbitrage()">💹 QB Arb</button>
   <button class="desktop-nav-tab"        id="dtab-rookie-board"    onclick="showTab('rookie-board')">🎓 Rookies</button>
 </div>
 
@@ -968,6 +969,7 @@
     <button class="drawer-item" id="drawer-power-rankings" onclick="showTab('power-rankings');closeMoreDrawer()"><span class="drawer-icon">📊</span><span class="drawer-label">Rankings</span></button>
     <button class="drawer-item" id="drawer-trade-finder" onclick="showTab('trade-finder');closeMoreDrawer()"><span class="drawer-icon">🔍</span><span class="drawer-label">Finder</span></button>
     <button class="drawer-item" id="drawer-league-intel" onclick="showTab('league-intel');closeMoreDrawer()"><span class="drawer-icon">🧠</span><span class="drawer-label">Intel</span></button>
+    <button class="drawer-item" id="drawer-qb-arbitrage" onclick="showTab('qb-arbitrage');renderQBArbitrage();closeMoreDrawer()"><span class="drawer-icon">💹</span><span class="drawer-label">QB Arb</span></button>
     <button class="drawer-item" id="drawer-waivers" onclick="showTab('waivers');closeMoreDrawer()"><span class="drawer-icon">📋</span><span class="drawer-label">Waivers</span></button>
     <button class="drawer-item" id="drawer-rookie-board" onclick="showTab('rookie-board');closeMoreDrawer()"><span class="drawer-icon">🎓</span><span class="drawer-label">Rookies</span></button>
   </div>
@@ -1247,6 +1249,43 @@
       <div id="ownerProfiles">Loading...</div>
     </div>
   </div>
+
+  <!-- QB ARBITRAGE TAB -->
+  <div class="tab-content" id="tab-qb-arbitrage">
+    <div class="card">
+      <div class="card-title">💹 QB Arbitrage — 6pt vs KTC 4pt</div>
+      <div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">
+        Your league scores passing TDs at 6pts; KTC prices them at 4. The gap (app 6pt value − raw KTC 4pt value) is the mispricing. <span style="color:var(--green)">Large +gap</span> = market underpays (elite pocket passers → BUY-FROM others / HOLD yours). <span style="color:var(--red)">Flat/–gap</span> = fair or overpaid (pure rushers → SELL yours to KTC believers). Mispricing rank, not a talent rank; the edge decays once a leaguemate wises up to 6pt scoring.
+      </div>
+      <div class="filter-row" id="qbArbFilter">
+        <button class="filter-btn active" onclick="qbArbSetFilter('ALL', this)">All QBs</button>
+        <button class="filter-btn" onclick="qbArbSetFilter('MINE', this)">⚔ Mine</button>
+        <button class="filter-btn" onclick="qbArbSetFilter('OTHERS', this)">League</button>
+        <button class="sync-btn" style="font-size:10px;padding:4px 10px;margin-left:auto" onclick="fetchKTCRawValues(true).then(()=>renderQBArbitrage())">⟳ Refresh KTC</button>
+      </div>
+      <div id="qbArbMeta" style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted);margin-bottom:8px"></div>
+      <div style="overflow-x:auto">
+        <table class="data-table" id="qbArbTable">
+          <thead>
+            <tr>
+              <th onclick="qbArbSetSort('name')">QB</th>
+              <th onclick="qbArbSetSort('age')">Age</th>
+              <th onclick="qbArbSetSort('owner')">Owner</th>
+              <th class="text-right" onclick="qbArbSetSort('appVal')">App 6pt</th>
+              <th class="text-right" onclick="qbArbSetSort('ktcVal')">KTC 4pt</th>
+              <th class="text-right" onclick="qbArbSetSort('gap')">Gap $ ↓</th>
+              <th class="text-right" onclick="qbArbSetSort('gapPct')">Gap %</th>
+              <th>Signal / Action</th>
+            </tr>
+          </thead>
+          <tbody id="qbArbBody">
+            <tr><td colspan="8" class="text-center muted" style="padding:24px">Open to scan…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="tab-content" id="tab-waivers">
     <div class="filter-row">
       <button class="filter-btn active" onclick="filterWaivers('ALL', this)">All</button>
@@ -4290,6 +4329,123 @@ window.addEventListener('load', () => {
   setLoadingProgress(5, 'LOADING WAR ROOM...');
   syncAll();
 });
+
+// ============================================================
+// QB ARBITRAGE — 6pt (app) vs 4pt (KTC) TD mispricing scanner
+// App value = player.value (your 6pt sheet). KTC 4pt = leaguemate.fyi
+// superflexValue (KTC's public values are 4pt-TD based; TE+ doesn't touch QBs).
+// ============================================================
+STATE.ktcRawMap = STATE.ktcRawMap || null;
+STATE.qbArbSort = { key: 'gap', asc: false };
+STATE.qbArbFilter = 'ALL';
+
+async function fetchKTCRawValues(force) {
+  if (STATE.ktcRawMap && !force) return STATE.ktcRawMap;
+  const map = {};
+  try {
+    const resp = await fetchWithTimeout('https://leaguemate.fyi/api/ktc', {}, 8000);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    for (const p of data) {
+      if (p.position === 'QB' && p.playerName) {
+        const v = p.superflexValue || p.value || 0;   // KTC SF = 4pt TD baseline
+        if (v > 0) map[cleanName(p.playerName)] = v;
+      }
+    }
+    STATE.ktcRawMap = map;
+  } catch (e) {
+    console.warn('fetchKTCRawValues failed:', e.message);
+    STATE.ktcRawMap = map; // may be empty; UI shows dashes
+  }
+  return STATE.ktcRawMap;
+}
+
+function qbArbSignal(gapPct) {
+  if (gapPct == null || isNaN(gapPct)) return null;
+  if (gapPct > 0.25)   return { key:'under',  label:'MARKET UNDERPAYS', color:'var(--green)' };
+  if (gapPct > 0.10)   return { key:'under2', label:'MILD UNDERPAY',    color:'var(--blue)' };
+  if (gapPct >= -0.10) return { key:'fair',   label:'FAIRLY PRICED',    color:'var(--text-dim)' };
+  return { key:'over', label:'MARKET OVERPAYS', color:'var(--red)' };
+}
+
+function qbArbAction(sig, isMine) {
+  if (!sig) return '';
+  if (sig.key === 'under' || sig.key === 'under2')
+    return isMine ? '<span style="color:var(--green)"> · HOLD/LEVERAGE</span>'
+                  : '<span style="color:var(--green)"> · BUY-FROM</span>';
+  if (sig.key === 'over')
+    return isMine ? '<span style="color:var(--red)"> · SELL-TO KTC BELIEVER</span>'
+                  : '<span style="color:var(--text-muted)"> · avoid</span>';
+  return '';
+}
+
+async function renderQBArbitrage() {
+  const host = document.getElementById('qbArbBody');
+  if (!host) return;
+  host.innerHTML = '<tr><td colspan="8" class="text-center muted" style="padding:24px">Fetching raw KTC (4pt) values…</td></tr>';
+  const ktcRaw = await fetchKTCRawValues(false);
+
+  let rows = [];
+  for (const [owner, players] of Object.entries(STATE.allRosters || {})) {
+    for (const p of players) {
+      if (p.pos !== 'QB') continue;
+      const appVal = p.value;                              // 6pt (your sheet)
+      const ktcVal = ktcRaw[cleanName(p.name)] || null;    // 4pt (KTC raw)
+      const gap = (ktcVal != null) ? appVal - ktcVal : null;
+      const gapPct = (ktcVal != null && ktcVal > 0) ? gap / ktcVal : null;
+      rows.push({ name:p.name, age:p.age, owner, isMine: owner === CONFIG.MY_TEAM_NAME,
+        injured: !!p.injuryFlag, appVal, ktcVal, gap, gapPct, signal: qbArbSignal(gapPct) });
+    }
+  }
+
+  if (STATE.qbArbFilter === 'MINE')   rows = rows.filter(r => r.isMine);
+  if (STATE.qbArbFilter === 'OTHERS') rows = rows.filter(r => !r.isMine);
+
+  const { key, asc } = STATE.qbArbSort;
+  rows.sort((a, b) => {
+    let av = a[key], bv = b[key];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === 'string') return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+    return asc ? av - bv : bv - av;
+  });
+
+  if (!rows.length) { host.innerHTML = '<tr><td colspan="8" class="text-center muted" style="padding:24px">No QBs found.</td></tr>'; return; }
+
+  const matched = rows.filter(r => r.ktcVal != null).length;
+  const meta = document.getElementById('qbArbMeta');
+  if (meta) meta.textContent = matched + ' of ' + rows.length + ' QBs matched · KTC 4pt from leaguemate.fyi · injured QBs (🏥) show inflated gaps (app value is pre-injury)';
+
+  host.innerHTML = rows.map(r => {
+    const sig = r.signal;
+    const gapCol = r.gap == null ? 'var(--text-muted)' : r.gap > 0 ? 'var(--green)' : r.gap < 0 ? 'var(--red)' : 'var(--text-dim)';
+    const pct = r.gapPct == null ? '—' : (r.gapPct > 0 ? '+' : '') + (r.gapPct * 100).toFixed(0) + '%';
+    return '<tr style="' + (r.isMine ? 'background:rgba(255,107,26,0.06)' : '') + '">'
+      + '<td style="font-weight:' + (r.isMine?'600':'400') + '">' + (r.isMine ? '⚔ ' : '') + r.name + (r.injured ? ' <span title="App value is pre-injury; gap inflated" style="color:var(--red);font-size:10px">🏥</span>' : '') + '</td>'
+      + '<td class="mono" style="font-size:12px">' + (r.age||'—') + '</td>'
+      + '<td class="mono dim" style="font-size:11px">' + (r.isMine ? 'You' : r.owner) + '</td>'
+      + '<td class="text-right mono" style="font-size:12px;color:var(--accent)">' + fmt(r.appVal) + '</td>'
+      + '<td class="text-right mono" style="font-size:12px;color:var(--text-dim)">' + (r.ktcVal==null?'—':fmt(r.ktcVal)) + '</td>'
+      + '<td class="text-right mono" style="font-size:12px;color:' + gapCol + ';font-weight:600">' + (r.gap==null?'—':(r.gap>0?'+':'')+fmt(r.gap)) + '</td>'
+      + '<td class="text-right mono" style="font-size:12px;color:' + gapCol + '">' + pct + '</td>'
+      + '<td>' + (sig ? '<span class="badge" style="background:rgba(0,0,0,0.25);border:1px solid ' + sig.color + ';color:' + sig.color + '">' + sig.label + '</span>' + qbArbAction(sig, r.isMine) : '—') + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+function qbArbSetSort(key) {
+  const s = STATE.qbArbSort;
+  s.asc = (s.key === key) ? !s.asc : false;
+  s.key = key;
+  renderQBArbitrage();
+}
+function qbArbSetFilter(f, btn) {
+  STATE.qbArbFilter = f;
+  document.querySelectorAll('#qbArbFilter .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderQBArbitrage();
+}
 </script>
 
 <!-- ============================================================
