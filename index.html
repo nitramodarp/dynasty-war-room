@@ -3125,7 +3125,7 @@ function renderTradeCard(s, i) {
         + pill(s.iGet.pos)
         + '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGet.value) + '</span>'
         + '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGet.age + '</span>'
-        + badge(archA) + '</div>'
+        + badge(archA) + '</div>' + tradeProdLine(s.iGet)
     : '<div style="font-weight:600;font-size:13px;margin-bottom:4px">'
         + (s.iGetPick ? s.iGetPick.label + (s.iGetPick2 ? ' + ' + s.iGetPick2.label : '') : '?') + '</div>'
       + '<div style="display:flex;gap:6px;align-items:center">'
@@ -3141,7 +3141,7 @@ function renderTradeCard(s, i) {
         + pill(s.iGive.pos)
         + '<span class="mono" style="font-size:11px;color:var(--accent)">' + fmt(s.iGive.value) + '</span>'
         + '<span class="mono" style="font-size:10px;color:var(--text-dim)">Age ' + s.iGive.age + '</span>'
-        + badge(archB) + '</div>'
+        + badge(archB) + '</div>' + tradeProdLine(s.iGive)
       + (s.iGivePick ? '<div style="margin-top:5px;font-size:10px;color:var(--gold)">+ ' + s.iGivePick.label + ' (' + fmt(s.iGivePick.value) + ')</div>' : '');
   } else if (s.iGivePick) {
     givePanel = '<div style="font-weight:600;font-size:13px;margin-bottom:4px">' + s.iGivePick.label + '</div>'
@@ -3970,7 +3970,7 @@ function renderRookieBoardTable(rookies) {
       <td>${posPill(r.pos)}</td>
       <td class="mono dim" style="font-size:11px">${r.team || '—'}</td>
       <td class="mono" style="font-size:12px">${r.age || '—'}</td>
-      <td class="mono" style="color:var(--accent);font-size:12px">${fmt(r.value)}</td>
+      <td class="mono" style="color:var(--accent);font-size:12px">${fmt(r.value)}${(() => { const pr = projFor(r.name, r.pos); return pr ? `<div class="dim" style="font-size:9px;color:var(--text-dim)">${pr.fps.toFixed(0)} FPS · ${r.pos}${pr.posRank}</div>` : ''; })()}</td>
       <td>
         <div style="display:flex;align-items:center;gap:6px">
           <div style="width:40px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">
@@ -4373,6 +4373,7 @@ function filterRookieBoard(filter, btn) {
 window.addEventListener('load', () => {
   setLoadingProgress(5, 'LOADING WAR ROOM...');
   syncAll();
+  fetchProjections().catch(() => {});   // warm projection cache for trade analyzer + rookie board
 });
 
 // ============================================================
@@ -4531,6 +4532,19 @@ async function fetchProjections(force) {
     STATE.projMap = map; // may be empty; UI shows dashes
   }
   return STATE.projMap;
+}
+
+// Synchronous projection lookup (reads warmed cache; null if not loaded/matched)
+function projFor(name, pos) {
+  if (!STATE.projMap) return null;
+  return STATE.projMap[projClean(name) + '|' + pos] || null;
+}
+// Small production line for trade-analyzer player panels
+function tradeProdLine(a) {
+  if (!a) return '';
+  const pr = projFor(a.name, a.pos);
+  if (!pr) return '';
+  return '<div class="mono" style="font-size:10px;color:var(--green);margin-top:3px">Proj ' + pr.fps.toFixed(1) + ' FPS · ' + a.pos + pr.posRank + '</div>';
 }
 
 function vpAgeClass(pos, age) { const b = getArchetype(pos, age); return b ? b.cls : null; }
