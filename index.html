@@ -1120,6 +1120,7 @@
 
     <div class="card">
       <div class="card-title">📊 League Positional Breakdown</div>
+      <div style="font-size:10px;color:var(--text-dim);margin:-4px 0 10px;line-height:1.45">Position cells: <b style="color:var(--text)">startable core</b> (top starters only) over <span style="color:var(--text-dim)">total capital</span> (every rostered body). A big gap = a top-heavy room padded by bench depth.</div>
       <div style="overflow-x:auto">
         <table class="data-table" id="leagueBreakdownTable">
           <thead>
@@ -1127,10 +1128,10 @@
               <th>Team</th>
               <th class="text-right">Total Value</th>
               <th class="text-right">Proj Pts</th>
-              <th class="text-right">QB Val</th>
-              <th class="text-right">RB Val</th>
-              <th class="text-right">WR Val</th>
-              <th class="text-right">TE Val</th>
+              <th class="text-right">QB</th>
+              <th class="text-right">RB</th>
+              <th class="text-right">WR</th>
+              <th class="text-right">TE</th>
               <th class="text-right">Pick Cap</th>
               <th class="text-right">Avg Age</th>
               <th>Archetype</th>
@@ -2207,16 +2208,22 @@ function calcTeamStats(ownerName) {
   const vorpByPos = { QB: [], RB: [], WR: [], TE: [] };
   for (const p of players) { if (vorpByPos[p.pos]) vorpByPos[p.pos].push(p); }
   let totalVORP = 0;
+  // Startable value: top ceil(slots) players' KTC value per position, in the SAME unit
+  // as posValues so the two are directly comparable in the breakdown. Bench depth and
+  // youth stashes are excluded, so a top-heavy room reads thin here even when its total
+  // capital is high — this is the honest "room strength" number.
+  const posStartable = { QB:0, RB:0, WR:0, TE:0 };
   for (const pos in vorpByPos) {
-    totalVORP += vorpByPos[pos]
+    const top = vorpByPos[pos]
       .sort((a, b) => b.value - a.value)
-      .slice(0, Math.ceil(STARTER_SLOTS[pos]))
-      .reduce((s, p) => s + p.vorp, 0);
+      .slice(0, Math.ceil(STARTER_SLOTS[pos]));
+    totalVORP += top.reduce((s, p) => s + p.vorp, 0);
+    posStartable[pos] = top.reduce((s, p) => s + p.value, 0);
   }
   const avgAge = players.length ? players.reduce((s,p) => s+(p.age||0), 0) / players.filter(p=>p.age).length : 0;
   const posValues = { QB:0, RB:0, WR:0, TE:0 };
   for (const p of players) { if (posValues[p.pos] !== undefined) posValues[p.pos] += p.value; }
-  return { totalValue, totalRosterValue, totalPickValue, totalVORP, avgAge, posValues, players, picks: myPicksForTeam };
+  return { totalValue, totalRosterValue, totalPickValue, totalVORP, avgAge, posValues, posStartable, players, picks: myPicksForTeam };
 }
 
 function calcPowerRankings() {
@@ -2313,7 +2320,10 @@ function renderDashboard() {
             ${posPill(pos)}
             <span class="mono" style="font-size:11px;color:var(--text-dim)">${posPlayers.length} players · avg age ${avgAge.toFixed(1)}</span>
           </div>
-          <span class="mono" style="font-size:12px;color:var(--accent)">${fmt(total)}</span>
+          <span style="text-align:right;line-height:1.2">
+            <span class="mono" style="font-size:12px;color:var(--accent)">${fmt(stats.posStartable[pos])}</span>
+            <span class="mono" style="display:block;font-size:9px;color:var(--text-dim)">${fmt(total)} cap</span>
+          </span>
         </div>
         <div style="display:flex;flex-direction:column;gap:3px">
           ${posPlayers.slice(0,4).map(p => {
@@ -2692,6 +2702,9 @@ function renderPowerRankings() {
 
   // League breakdown table
   const tbody = document.getElementById('leagueBreakdownBody');
+  // Position cell: startable core (primary) over total capital (sub-value).
+  const posCell = (startable, capital, color) =>
+    `<td class="text-right mono" style="font-size:11px;color:${color}">${fmt(startable)}<div style="font-size:9px;color:var(--text-dim);font-weight:400;margin-top:1px">${fmt(capital)}</div></td>`;
   tbody.innerHTML = rankings.map(team => {
     const isMe = team.name === CONFIG.MY_TEAM_NAME;
     const projStarters = projByTeam[team.name] != null ? projByTeam[team.name] : null;
@@ -2700,10 +2713,10 @@ function renderPowerRankings() {
       <td style="font-weight:${isMe?'600':'400'}">${isMe ? '⚔ ' : ''}${team.name}</td>
       <td class="text-right mono" style="color:var(--accent)">${fmt(team.totalValue)}</td>
       <td class="text-right mono" style="font-size:11px;color:var(--purple);font-weight:600">${projStarters != null ? fmt(projStarters) + '<span style="color:var(--text-muted);font-weight:400;font-size:9px;margin-left:4px">#' + prodRank + '</span>' : '—'}</td>
-      <td class="text-right mono" style="font-size:11px;color:var(--accent2)">${fmt(team.posValues.QB)}</td>
-      <td class="text-right mono" style="font-size:11px;color:var(--green)">${fmt(team.posValues.RB)}</td>
-      <td class="text-right mono" style="font-size:11px;color:var(--blue)">${fmt(team.posValues.WR)}</td>
-      <td class="text-right mono" style="font-size:11px;color:var(--gold)">${fmt(team.posValues.TE)}</td>
+      ${posCell(team.posStartable.QB, team.posValues.QB, 'var(--accent2)')}
+      ${posCell(team.posStartable.RB, team.posValues.RB, 'var(--green)')}
+      ${posCell(team.posStartable.WR, team.posValues.WR, 'var(--blue)')}
+      ${posCell(team.posStartable.TE, team.posValues.TE, 'var(--gold)')}
       <td class="text-right mono" style="font-size:11px;color:var(--text-dim)">${fmt(team.totalPickValue)}</td>
       <td class="text-right mono" style="font-size:11px">${team.avgAge.toFixed(1)}</td>
       <td><span style="color:${team.archetype.color};font-size:11px">${team.archetype.label}</span></td>
