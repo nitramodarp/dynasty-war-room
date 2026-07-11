@@ -3081,6 +3081,79 @@ function analyzeTrade() {
     + '<div><span style="color:var(--accent)">OUT </span><span style="color:var(--text-dim)">Now ' + outNowPct + '%</span>' + mkBar(outNowPct,'var(--accent)') + '<span style="color:var(--text-muted)">Future ' + outFutPct + '%</span>' + mkBar(outFutPct,'var(--blue)') + '</div>'
     + '<div style="margin-top:2px">' + windowNote + '</div>'
     + '</div>';
+
+  // ── CONTENDER GAP IMPACT — what this trade does to your optimal lineup ──
+  detail.innerHTML += buildTradeGapImpact(a, b);
+}
+
+// Simulates the trade against MY roster and re-runs the per-position optimizer.
+// a = assets coming IN, b = assets going OUT. Returns an HTML block ('' if n/a).
+function buildTradeGapImpact(a, b) {
+  const inPlayers  = a.filter(x => x.pos !== 'PICK');
+  const outPlayers = b.filter(x => x.pos !== 'PICK');
+  if (!inPlayers.length && !outPlayers.length) return '';              // pick-only deal: no lineup impact
+  if (!STATE.projMap || !Object.keys(STATE.projMap).length) return '';  // projections not loaded
+  if (!STATE.myRoster || !STATE.myRoster.length || !STATE.allRosters) return '';
+
+  // Post-trade roster: my roster minus OUT players, plus IN players (active, not taxi)
+  const outNames = new Set(outPlayers.map(x => projClean(x.name)));
+  const post = STATE.myRoster.filter(p => !outNames.has(projClean(p.name)));
+  const notOnRoster = outPlayers.filter(x => !STATE.myRoster.some(p => projClean(p.name) === projClean(x.name)));
+  for (const x of inPlayers) post.push({ name: x.name, pos: x.pos, onTaxiSquad: false });
+
+  const pre  = teamProjByPos(STATE.myRoster, false);
+  const sim  = teamProjByPos(post, false);
+
+  // Top-4 benchmark, same convention as the dashboard panel (2026 lineup mode)
+  const teams = Object.entries(STATE.allRosters).map(function(e) { return teamProjByPos(e[1], false); })
+    .sort(function(x, y) { return y.total - x.total; }).slice(0, 4);
+  const bench = { QB: 0, RB: 0, WR: 0, TE: 0, total: 0 };
+  for (const t of teams) { bench.QB += t.byPos.QB / 4; bench.RB += t.byPos.RB / 4; bench.WR += t.byPos.WR / 4; bench.TE += t.byPos.TE / 4; bench.total += t.total / 4; }
+
+  // Unmatched incoming players count as 0 FPS — flag rather than silently understate
+  const unmatchedIn = inPlayers.filter(x => !projFor(x.name, x.pos)).map(x => x.name);
+
+  let rows = '';
+  for (const pos of ['QB', 'RB', 'WR', 'TE']) {
+    const p0 = pre.byPos[pos], p1 = sim.byPos[pos], bk = Math.round(bench[pos]);
+    const d = p1 - p0;
+    if (d === 0 && p0 === p1) { // unchanged rows render dim, one line
+      rows += '<div><span style="display:inline-block;width:26px;font-weight:700;color:var(--text-muted)">' + pos + '</span>'
+        + '<span style="color:var(--text-muted)">' + fmt(p0) + ' — unchanged</span>'
+        + '<span style="color:var(--text-muted);font-size:9px"> &nbsp;(bench ' + fmt(bk) + ')</span></div>';
+      continue;
+    }
+    const dColor = d > 0 ? 'var(--green)' : 'var(--red)';
+    // Color the post number against the benchmark, same thresholds as the panel
+    const ratio = bk > 0 ? p1 / bk : 1;
+    const pColor = ratio >= 0.95 ? 'var(--green)' : (ratio >= 0.85 ? 'var(--yellow)' : 'var(--red)');
+    rows += '<div><span style="display:inline-block;width:26px;font-weight:700;color:var(--text)">' + pos + '</span>'
+      + '<span style="color:var(--text-dim)">' + fmt(p0) + '</span>'
+      + '<span style="color:var(--text-muted)"> → </span>'
+      + '<span style="color:' + pColor + ';font-weight:500">' + fmt(p1) + '</span>'
+      + '<span style="color:' + dColor + '"> &nbsp;(' + (d > 0 ? '+' : '') + fmt(d) + ')</span>'
+      + '<span style="color:var(--text-muted);font-size:9px"> &nbsp;vs bench ' + fmt(bk) + '</span></div>';
+  }
+  const dTot = sim.total - pre.total;
+  const totColor = dTot > 0 ? 'var(--green)' : (dTot < 0 ? 'var(--red)' : 'var(--text-muted)');
+
+  let html = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-family:\'DM Mono\',monospace;font-size:11px;line-height:2">'
+    + '<div style="color:var(--text-muted);font-size:9px;letter-spacing:1px;margin-bottom:2px">&#x1F3AF; CONTENDER GAP IMPACT (2026 optimal lineup)</div>'
+    + rows
+    + '<div style="margin-top:2px"><span style="display:inline-block;width:26px;font-weight:700;color:var(--text)">ALL</span>'
+    + '<span style="color:var(--text-dim)">' + fmt(pre.total) + '</span><span style="color:var(--text-muted)"> → </span>'
+    + '<span style="color:' + totColor + ';font-weight:500">' + fmt(sim.total) + '</span>'
+    + '<span style="color:' + totColor + '"> &nbsp;(' + (dTot >= 0 ? '+' : '') + fmt(dTot) + ')</span>'
+    + '<span style="color:var(--text-muted);font-size:9px"> &nbsp;vs bench ' + fmt(Math.round(bench.total)) + '</span></div>';
+
+  if (unmatchedIn.length) {
+    html += '<div style="color:var(--yellow);font-size:10px;line-height:1.5;margin-top:4px">&#x26A0;&#xFE0F; No Ciely projection for ' + unmatchedIn.join(', ') + ' — counted as 0 FPS; lineup gain may be understated</div>';
+  }
+  if (notOnRoster.length) {
+    html += '<div style="color:var(--text-muted);font-size:10px;line-height:1.5;margin-top:4px">&#x2139;&#xFE0F; ' + notOnRoster.map(function(x){return x.name;}).join(', ') + ' not on your roster — impact shown assumes your side of the deal</div>';
+  }
+  html += '</div>';
+  return html;
 }
 
   
@@ -4752,13 +4825,17 @@ function renderContenderGap() {
     const ratio = b > 0 ? m / b : 1;
     const delta = m - b;
     const color = ratio >= 0.95 ? 'var(--green)' : (ratio >= 0.85 ? 'var(--yellow)' : 'var(--red)');
-    // Annotation sized to the deficit
+    // Annotation sized to the deficit — capped at realistic single-player FPS
+    // (no single RB scores 450; don't recommend acquiring a player who doesn't exist)
+    const SINGLE_PLAYER_CAP = { QB: 420, RB: 300, WR: 300, TE: 210 };
     let note = '';
     if (delta < 0) {
       const d = Math.abs(delta);
-      if (d > 150)      note = 'needs one premium ~' + Math.round(d / 50) * 50 + 'pt starter — not depth adds';
-      else if (d > 75)  note = 'one startable piece short';
-      else              note = 'depth / health territory — no trade required';
+      const cap = SINGLE_PLAYER_CAP[pos] || 300;
+      if (d > cap)          note = 'needs two real pieces — a starter and a second contributor (no single ' + pos + ' scores ' + fmt(d) + ')';
+      else if (d > 150)     note = 'needs one premium ~' + Math.round(d / 50) * 50 + 'pt starter — not depth adds';
+      else if (d > 75)      note = 'one startable piece short';
+      else                  note = 'depth / health territory — no trade required';
     } else {
       note = 'contender-grade';
     }
