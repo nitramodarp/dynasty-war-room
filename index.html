@@ -1052,6 +1052,17 @@
     </div>
 
     <div class="card">
+      <div class="card-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">🎯 Contender Gap
+        <div style="margin-left:auto;display:flex;gap:4px">
+          <button id="cgModeLineup" class="filter-btn active" onclick="setCgMode(false)">2026 Lineup</button>
+          <button id="cgModeTaxi" class="filter-btn" onclick="setCgMode(true)">+ Taxi</button>
+        </div>
+      </div>
+      <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:10px;line-height:1.5">Your optimal starting lineup (Ciely 2026 FPS, actual slot assignment: 1QB · 2RB · 2WR · 1TE · 2FLEX · 1SF) vs the league's top-4 contender benchmark, by position. Gap = what separates this roster from contention.</div>
+      <div id="contenderGap"><div class="mono muted" style="font-size:12px;padding:12px">Loading projections…</div></div>
+    </div>
+
+    <div class="card">
       <div class="card-title">📈 Roster Overview</div>
       <div style="overflow-x:auto">
         <table class="data-table" id="rosterOverviewTable">
@@ -1869,6 +1880,7 @@ async function fetchRosters() {
   const rosters = await resp.json();
   const rosterMap = {};
   const rosterIdMap = {};
+  const leagueTaxiIds = new Set();
   for (const r of rosters) {
     const name = CONFIG.OWNER_MAP[r.owner_id];
     if (name) {
@@ -1876,8 +1888,10 @@ async function fetchRosters() {
       const allIds = [...new Set([...(r.players || []), ...(r.taxi || [])])];
       rosterMap[r.owner_id] = allIds;
       rosterIdMap[r.roster_id] = name;
+      for (const t of (r.taxi || [])) leagueTaxiIds.add(t);
     }
   }
+  STATE.leagueTaxiIds = leagueTaxiIds;
   STATE.rosters = rosterMap;
   STATE.rosterIdMap = rosterIdMap;
   STATE.ownedPlayerIds = new Set();
@@ -2063,7 +2077,8 @@ function buildAllRosters() {
         age: ktc.age,
         vorp,
         rookie: ktc.rookie,
-        posRank: ktc.posRank
+        posRank: ktc.posRank,
+        onTaxiSquad: STATE.leagueTaxiIds ? STATE.leagueTaxiIds.has(pid) : false
       });
     }
     if (unmatched.length) console.warn('⚠️ Unmatched players on YOUR roster:', unmatched);
@@ -2426,6 +2441,9 @@ function renderDashboard() {
     html += `<button onclick="var e=document.getElementById('clogCuts');var s=e.style.display==='none';e.style.display=s?'block':'none';this.textContent=(s?'▾ Hide ':'▸ ')+'${cutLabel}'" style="width:100%;text-align:left;padding:8px 12px;margin-bottom:6px;background:transparent;border:1px dashed var(--border);border-radius:6px;color:var(--text-dim);font-size:11px;font-family:DM Mono,monospace;cursor:pointer">▸ ${cutLabel}</button><div id="clogCuts" style="display:none">${cuts.map(itemHtml).join('')}</div>`;
   }
   document.getElementById('actionItems').innerHTML = html || '<div class="mono muted" style="font-size:12px;padding:12px">No urgent actions — roster looks healthy</div>';
+
+  // Contender Gap panel (renders from same projection cache)
+  renderContenderGap();
 
   // Roster overview table
   renderRosterTable('rosterOverviewBody', STATE.myRoster);
@@ -4648,6 +4666,149 @@ function teamProjStarters(players) {
   total += best(['RB', 'WR', 'TE']);                                 // FLEX 2
   total += best(['QB', 'RB', 'WR', 'TE']);                           // SUPERFLEX
   return Math.round(total);
+}
+
+// ============================================================
+// CONTENDER GAP — per-position optimal lineup vs top-4 benchmark
+// ============================================================
+// Same slot algorithm as teamProjStarters, but attributes every point
+// (incl. FLEX/SF) to the position that actually fills the slot, and
+// respects taxi eligibility (taxi players can't legally start).
+function teamProjByPos(players, includeTaxi) {
+  const pools = { QB: [], RB: [], WR: [], TE: [] };
+  let matched = 0, unmatched = 0;
+  for (const p of players) {
+    if (!pools[p.pos]) continue;
+    if (!includeTaxi && p.onTaxiSquad) continue;
+    const pr = projFor(p.name, p.pos);
+    if (pr) matched++; else unmatched++;
+    pools[p.pos].push(pr ? pr.fps : 0);
+  }
+  for (const k in pools) pools[k].sort((a, b) => b - a);
+  const used = { QB: 0, RB: 0, WR: 0, TE: 0 };
+  const byPos = { QB: 0, RB: 0, WR: 0, TE: 0 };
+  const take = (pos, n) => { for (let i = 0; i < n; i++) if (used[pos] < pools[pos].length) byPos[pos] += pools[pos][used[pos]++]; };
+  const best = (positions) => {
+    let bv = -1, bp = null;
+    for (const pos of positions) if (used[pos] < pools[pos].length && pools[pos][used[pos]] > bv) { bv = pools[pos][used[pos]]; bp = pos; }
+    if (bp) { byPos[bp] += bv; used[bp]++; }
+  };
+  take('QB', 1); take('RB', 2); take('WR', 2); take('TE', 1);       // dedicated
+  best(['RB', 'WR', 'TE']);                                          // FLEX 1
+  best(['RB', 'WR', 'TE']);                                          // FLEX 2
+  best(['QB', 'RB', 'WR', 'TE']);                                    // SUPERFLEX
+  for (const k in byPos) byPos[k] = Math.round(byPos[k]);
+  const total = byPos.QB + byPos.RB + byPos.WR + byPos.TE;
+  return { byPos, total, matched, unmatched };
+}
+
+var STATE_CG_TAXI = false; // module-level toggle state (survives re-renders)
+function setCgMode(includeTaxi) {
+  STATE_CG_TAXI = !!includeTaxi;
+  const a = document.getElementById('cgModeLineup'), b = document.getElementById('cgModeTaxi');
+  if (a) a.classList.toggle('active', !STATE_CG_TAXI);
+  if (b) b.classList.toggle('active', STATE_CG_TAXI);
+  renderContenderGap();
+}
+
+function renderContenderGap() {
+  const host = document.getElementById('contenderGap');
+  if (!host) return;
+  if (!STATE.projMap || !Object.keys(STATE.projMap).length || !STATE.allRosters) {
+    host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Ciely projections not loaded — hit Sync Data or check ciely_projections_2026.csv</div>';
+    return;
+  }
+  const includeTaxi = STATE_CG_TAXI;
+  const POSN = ['QB', 'RB', 'WR', 'TE'];
+
+  // Compute every team's per-position optimal (same mode for everyone — apples to apples)
+  const teams = Object.entries(STATE.allRosters).map(([name, players]) => {
+    const r = teamProjByPos(players, includeTaxi);
+    return { name, ...r };
+  }).sort((a, b) => b.total - a.total);
+
+  const mine = teams.find(t => t.name === CONFIG.MY_TEAM_NAME);
+  if (!mine) { host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Roster not found</div>'; return; }
+  const myRank = teams.findIndex(t => t.name === CONFIG.MY_TEAM_NAME) + 1;
+
+  // Benchmark: per-position average of the top-4 teams by total projection
+  const top4 = teams.slice(0, 4);
+  const bench = { total: Math.round(top4.reduce((s, t) => s + t.total, 0) / 4) };
+  for (const pos of POSN) bench[pos] = Math.round(top4.reduce((s, t) => s + t.byPos[pos], 0) / 4);
+
+  const totGap = mine.total - bench.total;
+  const gapColor = totGap >= 0 ? 'var(--green)' : (mine.total / bench.total >= 0.92 ? 'var(--yellow)' : 'var(--red)');
+
+  // Header strip
+  let html = '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;padding:2px 2px 12px 2px;border-bottom:1px solid var(--border);margin-bottom:12px">'
+    + '<div><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">YOUR OPTIMAL</span><span class="mono" style="font-size:20px;color:var(--accent);font-weight:500">' + fmt(mine.total) + '</span><span class="mono" style="font-size:10px;color:var(--text-dim)"> #' + myRank + '</span></div>'
+    + '<div><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">TOP-4 BENCHMARK</span><span class="mono" style="font-size:20px;color:var(--text)">' + fmt(bench.total) + '</span></div>'
+    + '<div><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">GAP</span><span class="mono" style="font-size:20px;color:' + gapColor + ';font-weight:500">' + (totGap >= 0 ? '+' : '') + fmt(totGap) + '</span></div>'
+    + '</div>';
+
+  // Position rows
+  for (const pos of POSN) {
+    const m = mine.byPos[pos], b = bench[pos];
+    const ratio = b > 0 ? m / b : 1;
+    const delta = m - b;
+    const color = ratio >= 0.95 ? 'var(--green)' : (ratio >= 0.85 ? 'var(--yellow)' : 'var(--red)');
+    // Annotation sized to the deficit
+    let note = '';
+    if (delta < 0) {
+      const d = Math.abs(delta);
+      if (d > 150)      note = 'needs one premium ~' + Math.round(d / 50) * 50 + 'pt starter — not depth adds';
+      else if (d > 75)  note = 'one startable piece short';
+      else              note = 'depth / health territory — no trade required';
+    } else {
+      note = 'contender-grade';
+    }
+    const fillPct = Math.min(100, Math.round(ratio * 100));
+    html += '<div style="margin-bottom:12px">'
+      + '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">'
+      +   '<span class="mono" style="font-size:12px;font-weight:700;width:28px;color:var(--text)">' + pos + '</span>'
+      +   '<span class="mono" style="font-size:13px;color:' + color + ';font-weight:500">' + fmt(m) + '</span>'
+      +   '<span class="mono" style="font-size:10px;color:var(--text-muted)">/ ' + fmt(b) + '</span>'
+      +   '<span class="mono" style="font-size:11px;color:' + color + ';margin-left:auto">' + (delta >= 0 ? '+' : '') + fmt(delta) + '</span>'
+      + '</div>'
+      + '<div style="position:relative;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">'
+      +   '<div style="position:absolute;inset:0 auto 0 0;width:' + fillPct + '%;background:' + color + ';opacity:0.75;border-radius:4px"></div>'
+      +   '<div style="position:absolute;top:0;bottom:0;left:calc(100% - 1px);width:2px;background:var(--text-dim)"></div>'
+      + '</div>'
+      + '<div class="mono" style="font-size:10px;color:var(--text-dim);margin-top:3px">' + note + '</div>'
+      + '</div>';
+  }
+
+  // Footer: match integrity + data honesty
+  const modeNote = includeTaxi
+    ? 'Mode: + Taxi — includes taxi-squad players (window preview; they can\'t start in 2026)'
+    : 'Mode: 2026 Lineup — taxi-squad players excluded (not start-eligible)';
+  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:8px;border-top:1px solid var(--border);line-height:1.6">'
+    + modeNote + '<br>'
+    + mine.matched + ' of ' + (mine.matched + mine.unmatched) + ' roster players matched to Ciely projections'
+    + (mine.unmatched > 0 ? ' — <span style="color:var(--yellow)">unmatched players count as 0 FPS</span>' : '')
+    + '<br>2027 view unlocks when Ciely publishes 2027 projections — no estimated numbers here by design'
+    + '</div>';
+
+  host.innerHTML = html;
+}
+
+// ============================================================
+// MOBILE "MORE" DRAWER — these were referenced by the bottom nav
+// but never defined, which is why the More button was dead.
+// ============================================================
+function toggleMoreDrawer() {
+  const d = document.getElementById('moreDrawer');
+  const o = document.getElementById('moreOverlay');
+  if (!d || !o) return;
+  if (d.classList.contains('open')) { closeMoreDrawer(); return; }
+  d.classList.add('open');
+  o.classList.add('show');
+}
+function closeMoreDrawer() {
+  const d = document.getElementById('moreDrawer');
+  const o = document.getElementById('moreOverlay');
+  if (d) d.classList.remove('open');
+  if (o) o.classList.remove('show');
 }
 
 function vpAgeClass(pos, age) { const b = getArchetype(pos, age); return b ? b.cls : null; }
