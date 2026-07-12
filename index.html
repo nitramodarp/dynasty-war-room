@@ -967,6 +967,7 @@
   <button class="desktop-nav-tab"        id="dtab-league-intel"    onclick="showTab('league-intel')">🧠 Intel</button>
   <button class="desktop-nav-tab"        id="dtab-qb-arbitrage"    onclick="showTab('qb-arbitrage');renderQBArbitrage()">💹 QB Arb</button>
   <button class="desktop-nav-tab"        id="dtab-value-prod"      onclick="showTab('value-prod');renderValueProd()">📊 Val/Prod</button>
+  <button class="desktop-nav-tab"        id="dtab-pick-arb"        onclick="showTab('pick-arb');renderPickArb()">🎟️ Pick Arb</button>
   <button class="desktop-nav-tab"        id="dtab-rookie-board"    onclick="showTab('rookie-board')">🎓 Rookies</button>
 </div>
 
@@ -981,6 +982,7 @@
     <button class="drawer-item" id="drawer-qb-arbitrage" onclick="showTab('qb-arbitrage');renderQBArbitrage();closeMoreDrawer()"><span class="drawer-icon">💹</span><span class="drawer-label">QB Arb</span></button>
     <button class="drawer-item" id="drawer-value-prod" onclick="showTab('value-prod');renderValueProd();closeMoreDrawer()"><span class="drawer-icon">📊</span><span class="drawer-label">Val/Prod</span></button>
     <button class="drawer-item" id="drawer-waivers" onclick="showTab('waivers');closeMoreDrawer()"><span class="drawer-icon">📋</span><span class="drawer-label">Waivers</span></button>
+    <button class="drawer-item" id="drawer-pick-arb" onclick="showTab('pick-arb');renderPickArb();closeMoreDrawer()"><span class="drawer-icon">🎟️</span><span class="drawer-label">Pick Arb</span></button>
     <button class="drawer-item" id="drawer-rookie-board" onclick="showTab('rookie-board');closeMoreDrawer()"><span class="drawer-icon">🎓</span><span class="drawer-label">Rookies</span></button>
   </div>
 </div>
@@ -1382,6 +1384,14 @@
       </div>
     </div>
   </div>
+  <div class="tab-content" id="tab-pick-arb">
+    <div class="card">
+      <div class="card-title">🎟️ Pick Arbitrage</div>
+      <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">Draft slot follows <strong style="color:var(--text)">points scored</strong>, not asset value. The league eyeballs a team's pick by how loaded the roster looks; this app projects where they'll actually finish. Where those disagree, the pick is mispriced — and picks-for-picks costs you zero lineup points.</div>
+      <div id="pickArb"><div class="mono muted" style="font-size:12px;padding:12px">Loading…</div></div>
+    </div>
+  </div>
+
   <div class="tab-content" id="tab-rookie-board">
     <!-- 2027 Pick Capital -->
     <div class="card" style="border:1px solid var(--accent);margin-bottom:16px">
@@ -2089,6 +2099,8 @@ function buildAllRosters() {
   STATE.myRoster = allRosters[CONFIG.MY_TEAM_NAME] || [];
   STATE.rosterPicksFromPlayers = rosterPicksFromPlayers;
   STATE._draftOrderCache = null; // rebuild draft-order projection from fresh roster values
+  STATE._draftOrderBasis = null;
+  STATE._marketOrderCache = null;
 }
 
 function buildPickMap() {
@@ -2164,19 +2176,155 @@ function getPickPosition(teamName) {
     const all = Object.values(standings).sort((a, b) => a.wins - b.wins || a.pf - b.pf);
     return all.findIndex(x => x === standings[teamName]) + 1; // 1 = worst = picks first
   }
-  // Preseason: worst ROSTER picks first. Deterministic and pick-INDEPENDENT (roster
-  // value excludes picks), so it can't create a circular dependency with pick values
-  // — that circularity is what made the ledger and power ranking disagree. Cached per
-  // sync (cache is cleared in buildAllRosters).
-  if (!STATE._draftOrderCache) {
+  // Preseason: draft order follows POINTS SCORED, not total asset value. A team can lead
+  // the league in roster value and still finish last (loaded bench, broken starting lineup
+  // — e.g. a rebuilder hoarding taxi/young assets). Ciely optimal-lineup projection is the
+  // correct predictor of finish. Still fully pick-INDEPENDENT, so no circular dependency
+  // with pick values. Falls back to roster value before projections load.
+  const haveProj = !!(STATE.projMap && Object.keys(STATE.projMap).length);
+  const basis = haveProj ? 'proj' : 'value';
+  if (!STATE._draftOrderCache || STATE._draftOrderBasis !== basis) {
+    const order = {};
+    Object.entries(STATE.allRosters || {})
+      .map(([name, players]) => ({
+        name,
+        val: haveProj ? teamProjStarters(players)
+                      : (players || []).reduce((s, p) => s + (p.value || 0), 0)
+      }))
+      .sort((a, b) => a.val - b.val)                    // fewest projected points first
+      .forEach((t, i) => { order[t.name] = i + 1; });   // slot 1 = worst = picks first
+    STATE._draftOrderCache = order;
+    STATE._draftOrderBasis = basis;
+  }
+  return STATE._draftOrderCache[teamName] || 6;
+}
+
+// What the REST of the league likely assumes: draft slot eyeballed from total roster
+// value / KTC asset piles. This is the market's mental model, not the correct one —
+// the gap between this and getPickPosition() is the arbitrage.
+function getPickPositionMarket(teamName) {
+  if (!STATE._marketOrderCache) {
     const order = {};
     Object.entries(STATE.allRosters || {})
       .map(([name, players]) => ({ name, val: (players || []).reduce((s, p) => s + (p.value || 0), 0) }))
-      .sort((a, b) => a.val - b.val)                    // weakest roster first
-      .forEach((t, i) => { order[t.name] = i + 1; });   // slot 1 = weakest = picks first
-    STATE._draftOrderCache = order;
+      .sort((a, b) => a.val - b.val)
+      .forEach((t, i) => { order[t.name] = i + 1; });
+    STATE._marketOrderCache = order;
   }
-  return STATE._draftOrderCache[teamName] || 6;
+  return STATE._marketOrderCache[teamName] || 6;
+}
+
+function pickTierFor(pos) { return pos <= 4 ? 'Early' : pos <= 8 ? 'Mid' : 'Late'; }
+function pickValFor(year, round, tier) {
+  return CONFIG.PICK_VALUES[`${year} ${tier} ${round}${getOrdinal(round)}`] || 0;
+}
+
+// ============================================================
+// PICK ARBITRAGE — conveyance mispricing across the league
+// ============================================================
+function renderPickArb() {
+  const host = document.getElementById('pickArb');
+  if (!host) return;
+  if (!STATE.pickMap || !STATE.allRosters || !Object.keys(STATE.allRosters).length) {
+    host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Sync data first</div>';
+    return;
+  }
+  const haveProj = !!(STATE.projMap && Object.keys(STATE.projMap).length);
+  if (!haveProj) {
+    host.innerHTML = '<div class="mono" style="font-size:12px;padding:12px;color:var(--yellow)">Ciely projections not loaded — arbitrage needs projected finish. Hit Sync Data.</div>';
+    return;
+  }
+
+  const ROUNDS = [1, 2, 3];                 // 4ths/5ths are noise at these spreads
+  const YEARS = [2027, 2028];               // 2026 picks convey this year; 2029 too speculative
+
+  // ── Team divergence: where the app says they finish vs where the market assumes ──
+  const teams = Object.keys(STATE.allRosters).map(name => {
+    const projPos = getPickPosition(name);
+    const mktPos = getPickPositionMarket(name);
+    const projTier = pickTierFor(projPos), mktTier = pickTierFor(mktPos);
+    const spread1 = pickValFor(2027, 1, projTier) - pickValFor(2027, 1, mktTier);
+    return { name, projPos, mktPos, projTier, mktTier, spread1,
+             projPts: teamProjStarters(STATE.allRosters[name]) };
+  }).sort((a, b) => b.spread1 - a.spread1);
+
+  let html = '<div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:6px">TEAM DIVERGENCE — projected finish vs. market perception</div>';
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-family:\'DM Mono\',monospace;font-size:11px">'
+    + '<tr style="color:var(--text-muted);font-size:9px;letter-spacing:1px;text-align:left">'
+    + '<th style="padding:4px 6px 4px 0">TEAM</th><th style="padding:4px 6px">PROJ PTS</th><th style="padding:4px 6px">SLOT</th>'
+    + '<th style="padding:4px 6px">APP</th><th style="padding:4px 6px">MARKET</th><th style="padding:4px 6px;text-align:right">1st &Delta;</th></tr>';
+  for (const t of teams) {
+    const mine = t.name === CONFIG.MY_TEAM_NAME;
+    const c = t.spread1 > 0 ? 'var(--green)' : (t.spread1 < 0 ? 'var(--red)' : 'var(--text-muted)');
+    html += '<tr style="border-top:1px solid var(--border)' + (mine ? ';background:var(--surface2)' : '') + '">'
+      + '<td style="padding:5px 6px 5px 0;color:' + (mine ? 'var(--accent)' : 'var(--text)') + ';font-weight:' + (mine ? '700' : '400') + '">' + (mine ? '⚔ ' : '') + t.name + '</td>'
+      + '<td style="padding:5px 6px;color:var(--text-dim)">' + fmt(t.projPts) + '</td>'
+      + '<td style="padding:5px 6px;color:var(--text-muted)">' + t.projPos + '</td>'
+      + '<td style="padding:5px 6px;color:var(--text)">' + t.projTier + '</td>'
+      + '<td style="padding:5px 6px;color:var(--text-muted)">' + t.mktTier + '</td>'
+      + '<td style="padding:5px 6px;text-align:right;color:' + c + ';font-weight:500">' + (t.spread1 > 0 ? '+' : '') + fmt(t.spread1) + '</td>'
+      + '</tr>';
+  }
+  html += '</table></div>';
+  html += '<div class="mono" style="font-size:9px;color:var(--text-dim);margin-top:6px;line-height:1.6">Green = the market thinks this team is better than it will score → their picks convey earlier than assumed → <strong style="color:var(--green)">acquire</strong>. Red = market overrates their finish → their picks convey later → <strong style="color:var(--red)">spend these</strong>.</div>';
+
+  // ── Every 1st/2nd/3rd in the league, valued by true conveyance vs market perception ──
+  const mineOut = [], targets = [];
+  for (const key in STATE.pickMap) {
+    const holder = STATE.pickMap[key];
+    const [season, round, origRosterId] = key.split('_');
+    const yr = parseInt(season), rd = parseInt(round);
+    if (!YEARS.includes(yr) || !ROUNDS.includes(rd)) continue;
+    const orig = STATE.rosterIdMap?.[parseInt(origRosterId)];
+    if (!orig) continue;
+    const projTier = pickTierFor(getPickPosition(orig));
+    const mktTier = pickTierFor(getPickPositionMarket(orig));
+    const projVal = pickValFor(yr, rd, projTier);
+    const mktVal = pickValFor(yr, rd, mktTier);
+    const spread = projVal - mktVal;
+    if (spread === 0) continue;                          // no edge, skip
+    const row = { yr, rd, orig, holder, projTier, mktTier, projVal, mktVal, spread };
+    if (holder === CONFIG.MY_TEAM_NAME) { if (spread < 0) mineOut.push(row); }
+    else if (spread > 0) targets.push(row);
+  }
+  mineOut.sort((a, b) => a.spread - b.spread);
+  targets.sort((a, b) => b.spread - a.spread);
+
+  const pickLbl = r => r.yr + ' ' + r.rd + getOrdinal(r.rd) + ' <span style="color:var(--text-muted)">(' + r.orig + ')</span>';
+
+  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin:16px 0 6px">💸 YOUR CHIPS — market pays more than these are worth</div>';
+  if (!mineOut.length) {
+    html += '<div class="mono muted" style="font-size:11px;padding:4px 0">None — every pick you hold is fairly priced or underpriced. Nothing to sell into.</div>';
+  } else {
+    for (const r of mineOut) {
+      html += '<div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-top:1px solid var(--border);font-family:\'DM Mono\',monospace;font-size:11px">'
+        + '<span style="flex:1;color:var(--text)">' + pickLbl(r) + '</span>'
+        + '<span style="color:var(--text-dim)">' + r.projTier + ' ' + fmt(r.projVal) + '</span>'
+        + '<span style="color:var(--text-muted)">mkt ' + r.mktTier + ' ' + fmt(r.mktVal) + '</span>'
+        + '<span style="color:var(--red);font-weight:500;min-width:52px;text-align:right">' + fmt(r.spread) + '</span>'
+        + '</div>';
+    }
+  }
+
+  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin:16px 0 6px">🎯 TARGETS — worth more than their holder thinks</div>';
+  if (!targets.length) {
+    html += '<div class="mono muted" style="font-size:11px;padding:4px 0">No mispriced picks available.</div>';
+  } else {
+    for (const r of targets.slice(0, 14)) {
+      html += '<div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-top:1px solid var(--border);font-family:\'DM Mono\',monospace;font-size:11px">'
+        + '<span style="flex:1;color:var(--text)">' + pickLbl(r) + '</span>'
+        + '<span style="color:var(--text-muted);font-size:10px">held by ' + r.holder + '</span>'
+        + '<span style="color:var(--text-dim)">' + fmt(r.projVal) + '</span>'
+        + '<span style="color:var(--green);font-weight:500;min-width:52px;text-align:right">+' + fmt(r.spread) + '</span>'
+        + '</div>';
+    }
+  }
+
+  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:10px;margin-top:8px;border-top:1px solid var(--border);line-height:1.6">'
+    + 'Rounds 1–3, 2027–2028 only. Conveyance is a <em>forecast</em> — a team that trades for win-now vets mid-season moves its own picks later. Weight structural reads (old roster, broken lineup) over marginal ones.'
+    + '</div>';
+
+  host.innerHTML = html;
 }
 
 function getPickLabel(year, round, orig) {
@@ -3181,6 +3329,7 @@ function showTab(tabId) {
   if (tabId === 'waivers') renderWaivers();
   if (tabId === 'trade-analyzer') populatePickDropdowns();
   if (tabId === 'rookie-board') renderRookieBoard();
+  if (tabId === 'pick-arb') renderPickArb();
   if (tabId === 'trade-finder') renderPriorityMoves();
   if (tabId === 'league-intel') renderLeagueIntel();
 }
