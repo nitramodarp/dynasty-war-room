@@ -4875,27 +4875,17 @@ function tradeProdLine(a) {
   return '<div class="mono" style="font-size:10px;color:var(--green);margin-top:3px">Proj ' + pr.fps.toFixed(1) + ' FPS · ' + a.pos + pr.posRank + '</div>';
 }
 // Optimal Superflex starting lineup (1QB,2RB,2WR,1TE,2FLEX,1SF) projected season points
+// Optimal starting-lineup projection. Single source of truth: delegates to
+// teamProjByPos so the dashboard, power rankings, and draft-order/conveyance math
+// can never disagree.
+//
+// Previously this had its own copy of the slot-filling algorithm and — critically —
+// NO taxi filter, while teamProjByPos excluded taxi. Taxi players cannot legally
+// start, so counting them inflated the projections of teams hoarding young stashes
+// (i.e. rebuilders), pushing them to later draft slots and systematically
+// UNDERVALUING their future picks. That's exactly the signal Pick Arb measures.
 function teamProjStarters(players) {
-  const pools = { QB: [], RB: [], WR: [], TE: [] };
-  for (const p of players) {
-    if (!pools[p.pos]) continue;
-    const pr = projFor(p.name, p.pos);
-    pools[p.pos].push(pr ? pr.fps : 0);
-  }
-  for (const k in pools) pools[k].sort((a, b) => b - a);
-  const used = { QB: 0, RB: 0, WR: 0, TE: 0 };
-  let total = 0;
-  const take = (pos, n) => { for (let i = 0; i < n; i++) if (used[pos] < pools[pos].length) total += pools[pos][used[pos]++]; };
-  const best = (positions) => {
-    let bv = -1, bp = null;
-    for (const pos of positions) if (used[pos] < pools[pos].length && pools[pos][used[pos]] > bv) { bv = pools[pos][used[pos]]; bp = pos; }
-    if (bp) { used[bp]++; return bv; } return 0;
-  };
-  take('QB', 1); take('RB', 2); take('WR', 2); take('TE', 1);       // dedicated slots
-  total += best(['RB', 'WR', 'TE']);                                 // FLEX 1
-  total += best(['RB', 'WR', 'TE']);                                 // FLEX 2
-  total += best(['QB', 'RB', 'WR', 'TE']);                           // SUPERFLEX
-  return Math.round(total);
+  return teamProjByPos(players, false).total;
 }
 
 // ============================================================
