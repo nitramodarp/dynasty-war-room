@@ -1521,6 +1521,7 @@ const CONFIG = {
   // Pick values (KTC SF scale). Update twice yearly: before NFL Draft (April) and season start (Sep).
   // To update: paste fresh values from keeptradecut.com/dynasty-rankings (Superflex, no TEP, picks section).
   PICK_VALUES_UPDATED: 'April 2026 (post-NFL Draft)',
+  PICK_VALUES_DATE: '2026-04-25',   // ISO date for staleness checks
   ANATOMY_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1DAhsc8wfNeit65ndDYUuxoON_rnbiHnbtFPi9aRpeEk/export?format=csv&gid=1279331920',
   PICK_VALUES: {
     '2026 Early 1st': 5765, '2026 Mid 1st': 4663, '2026 Late 1st': 3960,
@@ -1535,13 +1536,16 @@ const CONFIG = {
     '2028 Early 2nd': 3142, '2028 Mid 2nd': 2926, '2028 Late 2nd': 2743,
     '2028 Early 3rd': 2179, '2028 Mid 3rd': 2069, '2028 Late 3rd': 1938,
     '2028 Early 4th': 1595, '2028 Mid 4th': 1555, '2028 Late 4th': 1292,
-    '2029 Early 1st': 6500, '2029 Mid 1st': 4800, '2029 Late 1st': 3600,
-    '2029 Early 2nd': 2800, '2029 Mid 2nd': 2400, '2029 Late 2nd': 2000,
-    '2029 Early 3rd': 1700, '2029 Mid 3rd': 1500, '2029 Late 3rd': 1300,
+    // 2029 = 2028 x 0.88 (one further year of time discount; a pick two years out can
+    // never be worth MORE than the same pick one year out — the old hand-set 6,500
+    // Early 1st inverted the futures curve and inflated 2029 capital by ~1,800)
+    '2029 Early 1st': 4375, '2029 Mid 1st': 3952, '2029 Late 1st': 3412,
+    '2029 Early 2nd': 2765, '2029 Mid 2nd': 2575, '2029 Late 2nd': 2414,
+    '2029 Early 3rd': 1918, '2029 Mid 3rd': 1821, '2029 Late 3rd': 1705,
     '2026 Early 5th': 220, '2026 Mid 5th': 150, '2026 Late 5th': 80,
     '2027 Early 5th': 260, '2027 Mid 5th': 175, '2027 Late 5th': 95,
     '2028 Early 5th': 230, '2028 Mid 5th': 155, '2028 Late 5th': 85,
-    '2029 Early 4th': 1100, '2029 Mid 4th':  950, '2029 Late 4th':  750,
+    '2029 Early 4th': 1404, '2029 Mid 4th': 1368, '2029 Late 4th': 1137,
     '2029 Early 5th': 200, '2029 Mid 5th': 140, '2029 Late 5th': 75,
   }
 };
@@ -1721,6 +1725,18 @@ function getTop6TEVorp() {
 }
 
 // Returns { flag, color, icon, reason } based on age/pos/value/VORP rules
+// A QB who backs up one of MY OWN starting QBs on the same NFL team. Zero trade
+// market (savvy leagues price handcuffs at ~nothing) but full insurance value —
+// he inherits an elite offense the moment my starter goes down. Market logic says
+// CUT; portfolio logic says HOLD. Portfolio wins.
+function isMyQBHandcuff(player) {
+  if (player.pos !== 'QB' || !player.team) return null;
+  const starter = (STATE.myRoster || []).find(q =>
+    q.pos === 'QB' && q.team === player.team && q.name !== player.name &&
+    (q.value || 0) > (player.value || 0));
+  return starter || null;
+}
+
 function getRosterHealthFlag(player) {
   const { pos, age, value, vorp } = player;
   if (!pos || !age) return null;
@@ -1741,6 +1757,8 @@ function getRosterHealthFlag(player) {
     const arch = getArchetype(pos, age);
     if (arch?.cls === 'sell') return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Archetype: Sell bracket (age ' + age + ')' };
     if (value >= 3000 && vorp > 0) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Above 3k + positive VORP' };
+    const hc = isMyQBHandcuff(player);
+    if (hc) return { flag: 'HOLD', color: 'var(--blue)', icon: '🧷', reason: 'Injury handcuff — backs up your ' + hc.name + ' (' + (player.team || '') + '). No trade market, full insurance value' };
     if (value >= 3000 || vorp > 0) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one QB threshold' };
     return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Below 3k and negative VORP' };
   }
@@ -2178,8 +2196,10 @@ function getPickPosition(teamName) {
   // about it. In the offseason STATE.standings holds the PREVIOUS season (loaded
   // deliberately for display), so it must NOT drive conveyance. That bug was pricing
   // every future pick off a season that's already over.
-  const played = !STATE._standingsArePrevSeason &&
-    Object.values(standings).some(s => ((s.wins || 0) + (s.losses || 0) + (s.ties || 0)) > 0);
+  // 1-0 vs 0-1 records are noisier predictors than preseason projections; wait until
+  // every team has 4+ games before letting live standings drive conveyance.
+  const gp = Object.values(standings).map(s => (s.wins || 0) + (s.losses || 0) + (s.ties || 0));
+  const played = !STATE._standingsArePrevSeason && gp.length > 0 && Math.min(...gp) >= 4;
   if (played && standings[teamName]) {
     const all = Object.values(standings).sort((a, b) => a.wins - b.wins || a.pf - b.pf);
     return all.findIndex(x => x === standings[teamName]) + 1; // 1 = worst = picks first
@@ -2569,6 +2589,7 @@ function renderDashboard() {
     // QB format-edge HOLDs (don't sell an underpriced pocket passer at a KTC-even price)
     for (const p of STATE.myRoster) {
       if (p.pos !== 'QB') continue;
+      if (isMyQBHandcuff(p)) continue;  // handcuffs never play → format edge is unrealizable, don't advertise it as a trade angle
       const pr = projFor(p.name, 'QB'); if (!pr || !pr.passTD) continue;
       const edge = pr.passTD * 2, fps4 = pr.fps - edge, edgePct = fps4 > 0 ? edge / fps4 * 100 : 0;
       if (edgePct >= 18) actions.push({ tier: 2, _name: p.name, color: 'var(--green)',
@@ -2901,6 +2922,18 @@ function renderPowerRankings() {
 function renderDraftPicks() {
   const dateEl = document.getElementById('pickValuesDate');
   if (dateEl && CONFIG.PICK_VALUES_UPDATED) dateEl.textContent = CONFIG.PICK_VALUES_UPDATED;
+  // Stale pick values are silent poison — every trade grade inherits them.
+  if (CONFIG.PICK_VALUES_DATE) {
+    const ageDays = Math.floor((Date.now() - new Date(CONFIG.PICK_VALUES_DATE).getTime()) / 86400000);
+    const notice = document.getElementById('pickValuesNotice');
+    if (notice && ageDays > 120) {
+      notice.style.borderLeftColor = 'var(--red)';
+      dateEl.innerHTML = CONFIG.PICK_VALUES_UPDATED + ' <span style="color:var(--red)">— ' + ageDays + ' days old, refresh from KTC</span>';
+    } else if (notice && ageDays > 75) {
+      notice.style.borderLeftColor = 'var(--yellow)';
+      dateEl.innerHTML = CONFIG.PICK_VALUES_UPDATED + ' <span style="color:var(--yellow)">— ' + ageDays + ' days old</span>';
+    }
+  }
   // My picks
   const myPicksHtml = STATE.myPicks?.length
     ? `<table class="data-table">
@@ -3028,11 +3061,36 @@ function filterWaivers(filter, btn) {
 // TRADE ANALYZER
 // ============================================================
 function populatePickDropdowns() {
+  // League picks first: real, team-attributed, auto-priced by projected conveyance —
+  // so nobody hand-picks "Early" for a team the engine says conveys Late (that
+  // mislabel overpriced a real trade anchor by ~500 before this existed).
+  let leagueOpts = '';
+  if (STATE.pickMap && STATE.rosterIdMap) {
+    const rows = [];
+    for (const key in STATE.pickMap) {
+      const [season, round, origRid] = key.split('_');
+      const yr = parseInt(season), rd = parseInt(round);
+      if (rd > 3) continue;                                  // 4ths/5ths: use generic tiers
+      const orig = STATE.rosterIdMap[parseInt(origRid)];
+      if (!orig) continue;
+      const tier = pickTierFor(getPickPosition(orig));
+      const val = pickValFor(yr, rd, tier);
+      const holder = STATE.pickMap[key];
+      rows.push({ yr, rd, orig, holder, tier, val });
+    }
+    rows.sort((a,b) => a.yr - b.yr || a.rd - b.rd || b.val - a.val);
+    if (rows.length) {
+      leagueOpts = '<optgroup label="League picks — auto-priced by projected finish">' +
+        rows.map(r => `<option value="${r.val}" data-label="${r.yr} ${r.tier} ${r.rd}${getOrdinal(r.rd)} (${r.orig})">${r.yr} ${r.rd}${getOrdinal(r.rd)} ${r.orig} · ${r.tier} (${fmt(r.val)})${r.holder !== r.orig ? ' — held by ' + r.holder : ''}</option>`).join('') +
+        '</optgroup>';
+    }
+  }
   const picks = Object.entries(CONFIG.PICK_VALUES).map(([k,v]) => ({ label: k, value: v }));
+  const genericOpts = '<optgroup label="Generic tiers (manual)">' +
+    picks.map(p => `<option value="${p.value}" data-label="${p.label}">${p.label} (${fmt(p.value)})</option>`).join('') + '</optgroup>';
   ['a','b'].forEach(side => {
     const sel = document.getElementById(`pickSelect_${side}`);
-    sel.innerHTML = '<option value="">+ Add a draft pick</option>' +
-      picks.map(p => `<option value="${p.value}" data-label="${p.label}">${p.label} (${fmt(p.value)})</option>`).join('');
+    sel.innerHTML = '<option value="">+ Add a draft pick</option>' + leagueOpts + genericOpts;
   });
 }
 
@@ -3802,7 +3860,7 @@ function findTrades() {
   var myPickAssets = (STATE.myPicks || [])
     .filter(function(pk) { return pk.year >= new Date().getFullYear() && pk.year <= new Date().getFullYear() + 2; })
     .map(function(pk) {
-      var val = CONFIG.PICK_VALUES[pk.label] || 0;
+      var val = (pk.value != null ? pk.value : CONFIG.PICK_VALUES[pk.label]) || 0;  // pk.value is conveyance-priced at build time
       return { label: pk.label, value: val, year: pk.year, round: pk.round };
     })
     .filter(function(pk) { return pk.value > 0; })
@@ -4209,20 +4267,9 @@ function getPickRange(rank) {
   return '5th+';
 }
 
-function getMyPicksForRookieDraft() {
-  // Filter my 2026 picks from STATE.myPicks (built by buildPickMap)
-  const currentYear = new Date().getFullYear();
-  return (STATE.myPicks || [])
-    .filter(p => p.year === currentYear)
-    .sort((a, b) => a.round - b.round);
-}
 
-function estimatePickNumber(pick) {
-  // Use exact slot from Sleeper if available
-  if (pick.slot) return (pick.round - 1) * 12 + pick.slot;
-  const pos = getPickPosition(pick.orig);
-  return (pick.round - 1) * 12 + pos;
-}
+
+
 
 function renderRookieBoard() {
   // The 2026 rookie class is drafted, and KTC won't price the 2027 college class
@@ -4304,34 +4351,7 @@ function renderPickCapital2027() {
   el.innerHTML = summary + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">' + cards + '</div>';
 }
 
-function renderRookieBoardTable(rookies) {
-  const filter = STATE.rookieFilter || 'ALL';
-  const filtered = filter === 'ALL' ? rookies : rookies.filter(r => r.pos === filter);
-  document.getElementById('rookieBoardBody').innerHTML = filtered.map((r, i) => {
-    const fit = calcRookieFitScore(r);
-    const fitInfo = getFitLabel(fit);
-    const overallRank = rookies.indexOf(r) + 1;
-    const pickRange = getPickRange(overallRank);
-    const isMyNeed = fit >= 65;
-    return `<tr style="${isMyNeed ? 'background:rgba(0,212,255,0.04)' : ''}">
-      <td class="mono" style="font-size:12px;color:var(--text-muted)">${overallRank}</td>
-      <td style="font-weight:500">${r.name}${isMyNeed ? ' <span style="font-size:9px;color:var(--accent)">★</span>' : ''}</td>
-      <td>${posPill(r.pos)}</td>
-      <td class="mono dim" style="font-size:11px">${r.team || '—'}</td>
-      <td class="mono" style="font-size:12px">${r.age || '—'}</td>
-      <td class="mono" style="color:var(--accent);font-size:12px">${fmt(r.value)}${(() => { const pr = projFor(r.name, r.pos); return pr ? `<div class="dim" style="font-size:9px;color:var(--text-dim)">${pr.fps.toFixed(0)} FPS · ${r.pos}${pr.posRank}</div>` : ''; })()}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div style="width:40px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">
-            <div style="width:${fit}%;height:100%;background:${fitInfo.color};border-radius:2px"></div>
-          </div>
-          <span style="font-family:DM Mono,monospace;font-size:10px;color:${fitInfo.color}">${fit}</span>
-        </div>
-      </td>
-      <td class="mono" style="font-size:10px;color:var(--text-muted)">${pickRange}</td>
-    </tr>`;
-  }).join('');
-}
+
 
 
 // ============================================================
