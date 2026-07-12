@@ -1945,6 +1945,7 @@ async function fetchStandings() {
             };
           }
         }
+        STATE._standingsArePrevSeason = true;   // NOT a predictor of future pick order
         console.log('Standings loaded from previous season:', prevId);
         return;
       }
@@ -1954,6 +1955,7 @@ async function fetchStandings() {
   }
 
   // Use current season standings (mid-season or fallback)
+  STATE._standingsArePrevSeason = false;
   for (const r of rosters) {
     const name = CONFIG.OWNER_MAP[r.owner_id];
     if (name) {
@@ -2171,7 +2173,13 @@ function buildPickMap() {
 function getPickPosition(teamName) {
   // Draft order = worst finish picks first (slot 1), best finish picks last.
   const standings = STATE.standings || {};
-  const played = Object.values(standings).some(s => ((s.wins || 0) + (s.losses || 0) + (s.ties || 0)) > 0);
+  // Only CURRENT-season results predict future pick order. Remaining picks are 2027+,
+  // and 2027 order is set by the 2026 season — last year's final standings say nothing
+  // about it. In the offseason STATE.standings holds the PREVIOUS season (loaded
+  // deliberately for display), so it must NOT drive conveyance. That bug was pricing
+  // every future pick off a season that's already over.
+  const played = !STATE._standingsArePrevSeason &&
+    Object.values(standings).some(s => ((s.wins || 0) + (s.losses || 0) + (s.ties || 0)) > 0);
   if (played && standings[teamName]) {
     const all = Object.values(standings).sort((a, b) => a.wins - b.wins || a.pf - b.pf);
     return all.findIndex(x => x === standings[teamName]) + 1; // 1 = worst = picks first
