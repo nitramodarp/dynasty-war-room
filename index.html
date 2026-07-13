@@ -1795,9 +1795,33 @@ function getLineupRole(player) {
 // the optimizer is currently starting him. If it is, the honest flag is "no trade market,
 // but he's your starter by default" — which tells you not to waste a trade slot shopping
 // him AND not to drop him for a waiver dart.
+// Is this player's Ciely projection simply MISSING (vs. genuinely projected low)?
+// Absence of data is not evidence of worthlessness. Waiver adds, late rookies, and
+// camp bodies routinely have no projection — condemning them for it is a data bug
+// wearing a recommendation's clothes.
+function hasNoProjection(player) {
+  if (!STATE.projMap || !Object.keys(STATE.projMap).length) return false;
+  return !projFor(player.name, player.pos);
+}
+
 function getRosterHealthFlag(player) {
   const h = getRosterHealthFlagRaw(player);
   if (!h || h.flag !== 'CUT') return h;
+
+  // A rookie sitting on TAXI in year one has had no chance to prove anything, costs no
+  // active roster spot, and has a two-year development window. Telling you to cut a
+  // player you drafted eleven weeks ago is the flag misfiring, not a recommendation.
+  if (player.rookie && player.onTaxiSquad) {
+    return { flag: 'STASH', color: 'var(--blue)', icon: '🌱',
+      reason: 'Rookie on taxi — year one, no active roster cost, two-year window. Too early to judge.' };
+  }
+
+  // No Ciely projection => the CUT was driven by missing data, not bad data.
+  if (hasNoProjection(player)) {
+    return { flag: 'UNKNOWN', color: 'var(--yellow)', icon: '❓',
+      reason: 'No Ciely projection — flag driven by missing data, not bad data. Verify role before dropping.' };
+  }
+
   const cost = lineupCostOfCutting(player);
   if (cost <= 0) return h;                                // genuinely droppable — not starting
   return {
@@ -2645,6 +2669,12 @@ function renderDashboard() {
     } else if (h.flag === 'MONITOR') {
       actions.push({ tier: 3, _name: p.name, color: h.color,
         msg: `${h.icon} <strong>MONITOR</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}` });
+    } else if (h.flag === 'STASH') {
+      actions.push({ tier: 4, _name: p.name, color: h.color,
+        msg: `${h.icon} <strong>STASH</strong> ${p.name} (${p.pos}) — ${h.reason}` });
+    } else if (h.flag === 'UNKNOWN') {
+      actions.push({ tier: 4, _name: p.name, color: h.color,
+        msg: `${h.icon} <strong>UNKNOWN</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}` });
     } else if (h.flag === 'NO MARKET') {
       // Not an action — a standing condition. Surfacing it because "my starter is a
       // player nobody wants" is exactly the signal that a position needs a real answer.
