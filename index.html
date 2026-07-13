@@ -1749,6 +1749,47 @@ function lineupCostOfCutting(player) {
   return Math.max(0, before - after);
 }
 
+// Which lineup slot does this player ACTUALLY fill? Runs the real optimizer instead of
+// assuming each position gets a guaranteed share of the flex.
+//
+// Flex slots are CONTESTED across RB/WR/TE. The old model gave RB "2 starters + 2 flex"
+// unconditionally — so on a roster with a WR surplus and an RB hole, it labeled RB3/RB4
+// as FLEX even though the WRs win both flex slots outright and those RBs never play.
+// It also ranked by KTC value rather than projected points, and sorted players with NO
+// Ciely projection to the TOP instead of the bottom. Hence waiver bodies showing STARTER.
+function getLineupRole(player) {
+  if (player.onTaxiSquad) return 'TAXI';
+  if (!STATE.myRoster || !STATE.projMap || !Object.keys(STATE.projMap).length) return 'DEPTH';
+  const fpsOf = x => {
+    const pr = projFor(x.name, x.pos);
+    const v = pr ? Number(pr.fps) : NaN;
+    return Number.isFinite(v) ? v : -1;      // no projection => ranks LAST, never NaN
+  };
+  const pools = { QB: [], RB: [], WR: [], TE: [] };
+  for (const x of STATE.myRoster) {
+    if (!pools[x.pos] || x.onTaxiSquad) continue;   // taxi can't start
+    pools[x.pos].push({ name: x.name, fps: fpsOf(x), value: x.value || 0 });
+  }
+  for (const k in pools) pools[k].sort((a, b) => b.fps - a.fps || b.value - a.value);
+  const used = { QB: 0, RB: 0, WR: 0, TE: 0 };
+  const assign = {};
+  const take = (pos, n, label) => {
+    for (let i = 0; i < n; i++) if (used[pos] < pools[pos].length) { assign[pools[pos][used[pos]].name] = label; used[pos]++; }
+  };
+  const best = (positions, label) => {
+    let bv = -Infinity, bp = null;
+    for (const pos of positions) {
+      if (used[pos] < pools[pos].length && pools[pos][used[pos]].fps > bv) { bv = pools[pos][used[pos]].fps; bp = pos; }
+    }
+    if (bp) { assign[pools[bp][used[bp]].name] = label; used[bp]++; }
+  };
+  take('QB', 1, 'STARTER'); take('RB', 2, 'STARTER'); take('WR', 2, 'STARTER'); take('TE', 1, 'STARTER');
+  best(['RB', 'WR', 'TE'], 'FLEX');            // FLEX 1 — contested
+  best(['RB', 'WR', 'TE'], 'FLEX');            // FLEX 2 — contested
+  best(['QB', 'RB', 'WR', 'TE'], 'SF');        // SUPERFLEX
+  return assign[player.name] || 'DEPTH';
+}
+
 // Lineup-aware wrapper. A CUT flag is an ASSET judgment ("won't be worth anything in
 // 2028"). It is NOT a roster judgment. Before telling you to drop someone, check whether
 // the optimizer is currently starting him. If it is, the honest flag is "no trade market,
@@ -2744,25 +2785,13 @@ function renderRosterTable(tbodyId, players) {
       <td>${a ? `<span class="badge badge-${a.cls}">${a.label}</span>` : '—'}</td>
       <td>${healthBadge(p)}</td>
       <td>${(function(){
-        if (taxi) return '<span class="badge badge-taxi">TAXI</span>';
-        // Rank by PROJECTED POINTS, not KTC value — points decide who starts, not price.
-        // (Ranking by value could tag a player DEPTH while the optimizer was starting him.)
-        const fpsOf = x => { const pr = projFor(x.name, x.pos); return pr ? pr.fps : -1; };
-        const posPlayers = STATE.myRoster
-          .filter(x => x.pos === p.pos && !x.onTaxiSquad)
-          .sort((a,b) => fpsOf(b) - fpsOf(a) || b.value - a.value);
-        const rank = posPlayers.findIndex(x=>x.name===p.name)+1;
-        // SF lineup: QB1+SF, RB×2, WR×2, TE×1, FLEX×2 (RB/WR/TE)
-        // QB: rank1=QB1(STARTER), rank2=SF(FLEX), rest=DEPTH
-        // RB/WR: rank1-2=STARTER, rank3-4=FLEX, rest=DEPTH
-        // TE: rank1=STARTER, rank2=FLEX, rest=DEPTH
-        const starterCounts = {QB:1, RB:2, WR:2, TE:1};
-        const flexCounts    = {QB:1, RB:2, WR:2, TE:1};
-        const s = starterCounts[p.pos]||2;
-        const f = s + (flexCounts[p.pos]||2);
-        if (rank <= s) return '<span style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;color:var(--green)">STARTER</span>';
-        if (rank <= f) return '<span style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:600;color:var(--accent)">FLEX</span>';
-        return '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text-muted)">DEPTH</span>';
+        const role = getLineupRole(p);
+        const st = { TAXI:  ['badge','badge-taxi'],
+                     STARTER:['var(--green)','700'], SF:['var(--green)','700'],
+                     FLEX:  ['var(--accent)','600'], DEPTH:['var(--text-muted)','400'] };
+        if (role === 'TAXI') return '<span class="badge badge-taxi">TAXI</span>';
+        const [col, wt] = st[role];
+        return '<span style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:' + wt + ';color:' + col + '">' + role + '</span>';
       })()}</td>
     </tr>`;
   }).join('');
