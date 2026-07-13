@@ -1737,7 +1737,37 @@ function isMyQBHandcuff(player) {
   return starter || null;
 }
 
+// What it costs your OPTIMAL LINEUP to drop this player. VORP measures value over a
+// GENERIC replacement; this measures value over YOUR actual replacement. A player can be
+// a worthless dynasty asset (old, negative VORP, no trade market) and still be the best
+// body you have at the position — cutting him doesn't free value, it just makes you worse.
+function lineupCostOfCutting(player) {
+  if (!STATE.myRoster || !STATE.projMap || !Object.keys(STATE.projMap).length) return 0;
+  if (player.onTaxiSquad) return 0;                       // taxi can't start anyway
+  const before = teamProjByPos(STATE.myRoster, false).total;
+  const after  = teamProjByPos(STATE.myRoster.filter(p => p.name !== player.name), false).total;
+  return Math.max(0, before - after);
+}
+
+// Lineup-aware wrapper. A CUT flag is an ASSET judgment ("won't be worth anything in
+// 2028"). It is NOT a roster judgment. Before telling you to drop someone, check whether
+// the optimizer is currently starting him. If it is, the honest flag is "no trade market,
+// but he's your starter by default" — which tells you not to waste a trade slot shopping
+// him AND not to drop him for a waiver dart.
 function getRosterHealthFlag(player) {
+  const h = getRosterHealthFlagRaw(player);
+  if (!h || h.flag !== 'CUT') return h;
+  const cost = lineupCostOfCutting(player);
+  if (cost <= 0) return h;                                // genuinely droppable — not starting
+  return {
+    flag: 'NO MARKET', color: 'var(--blue)', icon: '🔒',
+    reason: 'No trade value (' + h.reason.charAt(0).toLowerCase() + h.reason.slice(1)
+          + ') — but he starts by default. Cutting costs ' + fmt(cost)
+          + ' proj pts. Hold until a real replacement exists.'
+  };
+}
+
+function getRosterHealthFlagRaw(player) {
   const { pos, age, value, vorp } = player;
   if (!pos || !age) return null;
 
@@ -1782,7 +1812,7 @@ function healthBadge(player) {
   const h = getRosterHealthFlag(player);
   if (!h) return '';
   const bg = h.color.replace('var(--', '').replace(')', '');
-  const bgMap = { green: 'rgba(76,255,145,0.15)', yellow: 'rgba(255,215,0,0.15)', red: 'rgba(255,68,68,0.15)', orange: 'rgba(255,140,66,0.15)' };
+  const bgMap = { green: 'rgba(76,255,145,0.15)', yellow: 'rgba(255,215,0,0.15)', red: 'rgba(255,68,68,0.15)', orange: 'rgba(255,140,66,0.15)', blue: 'rgba(90,169,255,0.15)' };
   const bgColor = bgMap[bg] || 'rgba(100,100,100,0.15)';
   return `<span title="${h.reason}" style="font-family:DM Mono,monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:${bgColor};color:${h.color};font-weight:600;letter-spacing:0.5px">${h.icon} ${h.flag}</span>`;
 }
@@ -2574,6 +2604,11 @@ function renderDashboard() {
     } else if (h.flag === 'MONITOR') {
       actions.push({ tier: 3, _name: p.name, color: h.color,
         msg: `${h.icon} <strong>MONITOR</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}` });
+    } else if (h.flag === 'NO MARKET') {
+      // Not an action — a standing condition. Surfacing it because "my starter is a
+      // player nobody wants" is exactly the signal that a position needs a real answer.
+      actions.push({ tier: 4, _name: p.name, color: h.color,
+        msg: `${h.icon} <strong>NO MARKET</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}` });
     }
   }
   const flaggedNames = new Set(actions.map(a => a._name).filter(Boolean));
@@ -2710,7 +2745,12 @@ function renderRosterTable(tbodyId, players) {
       <td>${healthBadge(p)}</td>
       <td>${(function(){
         if (taxi) return '<span class="badge badge-taxi">TAXI</span>';
-        const posPlayers = STATE.myRoster.filter(x=>x.pos===p.pos).sort((a,b)=>b.value-a.value);
+        // Rank by PROJECTED POINTS, not KTC value — points decide who starts, not price.
+        // (Ranking by value could tag a player DEPTH while the optimizer was starting him.)
+        const fpsOf = x => { const pr = projFor(x.name, x.pos); return pr ? pr.fps : -1; };
+        const posPlayers = STATE.myRoster
+          .filter(x => x.pos === p.pos && !x.onTaxiSquad)
+          .sort((a,b) => fpsOf(b) - fpsOf(a) || b.value - a.value);
         const rank = posPlayers.findIndex(x=>x.name===p.name)+1;
         // SF lineup: QB1+SF, RB×2, WR×2, TE×1, FLEX×2 (RB/WR/TE)
         // QB: rank1=QB1(STARTER), rank2=SF(FLEX), rest=DEPTH
