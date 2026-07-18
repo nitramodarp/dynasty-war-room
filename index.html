@@ -968,6 +968,7 @@
   <button class="desktop-nav-tab"        id="dtab-qb-arbitrage"    onclick="showTab('qb-arbitrage');renderQBArbitrage()">💹 QB Arb</button>
   <button class="desktop-nav-tab"        id="dtab-value-prod"      onclick="showTab('value-prod');renderValueProd()">📊 Val/Prod</button>
   <button class="desktop-nav-tab"        id="dtab-pick-arb"        onclick="showTab('pick-arb');renderPickArb()">🎟️ Pick Arb</button>
+  <button class="desktop-nav-tab"        id="dtab-equity"          onclick="showTab('equity');renderEquity()">💵 Equity</button>
   <button class="desktop-nav-tab"        id="dtab-rookie-board"    onclick="showTab('rookie-board')">🎓 Rookies</button>
 </div>
 
@@ -983,6 +984,7 @@
     <button class="drawer-item" id="drawer-value-prod" onclick="showTab('value-prod');renderValueProd();closeMoreDrawer()"><span class="drawer-icon">📊</span><span class="drawer-label">Val/Prod</span></button>
     <button class="drawer-item" id="drawer-waivers" onclick="showTab('waivers');closeMoreDrawer()"><span class="drawer-icon">📋</span><span class="drawer-label">Waivers</span></button>
     <button class="drawer-item" id="drawer-pick-arb" onclick="showTab('pick-arb');renderPickArb();closeMoreDrawer()"><span class="drawer-icon">🎟️</span><span class="drawer-label">Pick Arb</span></button>
+    <button class="drawer-item" id="drawer-equity" onclick="showTab('equity');renderEquity();closeMoreDrawer()"><span class="drawer-icon">💵</span><span class="drawer-label">Equity</span></button>
     <button class="drawer-item" id="drawer-rookie-board" onclick="showTab('rookie-board');closeMoreDrawer()"><span class="drawer-icon">🎓</span><span class="drawer-label">Rookies</span></button>
   </div>
 </div>
@@ -1390,6 +1392,22 @@
       <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">Draft slot follows <strong style="color:var(--text)">points scored</strong>, not asset value. The league eyeballs a team's pick by how loaded the roster looks; this app projects where they'll actually finish. Where those disagree, the pick is mispriced — and picks-for-picks costs you zero lineup points.</div>
       <div id="pickArb"><div class="mono muted" style="font-size:12px;padding:12px">Loading…</div></div>
     </div>
+  </div>
+
+  <div class="tab-content" id="tab-equity">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">💵 Championship Equity — Dollars, Not Vibes</div>
+      <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">
+        The league mints one pot per year. A dynasty asset is worth real money only insofar as it moves your <strong style="color:var(--text)">probability of capturing a pot</strong>. This tab converts every player and pick into title odds and dollars: 2026 odds come from the <strong style="color:var(--text)">Ciely optimal-lineup projection</strong> (taxi excluded — they can't start); 2027–2028 window odds come from <strong style="color:var(--text)">age-decayed asset bases + matured pick capital</strong>. $EV = odds × pot, discounted. Bench players carry $0 for 2026 by design — insurance isn't equity.
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;padding-bottom:4px">
+        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">POT TO WINNER ($)</div><input id="eqPayout" type="number" value="1000" onchange="equityCfgChanged()" style="width:90px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">ENTRY / YR ($)</div><input id="eqEntry" type="number" value="100" onchange="equityCfgChanged()" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">DISCOUNT / YR</div><input id="eqDiscount" type="number" step="0.05" min="0.5" max="1" value="0.9" onchange="equityCfgChanged()" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">SEASONS PAID SO FAR</div><input id="eqPaid" type="number" value="2" onchange="equityCfgChanged()" style="width:60px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+      </div>
+    </div>
+    <div id="equityHost"><div class="mono muted" style="font-size:12px;padding:12px">Loading…</div></div>
   </div>
 
   <div class="tab-content" id="tab-rookie-board">
@@ -3495,6 +3513,7 @@ function showTab(tabId) {
   if (tabId === 'trade-analyzer') populatePickDropdowns();
   if (tabId === 'rookie-board') renderRookieBoard();
   if (tabId === 'pick-arb') renderPickArb();
+  if (tabId === 'equity') renderEquity();
   if (tabId === 'trade-finder') renderPriorityMoves();
   if (tabId === 'league-intel') renderLeagueIntel();
 }
@@ -5131,6 +5150,280 @@ function renderContenderGap() {
     + (mine.unmatched > 0 ? ' — <span style="color:var(--yellow)">unmatched players count as 0 FPS</span>' : '')
     + '<br>2027 view unlocks when Ciely publishes 2027 projections — no estimated numbers here by design'
     + '</div>';
+
+  host.innerHTML = html;
+}
+
+// ============================================================
+// CHAMPIONSHIP EQUITY — converts roster + pick capital into title
+// probability and real dollars against the league pot.
+//
+// Model, in plain terms:
+//   • 2026 title odds: softmax over each team's Ciely optimal-lineup
+//     projection (taxi excluded — same engine as Contender Gap /
+//     Pick Arb, so nothing can disagree). Temperature scaled to the
+//     league's projection spread so a loaded roster reads ~20-25%
+//     and a tanking roster reads ~1-2% — fantasy variance is real.
+//   • 2027 / 2028 window odds: softmax over age-decayed asset bases.
+//     Player value decays by positional age curve projected forward;
+//     picks mature into the base (35% credit in their draft year —
+//     rookies rarely win you a title year 1 — then 100% after).
+//   • $EV(team, year) = P(title|year) × payout × discount^(yr−2026)
+//   • Player price tag = share of the team's yearly $ pool:
+//     2026 pool splits by optimal-lineup points actually contributed;
+//     future pools split by age-projected value (taxi included — they
+//     can start by then). Picks earn from future pools only.
+// ============================================================
+var EQUITY_CFG = { payout: 1000, entry: 100, discount: 0.9, seasonsPaid: 2 };
+
+function equityCfgChanged() {
+  var g = function(id, d) { var el = document.getElementById(id); var v = parseFloat(el && el.value); return isNaN(v) ? d : v; };
+  EQUITY_CFG.payout      = g('eqPayout', 1000);
+  EQUITY_CFG.entry       = g('eqEntry', 100);
+  EQUITY_CFG.discount    = Math.min(1, Math.max(0.5, g('eqDiscount', 0.9)));
+  EQUITY_CFG.seasonsPaid = g('eqPaid', 2);
+  renderEquity();
+}
+
+function fmtUSD(v) {
+  if (v >= 1000) return '$' + fmt(Math.round(v));
+  if (v >= 20) return '$' + Math.round(v);
+  return '$' + v.toFixed(2);
+}
+
+function equityAgeFactor(pos, futureAge) {
+  if (!futureAge) return 1;
+  var over = 0, rate = 1;
+  if (pos === 'RB')      { over = Math.max(0, futureAge - 25); rate = 0.72; }
+  else if (pos === 'WR') { over = Math.max(0, futureAge - 28); rate = 0.82; }
+  else if (pos === 'TE') { over = Math.max(0, futureAge - 30); rate = 0.85; }
+  else if (pos === 'QB') { over = Math.max(0, futureAge - 33); rate = 0.85; }
+  return Math.pow(rate, over);
+}
+
+// Pick credit toward a given title year: nothing before it exists,
+// 35% in its rookie year, full weight once it's a second-year asset.
+function equityPickWeight(pickYear, titleYear) {
+  if (titleYear < pickYear) return 0;
+  if (titleYear === pickYear) return 0.35;
+  return 1.0;
+}
+
+// Softmax with temperature tied to league spread. TEMP_DIV controls
+// how deterministic titles are: higher = chalkier. 0.75 calibrates the
+// best projected roster to roughly 20-25% and the worst to ~1-2%.
+function equitySoftmax(scores) {
+  var n = scores.length;
+  if (!n) return [];
+  var mean = scores.reduce(function(a,b){return a+b;},0) / n;
+  var sd = Math.sqrt(scores.reduce(function(a,b){return a+(b-mean)*(b-mean);},0) / n) || 1;
+  var T = Math.max(sd, 1) / 0.75;
+  var mx = Math.max.apply(null, scores);
+  var exps = scores.map(function(s){ return Math.exp((s - mx) / T); });
+  var Z = exps.reduce(function(a,b){return a+b;},0) || 1;
+  return { probs: exps.map(function(e){ return e / Z; }), temp: T };
+}
+
+// Age-projected asset base for a future title year (players + picks).
+function equityAssetBase(teamName, year) {
+  var players = STATE.allRosters[teamName] || [];
+  var dy = year - 2026;
+  var base = 0;
+  players.forEach(function(p) {
+    base += (p.value || 0) * equityAgeFactor(p.pos, (p.age || 25) + dy);
+  });
+  var st = calcTeamStats(teamName);
+  (st.picks || []).forEach(function(pk) {
+    base += (pk.value || 0) * equityPickWeight(pk.year, year);
+  });
+  return base;
+}
+
+// Optimal 2026 lineup WITH player attribution (same slot algorithm as
+// teamProjByPos, but returns who filled the slots and their FPS).
+function equityLineupPlayers(players) {
+  var byPos = { QB: [], RB: [], WR: [], TE: [] };
+  players.forEach(function(p) {
+    if (!byPos[p.pos] || p.onTaxiSquad) return;
+    var pr = projFor(p.name, p.pos);
+    byPos[p.pos].push({ name: p.name, pos: p.pos, fps: pr ? pr.fps : 0 });
+  });
+  for (var k in byPos) byPos[k].sort(function(a,b){ return b.fps - a.fps; });
+  var used = { QB: 0, RB: 0, WR: 0, TE: 0 }, out = [];
+  var take = function(pos, n) { for (var i = 0; i < n; i++) if (used[pos] < byPos[pos].length) out.push(byPos[pos][used[pos]++]); };
+  var best = function(list) {
+    var bv = -1, bp = null;
+    list.forEach(function(pos) { if (used[pos] < byPos[pos].length && byPos[pos][used[pos]].fps > bv) { bv = byPos[pos][used[pos]].fps; bp = pos; } });
+    if (bp) out.push(byPos[bp][used[bp]++]);
+  };
+  take('QB',1); take('RB',2); take('WR',2); take('TE',1);
+  best(['RB','WR','TE']); best(['RB','WR','TE']); best(['QB','RB','WR','TE']);
+  return out;
+}
+
+function renderEquity() {
+  var host = document.getElementById('equityHost');
+  if (!host) return;
+  if (!STATE.allRosters || !Object.keys(STATE.allRosters).length) {
+    host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Roster data not loaded — hit Sync Data.</div>';
+    return;
+  }
+  if (!STATE.projMap || !Object.keys(STATE.projMap).length) {
+    fetchProjections().then(function() { var t = document.getElementById('tab-equity'); if (t && t.classList.contains('active')) renderEquity(); }).catch(function(){});
+    host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Loading Ciely projections…</div>';
+    return;
+  }
+
+  var C = EQUITY_CFG;
+  var teams = Object.values(CONFIG.OWNER_MAP);
+  var YEARS = [2026, 2027, 2028];
+
+  // ── League-wide title odds per year ──────────────────────────────
+  var proj26 = teams.map(function(t) { return teamProjStarters(STATE.allRosters[t] || []); });
+  var sm26 = equitySoftmax(proj26);
+  var base27 = teams.map(function(t) { return equityAssetBase(t, 2027); });
+  var sm27 = equitySoftmax(base27);
+  var base28 = teams.map(function(t) { return equityAssetBase(t, 2028); });
+  var sm28 = equitySoftmax(base28);
+
+  var league = teams.map(function(t, i) {
+    var p = { name: t, p26: sm26.probs[i], p27: sm27.probs[i], p28: sm28.probs[i] };
+    p.ev26 = p.p26 * C.payout;
+    p.ev27 = p.p27 * C.payout * C.discount;
+    p.ev28 = p.p28 * C.payout * C.discount * C.discount;
+    p.evTotal = p.ev26 + p.ev27 + p.ev28;
+    return p;
+  });
+  var mine = league.find(function(x) { return x.name === CONFIG.MY_TEAM_NAME; });
+  if (!mine) { host.innerHTML = '<div class="mono muted" style="padding:12px">Roster not found</div>'; return; }
+
+  var pct = function(p) { return (p * 100).toFixed(1) + '%'; };
+
+  // ── Franchise P&L ledger ─────────────────────────────────────────
+  var feesPaid = C.seasonsPaid * C.entry;
+  var seasonsThruWindow = C.seasonsPaid + 2; // + 2027 + 2028
+  var feesThruWindow = seasonsThruWindow * C.entry;
+  var netEV = mine.evTotal - feesThruWindow;
+  var uniformP = 1 / teams.length;
+
+  // ── Trade leak cost: marginal $ per 1,000 value units leaked ─────
+  // d$/dv for team i under softmax = payout × P(1−P) / T (value-space
+  // years only — 2026 runs on points, and 2026 is a tank anyway).
+  var leak27 = C.payout * C.discount * mine.p27 * (1 - mine.p27) / sm27.temp * 1000;
+  var leak28 = C.payout * C.discount * C.discount * mine.p28 * (1 - mine.p28) / sm28.temp * 1000;
+  var leakTotal = leak27 + leak28;
+
+  var html = '';
+
+  // Stat cards
+  html += '<div class="grid-4" style="margin-bottom:16px">'
+    + '<div class="stat-card"><div class="stat-value" style="color:' + (mine.p26 >= uniformP ? 'var(--green)' : 'var(--red)') + '">' + pct(mine.p26) + '</div><div class="stat-label">2026 Title Odds</div><div class="stat-sub">Ciely lineup · league avg ' + pct(uniformP) + '</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:' + (mine.p27 >= uniformP ? 'var(--green)' : 'var(--yellow)') + '">' + pct(mine.p27) + '</div><div class="stat-label">2027 Window Odds</div><div class="stat-sub">age-proj assets + picks</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:' + (mine.p28 >= uniformP ? 'var(--green)' : 'var(--yellow)') + '">' + pct(mine.p28) + '</div><div class="stat-label">2028 Window Odds</div><div class="stat-sub">age-proj assets + picks</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:var(--gold)">' + fmtUSD(mine.evTotal) + '</div><div class="stat-label">Franchise EV 26–28</div><div class="stat-sub">expected winnings, discounted</div></div>'
+    + '</div>';
+
+  // P&L ledger
+  var netColor = netEV >= 0 ? 'var(--green)' : 'var(--red)';
+  var verdict;
+  if (netEV >= 0) verdict = 'Positive expected value through the window — the rebuild math is working. One actual title puts you massively in the black.';
+  else if (mine.p27 + mine.p28 > 2.4 * uniformP) verdict = 'Slightly under water on pure EV, but your 2027–28 odds run well above league average — this is what a correctly-priced tank looks like mid-build. Every 2027 pick reclaimed moves this line.';
+  else verdict = 'Under water and the window odds aren\'t above average yet — the 2027 capital moves (Mahomes deal, pick reclamation) are what close this gap. This number is the argument for making them.';
+  html += '<div class="card" style="margin-bottom:16px"><div class="card-title">📒 Franchise P&L</div>'
+    + '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px">'
+    + '<div><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">FEES PAID TO DATE</span><span class="mono" style="font-size:18px;color:var(--red)">−' + fmtUSD(feesPaid) + '</span></div>'
+    + '<div><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">FEES THRU 2028</span><span class="mono" style="font-size:18px;color:var(--red)">−' + fmtUSD(feesThruWindow) + '</span></div>'
+    + '<div><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">EXPECTED WINNINGS 26–28</span><span class="mono" style="font-size:18px;color:var(--green)">+' + fmtUSD(mine.evTotal) + '</span></div>'
+    + '<div><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">NET EV THRU WINDOW</span><span class="mono" style="font-size:20px;font-weight:600;color:' + netColor + '">' + (netEV >= 0 ? '+' : '−') + fmtUSD(Math.abs(netEV)) + '</span></div>'
+    + '</div>'
+    + '<div class="mono" style="font-size:10px;color:var(--text-dim);line-height:1.6">' + verdict + '</div>'
+    + '<div class="mono" style="font-size:10px;color:var(--yellow);line-height:1.6;margin-top:8px">💸 <strong>Trade leak cost:</strong> every 1,000 units of app value you leak in a trade burns ~<strong>' + fmtUSD(leakTotal) + '</strong> of 2027–28 title equity (' + fmtUSD(leak27) + ' from 2027 + ' + fmtUSD(leak28) + ' from 2028). That\'s the literal price of dumb shit — and the payoff of smart shit runs the same rate in reverse.</div>'
+    + '</div>';
+
+  // League equity table
+  var sorted = league.slice().sort(function(a,b){ return b.evTotal - a.evTotal; });
+  html += '<div class="card" style="margin-bottom:16px"><div class="card-title">🏆 League Title Equity</div><div style="overflow-x:auto"><table class="data-table"><thead><tr><th>#</th><th>Team</th><th class="text-right">2026</th><th class="text-right">2027</th><th class="text-right">2028</th><th class="text-right">$EV 26–28</th></tr></thead><tbody>';
+  sorted.forEach(function(t, i) {
+    var me = t.name === CONFIG.MY_TEAM_NAME;
+    html += '<tr style="' + (me ? 'background:rgba(255,107,26,0.08)' : '') + '">'
+      + '<td class="mono">' + (i+1) + '</td>'
+      + '<td style="' + (me ? 'color:var(--accent);font-weight:600' : '') + '">' + t.name + '</td>'
+      + '<td class="text-right mono">' + pct(t.p26) + '</td>'
+      + '<td class="text-right mono">' + pct(t.p27) + '</td>'
+      + '<td class="text-right mono">' + pct(t.p28) + '</td>'
+      + '<td class="text-right mono" style="color:var(--gold)">' + fmtUSD(t.evTotal) + '</td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>'
+    + '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:8px;line-height:1.6">2026 from Ciely optimal lineups (taxi excluded). 2027–28 from age-decayed roster value + pick capital (35% credit in a pick\'s draft year, full credit after). Uniform baseline = ' + pct(uniformP) + ' per team per year.</div></div>';
+
+  // ── Per-asset price tags (my roster + picks) ─────────────────────
+  var myPlayers = STATE.allRosters[CONFIG.MY_TEAM_NAME] || [];
+  var myStats = calcTeamStats(CONFIG.MY_TEAM_NAME);
+
+  // 2026 pool splits by optimal-lineup FPS actually contributed
+  var lineup = equityLineupPlayers(myPlayers);
+  var lineupFps = {}; var lineupTotal = 0;
+  lineup.forEach(function(p) { lineupFps[p.name] = (lineupFps[p.name] || 0) + p.fps; lineupTotal += p.fps; });
+
+  // Future pools split by age-projected value share (players + picks)
+  var futureShares = function(year) {
+    var rows = [], total = 0, dy = year - 2026;
+    myPlayers.forEach(function(p) {
+      var v = (p.value || 0) * equityAgeFactor(p.pos, (p.age || 25) + dy);
+      rows.push({ key: 'P:' + p.name, v: v }); total += v;
+    });
+    (myStats.picks || []).forEach(function(pk, i) {
+      var v = (pk.value || 0) * equityPickWeight(pk.year, year);
+      rows.push({ key: 'K:' + i, v: v }); total += v;
+    });
+    var m = {};
+    rows.forEach(function(r) { m[r.key] = total > 0 ? r.v / total : 0; });
+    return m;
+  };
+  var sh27 = futureShares(2027), sh28 = futureShares(2028);
+
+  var assetRows = [];
+  myPlayers.forEach(function(p) {
+    var d26 = lineupTotal > 0 ? (lineupFps[p.name] || 0) / lineupTotal * mine.ev26 : 0;
+    var d27 = (sh27['P:' + p.name] || 0) * mine.ev27;
+    var d28 = (sh28['P:' + p.name] || 0) * mine.ev28;
+    assetRows.push({ name: p.name, pos: p.pos, taxi: !!p.onTaxiSquad, d26: d26, d27: d27, d28: d28, total: d26 + d27 + d28 });
+  });
+  (myStats.picks || []).forEach(function(pk, i) {
+    var label = pk.year + ' R' + pk.round + ' (via ' + pk.orig + ')';
+    var d27 = (sh27['K:' + i] || 0) * mine.ev27;
+    var d28 = (sh28['K:' + i] || 0) * mine.ev28;
+    assetRows.push({ name: label, pos: 'PICK', taxi: false, d26: 0, d27: d27, d28: d28, total: d27 + d28 });
+  });
+  assetRows.sort(function(a,b){ return b.total - a.total; });
+
+  html += '<div class="card"><div class="card-title">🏷️ Roster Price Tags — What Every Asset Is Actually Worth</div>'
+    + '<div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:10px;line-height:1.6">Each asset\'s slice of your yearly title-equity dollars. 2026 pays only players in the optimal lineup; 2027–28 pays by age-projected value share (taxi included — they can start by then). Picks earn from the future pools. A player showing pennies isn\'t worthless in trade — this is his share of <em>your</em> championship money, not his market price.</div>'
+    + '<div style="overflow-x:auto"><table class="data-table" id="equityAssetTable"><thead><tr>'
+    + '<th onclick="sortTable(\'equityAssetTable\',0)">Asset</th><th onclick="sortTable(\'equityAssetTable\',1)">Pos</th>'
+    + '<th class="text-right" onclick="sortTable(\'equityAssetTable\',2)">2026 $</th>'
+    + '<th class="text-right" onclick="sortTable(\'equityAssetTable\',3)">2027 $</th>'
+    + '<th class="text-right" onclick="sortTable(\'equityAssetTable\',4)">2028 $</th>'
+    + '<th class="text-right" onclick="sortTable(\'equityAssetTable\',5)">Total $ ↓</th>'
+    + '<th class="text-right" onclick="sortTable(\'equityAssetTable\',6)">% of Franchise</th>'
+    + '</tr></thead><tbody>';
+  assetRows.forEach(function(r) {
+    var share = mine.evTotal > 0 ? (r.total / mine.evTotal * 100) : 0;
+    html += '<tr>'
+      + '<td>' + r.name + (r.taxi ? ' <span class="mono" style="font-size:9px;color:var(--text-muted)">🚕</span>' : '') + '</td>'
+      + '<td>' + (r.pos === 'PICK' ? '<span class="badge badge-aging">PICK</span>' : posPill(r.pos)) + '</td>'
+      + '<td class="text-right mono">' + (r.d26 > 0 ? fmtUSD(r.d26) : '<span style="color:var(--text-muted)">—</span>') + '</td>'
+      + '<td class="text-right mono">' + fmtUSD(r.d27) + '</td>'
+      + '<td class="text-right mono">' + fmtUSD(r.d28) + '</td>'
+      + '<td class="text-right mono" style="color:var(--gold);font-weight:500">' + fmtUSD(r.total) + '</td>'
+      + '<td class="text-right mono">' + share.toFixed(1) + '%</td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>'
+    + '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:10px;border-top:1px solid var(--border);margin-top:8px;line-height:1.6">'
+    + 'Methodology: P(title) via softmax over league scores, temperature = league spread ÷ 0.75 (best roster ≈ 20-25%, tank ≈ 1-2% — fantasy variance is real). Age decay per year past prime: RB 0.72× (25+), WR 0.82× (28+), TE 0.85× (30+), QB 0.85× (33+). All dollar figures are expected value, not guarantees — one actual banner dwarfs every number on this page.'
+    + '</div></div>';
 
   host.innerHTML = html;
 }
