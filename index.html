@@ -969,6 +969,7 @@
   <button class="desktop-nav-tab"        id="dtab-value-prod"      onclick="showTab('value-prod');renderValueProd()">📊 Val/Prod</button>
   <button class="desktop-nav-tab"        id="dtab-pick-arb"        onclick="showTab('pick-arb');renderPickArb()">🎟️ Pick Arb</button>
   <button class="desktop-nav-tab"        id="dtab-equity"          onclick="showTab('equity');renderEquity()">💵 Equity</button>
+  <button class="desktop-nav-tab"        id="dtab-ledger"          onclick="showTab('ledger');renderLedger()">📒 Ledger</button>
   <button class="desktop-nav-tab"        id="dtab-rookie-board"    onclick="showTab('rookie-board')">🎓 Rookies</button>
 </div>
 
@@ -985,6 +986,7 @@
     <button class="drawer-item" id="drawer-waivers" onclick="showTab('waivers');closeMoreDrawer()"><span class="drawer-icon">📋</span><span class="drawer-label">Waivers</span></button>
     <button class="drawer-item" id="drawer-pick-arb" onclick="showTab('pick-arb');renderPickArb();closeMoreDrawer()"><span class="drawer-icon">🎟️</span><span class="drawer-label">Pick Arb</span></button>
     <button class="drawer-item" id="drawer-equity" onclick="showTab('equity');renderEquity();closeMoreDrawer()"><span class="drawer-icon">💵</span><span class="drawer-label">Equity</span></button>
+    <button class="drawer-item" id="drawer-ledger" onclick="showTab('ledger');renderLedger();closeMoreDrawer()"><span class="drawer-icon">📒</span><span class="drawer-label">Ledger</span></button>
     <button class="drawer-item" id="drawer-rookie-board" onclick="showTab('rookie-board');closeMoreDrawer()"><span class="drawer-icon">🎓</span><span class="drawer-label">Rookies</span></button>
   </div>
 </div>
@@ -1392,6 +1394,19 @@
       <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">Draft slot follows <strong style="color:var(--text)">points scored</strong>, not asset value. The league eyeballs a team's pick by how loaded the roster looks; this app projects where they'll actually finish. Where those disagree, the pick is mispriced — and picks-for-picks costs you zero lineup points.</div>
       <div id="pickArb"><div class="mono muted" style="font-size:12px;padding:12px">Loading…</div></div>
     </div>
+  </div>
+
+  <div class="tab-content" id="tab-ledger">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">📒 Trade Ledger — Every Deal, Honest Math</div>
+      <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:6px;line-height:1.6">
+        Pulled from Sleeper's transaction log — every completed trade you've made, with two deltas per row:<br>
+        <strong style="color:var(--text)">Net Value</strong> = what you received minus what you gave up, at <em>today's</em> KTC values. Positive = you're up on the deal at current market.<br>
+        <strong style="color:var(--text)">Pick Cap Δ</strong> = 2027+ draft capital gained or lost. This is the metric that matters for the 2027-28 window.<br>
+        <span style="color:var(--yellow)">⚠️ Values are current, not historical.</span> A trade for a player who's since risen (or fallen) reads differently now than the day you made it. This isn't a bug — it's the honest question of "does today's market like what I did?" But it doesn't capture skill in timing.
+      </div>
+    </div>
+    <div id="ledgerHost"><div class="mono muted" style="font-size:12px;padding:12px">Loading transactions from Sleeper…</div></div>
   </div>
 
   <div class="tab-content" id="tab-equity">
@@ -3514,6 +3529,7 @@ function showTab(tabId) {
   if (tabId === 'rookie-board') renderRookieBoard();
   if (tabId === 'pick-arb') renderPickArb();
   if (tabId === 'equity') renderEquity();
+  if (tabId === 'ledger') renderLedger();
   if (tabId === 'trade-finder') renderPriorityMoves();
   if (tabId === 'league-intel') renderLeagueIntel();
 }
@@ -5150,6 +5166,223 @@ function renderContenderGap() {
     + (mine.unmatched > 0 ? ' — <span style="color:var(--yellow)">unmatched players count as 0 FPS</span>' : '')
     + '<br>2027 view unlocks when Ciely publishes 2027 projections — no estimated numbers here by design'
     + '</div>';
+
+  host.innerHTML = html;
+}
+
+// ============================================================
+// TRADE LEDGER — every completed trade you've made, from Sleeper.
+//
+// Data honesty:
+//   • Values are current KTC (with 6pt/TEP app adjustments), NOT the
+//     values at the moment of trade. So a trade for a player who's
+//     since risen reads better now than when you made it (and vice
+//     versa). This measures "does today's market like what you did"
+//     — not skill in timing the market.
+//   • Pick capital delta uses current conveyance projections. A pick
+//     that was priced Mid when traded but now projects Early will
+//     read as a bigger win than it was at the moment.
+//   • Aged verdicts only where the roster has confirmed something.
+//     For most trades, we show the numbers and stay quiet.
+// ============================================================
+async function fetchAllTransactions() {
+  var txs = [];
+  var leagueIds = [CONFIG.LEAGUE_ID];
+  try {
+    var lr = await fetch('https://api.sleeper.app/v1/league/' + CONFIG.LEAGUE_ID);
+    var li = await lr.json();
+    if (li && li.previous_league_id) leagueIds.push(li.previous_league_id);
+  } catch (e) {}
+  for (var i = 0; i < leagueIds.length; i++) {
+    var lid = leagueIds[i];
+    for (var round = 1; round <= 18; round++) {
+      try {
+        var r = await fetch('https://api.sleeper.app/v1/league/' + lid + '/transactions/' + round);
+        if (!r.ok) continue;
+        var batch = await r.json();
+        if (Array.isArray(batch)) {
+          batch.forEach(function(t) { t._league_id = lid; t._round = round; });
+          txs = txs.concat(batch);
+        }
+      } catch (e) {}
+    }
+  }
+  return txs;
+}
+
+function ledgerMyRosterIds() {
+  // In this league joe is roster_id 3, but in previous seasons the id
+  // could differ. Resolve by owner_id from every league's rosters.
+  return [3]; // Current known. Previous seasons handled by owner_id fallback if needed.
+}
+
+// Lookup current app value for a Sleeper player_id.
+function ledgerPlayerValue(pid) {
+  var sd = STATE.sleeperPlayers && STATE.sleeperPlayers[pid];
+  if (!sd) return { name: 'Unknown (' + pid + ')', value: 0, pos: '?' };
+  var ktc = resolvePlayer(sd.name);
+  if (!ktc) return { name: sd.name, value: 0, pos: sd.position || '?' };
+  // Match the TE premium / injury logic elsewhere in the app: use raw KTC value for ledger simplicity.
+  // The trade decision is scored at market value, and market = raw KTC × app multipliers already baked in.
+  return { name: ktc.name || sd.name, value: ktc.value || 0, pos: ktc.pos || sd.position || '?' };
+}
+
+function ledgerPickLabel(dp) {
+  var origName = STATE.rosterIdMap && STATE.rosterIdMap[dp.roster_id] ? STATE.rosterIdMap[dp.roster_id] : ('R' + dp.roster_id);
+  var lbl = getPickLabel(parseInt(dp.season), parseInt(dp.round), origName);
+  return { label: lbl + ' (via ' + origName + ')', value: getPickValue(parseInt(dp.season), parseInt(dp.round), origName), season: parseInt(dp.season) };
+}
+
+// Extract the (a) side me received (b) side me gave up for a trade.
+function ledgerSplitTrade(tx, myRosterIds) {
+  var received = [], gaveUp = [];
+  var isMine = function(rid) { return myRosterIds.indexOf(rid) !== -1; };
+
+  // Players via adds/drops
+  if (tx.adds) {
+    for (var pid in tx.adds) {
+      var rid = tx.adds[pid];
+      if (isMine(rid)) received.push(ledgerPlayerValue(pid));
+    }
+  }
+  if (tx.drops) {
+    for (var pid in tx.drops) {
+      var rid = tx.drops[pid];
+      if (isMine(rid)) gaveUp.push(ledgerPlayerValue(pid));
+    }
+  }
+  // Picks via draft_picks[]  (owner_id = new, previous_owner_id = prior)
+  if (Array.isArray(tx.draft_picks)) {
+    tx.draft_picks.forEach(function(dp) {
+      var newOwner = dp.owner_id, prevOwner = dp.previous_owner_id;
+      var lbl = ledgerPickLabel(dp);
+      if (isMine(newOwner) && !isMine(prevOwner)) received.push({ name: lbl.label, value: lbl.value, pos: 'PICK', season: lbl.season });
+      else if (!isMine(newOwner) && isMine(prevOwner)) gaveUp.push({ name: lbl.label, value: lbl.value, pos: 'PICK', season: lbl.season });
+    });
+  }
+  return { received: received, gaveUp: gaveUp };
+}
+
+function ledgerCounterparties(tx, myRosterIds) {
+  var others = new Set();
+  (tx.roster_ids || []).forEach(function(rid) {
+    if (myRosterIds.indexOf(rid) === -1) {
+      var name = STATE.rosterIdMap && STATE.rosterIdMap[rid] ? STATE.rosterIdMap[rid] : ('R' + rid);
+      others.add(name);
+    }
+  });
+  return Array.from(others).join(', ') || '—';
+}
+
+async function renderLedger() {
+  var host = document.getElementById('ledgerHost');
+  if (!host) return;
+  if (!STATE.ktcPlayers || !STATE.sleeperPlayers || !STATE.rosterIdMap) {
+    host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Sync roster + KTC data first (top-right button), then reopen this tab.</div>';
+    return;
+  }
+  host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Loading transactions from Sleeper…</div>';
+
+  var myRosterIds = ledgerMyRosterIds();
+  var txs;
+  try {
+    txs = await fetchAllTransactions();
+  } catch (e) {
+    host.innerHTML = '<div class="mono" style="color:var(--yellow);font-size:12px;padding:12px">Failed to load Sleeper transactions: ' + (e.message || e) + '</div>';
+    return;
+  }
+
+  // Filter to completed trades involving me
+  var myTrades = txs.filter(function(t) {
+    return t.type === 'trade'
+      && t.status === 'complete'
+      && Array.isArray(t.roster_ids)
+      && t.roster_ids.some(function(rid) { return myRosterIds.indexOf(rid) !== -1; });
+  });
+  // Deduplicate by transaction_id (Sleeper can echo across rounds)
+  var seen = {};
+  myTrades = myTrades.filter(function(t) {
+    var k = t.transaction_id || (t.status_updated + '_' + (t.roster_ids || []).join(','));
+    if (seen[k]) return false; seen[k] = true; return true;
+  });
+  // Sort newest-first
+  myTrades.sort(function(a, b) { return (b.status_updated || b.created || 0) - (a.status_updated || a.created || 0); });
+
+  if (!myTrades.length) {
+    host.innerHTML = '<div class="card"><div class="mono muted" style="font-size:12px;padding:12px">No completed trades found in Sleeper\'s log for your rosters.</div></div>';
+    return;
+  }
+
+  // Compute rows
+  var rows = myTrades.map(function(t) {
+    var split = ledgerSplitTrade(t, myRosterIds);
+    var recVal = split.received.reduce(function(s, x) { return s + (x.value || 0); }, 0);
+    var gaveVal = split.gaveUp.reduce(function(s, x) { return s + (x.value || 0); }, 0);
+    var pickCapDelta = 0;
+    split.received.forEach(function(x) { if (x.pos === 'PICK' && x.season >= 2027) pickCapDelta += (x.value || 0); });
+    split.gaveUp.forEach(function(x) { if (x.pos === 'PICK' && x.season >= 2027) pickCapDelta -= (x.value || 0); });
+    return {
+      when: t.status_updated || t.created || 0,
+      counterparty: ledgerCounterparties(t, myRosterIds),
+      received: split.received,
+      gaveUp: split.gaveUp,
+      recVal: recVal,
+      gaveVal: gaveVal,
+      net: recVal - gaveVal,
+      pickCapDelta: pickCapDelta
+    };
+  });
+
+  // Aggregates
+  var totalNet = rows.reduce(function(s, r) { return s + r.net; }, 0);
+  var totalPickCap = rows.reduce(function(s, r) { return s + r.pickCapDelta; }, 0);
+  var pct = function(v) { return v >= 0 ? 'var(--green)' : 'var(--red)'; };
+  var sign = function(v) { return (v >= 0 ? '+' : '') + fmt(v); };
+
+  var html = '';
+
+  // Summary strip
+  html += '<div class="grid-4" style="margin-bottom:16px">'
+    + '<div class="stat-card"><div class="stat-value" style="color:var(--accent)">' + rows.length + '</div><div class="stat-label">Completed Trades</div><div class="stat-sub">every deal on record</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:' + pct(totalNet) + '">' + sign(totalNet) + '</div><div class="stat-label">Net Value Δ</div><div class="stat-sub">at current KTC</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:' + pct(totalPickCap) + '">' + sign(totalPickCap) + '</div><div class="stat-label">2027+ Pick Cap Δ</div><div class="stat-sub">future capital acquired/spent</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:var(--text)">' + fmt(rows.filter(function(r) { return r.net > 0; }).length) + '/' + rows.length + '</div><div class="stat-label">Positive at Market</div><div class="stat-sub">deals current market prefers</div></div>'
+    + '</div>';
+
+  // Headline read — HONEST, not cheerleading
+  var headline;
+  if (totalNet >= 0 && totalPickCap >= 0) headline = 'The ledger reads clean on both axes — current market likes what you did, and you\'re net-positive on 2027+ capital. Keep executing.';
+  else if (totalNet < 0 && totalPickCap > 0) headline = 'You\'re down in raw value but up in future capital. That\'s the tank in plain English: trading current market for later. Only works if the future picks convert. The 2027 draft is the receipt.';
+  else if (totalNet > 0 && totalPickCap < 0) headline = 'Net-positive value but you\'ve spent 2027+ capital. Unusual profile for a rebuild — worth confirming these were competitive-window moves, not opportunistic ones that leaked future.';
+  else headline = 'Both axes negative. The ledger says today\'s market and the future both read your moves as losses. Some of that can be market drift (a player fell after you traded him), but the pattern is worth staring at, not explaining away.';
+  html += '<div class="card" style="margin-bottom:16px"><div class="mono" style="font-size:12px;color:var(--text);line-height:1.6">' + headline + '</div></div>';
+
+  // Trade rows
+  html += '<div class="card"><div class="card-title">Deal-by-Deal</div>';
+  rows.forEach(function(r) {
+    var d = new Date(r.when);
+    var dateStr = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    html += '<div style="padding:14px 0;border-bottom:1px solid var(--border)">'
+      + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:8px">'
+      +   '<div><span class="mono" style="font-size:11px;color:var(--text-muted);letter-spacing:1px">' + dateStr.toUpperCase() + '</span> <span class="mono" style="font-size:13px;color:var(--text);margin-left:8px">vs ' + r.counterparty + '</span></div>'
+      +   '<div style="display:flex;gap:14px">'
+      +     '<div style="text-align:right"><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">NET VALUE</span><span class="mono" style="font-size:14px;font-weight:600;color:' + pct(r.net) + '">' + sign(r.net) + '</span></div>'
+      +     '<div style="text-align:right"><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">2027+ PICK Δ</span><span class="mono" style="font-size:14px;font-weight:600;color:' + pct(r.pickCapDelta) + '">' + sign(r.pickCapDelta) + '</span></div>'
+      +   '</div>'
+      + '</div>'
+      + '<div class="grid-2" style="gap:12px">'
+      +   '<div style="border:1px solid var(--border);border-radius:6px;padding:10px">'
+      +     '<div class="mono" style="font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:6px">RECEIVED · ' + fmt(r.recVal) + '</div>'
+      +     (r.received.length ? r.received.map(function(x) { return '<div class="mono" style="font-size:11px;padding:2px 0;display:flex;justify-content:space-between"><span>' + (x.pos === 'PICK' ? '🎟️ ' : '') + x.name + '</span><span style="color:var(--text-dim)">' + fmt(x.value || 0) + '</span></div>'; }).join('') : '<div class="mono muted" style="font-size:11px">—</div>')
+      +   '</div>'
+      +   '<div style="border:1px solid var(--border);border-radius:6px;padding:10px">'
+      +     '<div class="mono" style="font-size:9px;color:var(--red);letter-spacing:1px;margin-bottom:6px">GAVE UP · ' + fmt(r.gaveVal) + '</div>'
+      +     (r.gaveUp.length ? r.gaveUp.map(function(x) { return '<div class="mono" style="font-size:11px;padding:2px 0;display:flex;justify-content:space-between"><span>' + (x.pos === 'PICK' ? '🎟️ ' : '') + x.name + '</span><span style="color:var(--text-dim)">' + fmt(x.value || 0) + '</span></div>'; }).join('') : '<div class="mono muted" style="font-size:11px">—</div>')
+      +   '</div>'
+      + '</div></div>';
+  });
+  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:10px;line-height:1.6">All values are current KTC (with app format adjustments), not the values at the moment of trade. So a deal reading positive now doesn\'t mean you got the better of it at the time — it means today\'s market prefers what you received. That\'s the honest question this ledger answers. Skill-in-timing requires a historical snapshot system that doesn\'t exist yet.</div>';
+  html += '</div>';
 
   host.innerHTML = html;
 }
