@@ -3693,6 +3693,7 @@ function renderTradeCard(s, i) {
   var typeBadge = s.type === 'age-swap'    ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,165,0,0.15);color:var(--gold)">Age upgrade swap</span>'
                 : s.type === 'sweetened'   ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,215,0,0.12);color:var(--gold)">+ Pick sweetener</span>'
                 : s.type === 'pick-for-player' ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(180,76,255,0.15);color:var(--purple)">★ Capital-in (picks)</span>'
+                : s.type === 'pick-arb-swap' ? '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(76,255,145,0.15);color:var(--green)">🎟️ Pick arbitrage</span>'
                 : '';
 
   var html = '<div id="trade-card-' + s.id + '" style="background:var(--surface2);border:1px solid ' + (isTop ? 'var(--accent)' : 'var(--border)') + ';border-radius:12px;padding:16px;margin-bottom:12px;position:relative">';
@@ -4040,6 +4041,37 @@ function finderLedgerHeadwind(cpName) {
   if (net < -3000) return 800;
   if (net < -1500) return 400;
   return 0;
+}
+
+// Pick arbitrage computation — mirrors the Pick Arb tab exactly so nothing
+// disagrees. Returns picks I hold that are overpriced by market perception
+// (offload targets) and picks other teams hold that are underpriced (acquire
+// targets). The arbitrage is the delta between projected conveyance (app
+// truth) and market perception (KTC by total-value ranking).
+function finderComputePickArb() {
+  if (!STATE.pickMap || !STATE.rosterIdMap) return { mineOut: [], targets: [] };
+  var ROUNDS = [1, 2, 3];
+  var YEARS = [2027, 2028];
+  var mineOut = [], targets = [];
+  for (var key in STATE.pickMap) {
+    var holder = STATE.pickMap[key];
+    var parts = key.split('_');
+    var yr = parseInt(parts[0]), rd = parseInt(parts[1]), origRosterId = parts[2];
+    if (YEARS.indexOf(yr) === -1 || ROUNDS.indexOf(rd) === -1) continue;
+    var orig = STATE.rosterIdMap[parseInt(origRosterId)];
+    if (!orig) continue;
+    var projTier = pickTierFor(getPickPosition(orig));
+    var mktTier  = pickTierFor(getPickPositionMarket(orig));
+    var projVal  = pickValFor(yr, rd, projTier);
+    var mktVal   = pickValFor(yr, rd, mktTier);
+    var spread   = projVal - mktVal;
+    if (spread === 0) continue;
+    var label = getPickLabel(yr, rd, orig);
+    var row = { yr: yr, rd: rd, orig: orig, holder: holder, projTier: projTier, mktTier: mktTier, projVal: projVal, mktVal: mktVal, spread: spread, label: label };
+    if (holder === CONFIG.MY_TEAM_NAME) { if (spread < 0) mineOut.push(row); }
+    else if (spread > 0) targets.push(row);
+  }
+  return { mineOut: mineOut, targets: targets };
 }
 
 function finderCounterpartyBuysVet(profile, player) {
@@ -4393,6 +4425,94 @@ function findTrades() {
     }
   }
 
+  // ── Pick Arbitrage Swaps ─────────────────────────────────────────────────
+  // Pure conveyance arbitrage: acquire a pick projected to convey better
+  // than the market thinks, by shedding a pick projected to convey worse
+  // than the market thinks. The counterparty accepts because either:
+  //   (a) the KTC gap looks basically even to them, OR
+  //   (b) they think THEY'RE winning slightly at market — which is how
+  //       KTC truthers get talked into arb by mistake.
+  //
+  // Design:
+  //   • Same round only (1st↔1st, 2nd↔2nd, 3rd↔3rd)
+  //   • Real projection gain: their proj value − my proj value ≥ 300
+  //   • CP acceptance filter: either KTC gap ≤ 6% (looks even) OR
+  //     CP wins at market by 3-15% (they think they got the better deal)
+  //   • Never propose a deal I visibly win at market — CP rejects on sight
+  //   • Cooldown / deep-headwind gates still apply
+  var arb = finderComputePickArb();
+  if (arb.mineOut.length && arb.targets.length) {
+    for (var mo = 0; mo < arb.mineOut.length; mo++) {
+      var myPick = arb.mineOut[mo];
+      for (var tp = 0; tp < arb.targets.length; tp++) {
+        var theirPick = arb.targets[tp];
+        var cpName = theirPick.holder;
+        if (cpName === CONFIG.MY_TEAM_NAME) continue;
+
+        // Same round only — cross-round swaps get rejected on the round label alone
+        if (myPick.rd !== theirPick.rd) continue;
+
+        if (finderCounterpartyPickedOut(cpName)) continue;
+
+        // Real projected gain: their pick projects to convey better than mine
+        var trueGain = theirPick.projVal - myPick.projVal;
+        if (trueGain < 300) continue;
+
+        // Market perception check — from CP's KTC view
+        var mktBase = Math.max(myPick.mktVal, theirPick.mktVal);
+        var mktEdgeForCP = myPick.mktVal - theirPick.mktVal;   // >0 = CP wins at market
+        var mktGap = Math.abs(mktEdgeForCP);
+        var gapPct = mktGap / mktBase;
+
+        // Rejects: (a) I'm winning too obviously at market — CP walks away
+        //          (b) The CP-side gap is so wide it smells like a trap
+        // KTC-truther counterparties tolerate wider CP-favorable gaps because
+        // they trust the KTC readout; profiles get an extra 10% headroom.
+        var truthLikely = OWNER_PROFILES[cpName] && /ktc|market|pick.stockpiler|manipulator/i.test((OWNER_PROFILES[cpName].style || '') + (OWNER_PROFILES[cpName].notes || ''));
+        var maxCPMargin = truthLikely ? 0.40 : 0.30;
+        if (mktEdgeForCP < 0 && gapPct > 0.06) continue;       // I'm visibly winning at market — reject
+        if (mktEdgeForCP > 0 && gapPct > maxCPMargin) continue; // CP "winning" too much — smells like trap
+
+        // Deep ledger headwind still blocks (arb is low-stakes but not zero)
+        var hw = finderLedgerHeadwind(cpName);
+        if (hw >= 800) continue;
+
+        var cpProfile = OWNER_PROFILES[cpName];
+        var truthBonus = cpProfile && /ktc|market|pick.stockpiler|manipulator/i.test((cpProfile.style || '') + (cpProfile.notes || '')) ? 200 : 0;
+
+        var myPickAsset = { label: myPick.label, value: myPick.mktVal, year: myPick.yr, round: myPick.rd };
+        var theirPickAsset = { label: theirPick.label, value: theirPick.mktVal, year: theirPick.yr, round: theirPick.rd };
+
+        // Frame "why they accept" honestly given the market direction
+        var whyAccept;
+        if (mktEdgeForCP > 500) {
+          whyAccept = 'KTC shows ' + cpName + ' winning by ~' + fmt(mktEdgeForCP) + ' (' + Math.round(gapPct * 100) + '%) — they read it as a light steal from you'
+            + (truthBonus ? ' and they\'re KTC-aligned, so they\'ll trust that read' : '');
+        } else {
+          whyAccept = 'Fair KTC swap — market values within ' + Math.round(gapPct * 100) + '%, same round'
+            + (truthBonus ? '. ' + cpName + ' reads as KTC-aligned; even swaps sail through' : '');
+        }
+
+        suggestions.push({
+          id: 'trade-' + (idCounter++),
+          team: cpName,
+          iGet: null, iGetPick: theirPickAsset,
+          iGive: null, iGivePick: myPickAsset,
+          iGetPos: 'PICK', iGivePos: 'PICK',
+          score: 550 + trueGain * 0.5 + truthBonus - Math.max(0, -mktEdgeForCP) * 0.1,
+          valueDiff: mktGap,
+          capitalGain: trueGain,
+          profile: cpProfile,
+          type: 'pick-arb-swap',
+          whyTheyAccept: whyAccept,
+          whyYouAccept: 'Pick arb: <strong>shed</strong> ' + myPick.label + ' (market sees ' + myPick.mktTier + ' but projects ' + myPick.projTier + '), '
+            + '<strong>acquire</strong> ' + theirPick.label + ' (market sees ' + theirPick.mktTier + ' but projects ' + theirPick.projTier + '). '
+            + 'True projection gain: <strong>+' + fmt(trueGain) + '</strong> in real conveyance value.'
+        });
+      }
+    }
+  }
+
   // Deduplicate — remove same team+player combos
   var seen = new Set();
   var deduped = suggestions.filter(function(s) {
@@ -4422,7 +4542,7 @@ function findTrades() {
     var gap = Math.abs(getVal - giveVal);
     return gap / total <= 0.20; // within 20% = fair enough to propose
   });
-  var typeRank = { 'pick-for-player': 3, 'sweetened': 2, 'age-swap': 1, 'standard': 1 };
+  var typeRank = { 'pick-for-player': 3, 'pick-arb-swap': 3, 'sweetened': 2, 'age-swap': 1, 'standard': 1 };
   balanced.sort(function(a, b) {
     // capital-in (pick-for-player) leads when scores are within range
     if (Math.abs(b.score - a.score) < 150) {
