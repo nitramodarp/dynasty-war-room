@@ -3914,7 +3914,25 @@ function renderLedgerHeadlinePanel() {
   if (best && best.stats.avgNet > 200) {
     html += 'Your <strong style="color:var(--green)">strongest pattern</strong> is <em>' + ledgerShapeLabel(best.key) + '</em> (' + best.stats.count + ' deals, avg +' + fmt(best.stats.avgNet) + ' net). Green-flagged suggestions match this shape.';
   }
-  html += '</div></div>';
+  html += '</div>';
+
+  // Show which quality gates are active — makes the filtering visible so you
+  // know why the list is shorter and can spot counterparties on cooldown.
+  var gateNotes = [];
+  if (finderIsRebuildMode()) gateNotes.push('<strong style="color:var(--yellow)">Rebuild mode active</strong> — suppressing player-for-player deficit-fills; capital-in prioritized');
+  var pickedOut = Object.keys(intel.counterparties).filter(function(cp) {
+    return (intel.counterparties[cp].recentPickCapReceived || 0) >= 3000;
+  });
+  if (pickedOut.length) gateNotes.push('<strong style="color:var(--yellow)">On pick cooldown (last 45d):</strong> ' + pickedOut.join(', ') + ' — recently paid heavy pick capital, appetite empty');
+  var headwinds = Object.keys(intel.counterparties).filter(function(cp) {
+    return (intel.counterparties[cp].net || 0) < -1500;
+  });
+  if (headwinds.length) gateNotes.push('<strong style="color:var(--yellow)">Ledger headwind:</strong> ' + headwinds.join(', ') + ' — negative net requires bigger edge in your favor');
+  if (gateNotes.length) {
+    html += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:10px;color:var(--text-dim);line-height:1.7">'
+      + gateNotes.map(function(n) { return '• ' + n; }).join('<br>') + '</div>';
+  }
+  html += '</div>';
   return html;
 }
 
@@ -3949,6 +3967,108 @@ function renderCounterpartyIntelPanelHTML() {
   html += '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:8px;line-height:1.6">Net Value is at current KTC (drifts from what values were when trades happened). Green net = market currently prefers what you got. Red = it prefers what you gave up. Read this before scanning the suggestion cards below — it tells you who has actually paid you in past deals and who has extracted from you.</div>';
   html += '</div>';
   return html;
+}
+
+// ============================================================
+// FINDER QUALITY GATES — the seven rules that separate real
+// suggestions from noise. Each of these was authored to kill a
+// specific pathology observed in the actual output:
+//   1. FPS floor            → no bench bodies fill a "deficit"
+//   2. Age-swap role floor  → younger doesn't mean better if he's RB73
+//   3. Value symmetry       → both sides must move a real needle
+//   4. Rebuild-mode gate    → tanks don't suggest lineup patches
+//   5. Recency cooldown     → picked-out counterparties don't get pitched
+//   6. Archetype match      → generic "buysVets" flag is too coarse
+//   7. Ledger penalty       → negative history requires a bigger edge
+// ============================================================
+function finderIsSuggestableAsset(pl) {
+  if (!pl) return false;
+  var proj = (typeof projFor === 'function') ? projFor(pl.name, pl.pos) : null;
+  var fps = proj ? proj.fps : 0;
+  // Real starter-tier contribution (100+ FPS) OR real trade asset (2.5k+ value).
+  // Both/either catch legit players; neither = bench body we don't waste a slot on.
+  return (fps >= 100) || ((pl.value || 0) >= 2500);
+}
+
+function finderAgeSwapRoleFloor(pl) {
+  if (!pl) return false;
+  var proj = (typeof projFor === 'function') ? projFor(pl.name, pl.pos) : null;
+  var fps = proj ? proj.fps : 0;
+  if (pl.pos === 'RB' || pl.pos === 'WR') return fps >= 130;
+  if (pl.pos === 'QB' || pl.pos === 'TE') return fps >= 100;
+  return false;
+}
+
+function finderHasValueSymmetry(iGet, iGetPick, iGive, iGivePick, iGetPick2) {
+  var recStrong = (iGet && (iGet.value || 0) >= 2500)
+    || (iGetPick && (iGetPick.value || 0) >= 2500)
+    || (iGetPick2 && (iGetPick2.value || 0) >= 2500);
+  var giveStrong = (iGive && (iGive.value || 0) >= 2500)
+    || (iGivePick && (iGivePick.value || 0) >= 2500);
+  return recStrong && giveStrong;
+}
+
+function finderIsRebuildMode() {
+  // A tank/rebuild reads as "you project 200+ points below league median."
+  // If we're contending, this returns false and standard swaps flow normally.
+  if (!STATE.allRosters) return false;
+  var teams = Object.values(CONFIG.OWNER_MAP);
+  var projs = teams.map(function(t) {
+    try { return (typeof teamProjStarters === 'function') ? teamProjStarters(STATE.allRosters[t] || []) : 0; } catch (e) { return 0; }
+  });
+  var sorted = projs.slice().sort(function(a,b){return a-b;});
+  var median = sorted[Math.floor(teams.length / 2)];
+  var mine = (typeof teamProjStarters === 'function') ? teamProjStarters(STATE.allRosters[CONFIG.MY_TEAM_NAME] || []) : 0;
+  return mine < median - 200;
+}
+
+function finderCounterpartyPickedOut(cpName) {
+  var intel = STATE.ledgerIntel;
+  if (!intel || !intel.counterparties[cpName]) return false;
+  // If they've paid you 3,000+ in pick capital in the last 45 days, they
+  // just emptied their reserve. Don't ask them for more picks yet.
+  return (intel.counterparties[cpName].recentPickCapReceived || 0) >= 3000;
+}
+
+function finderLedgerHeadwind(cpName) {
+  var intel = STATE.ledgerIntel;
+  if (!intel || !intel.counterparties[cpName]) return 0;
+  // If historical net is deeply negative with this counterparty, new deals
+  // need a bigger edge in your favor to overcome the pattern. Return the
+  // minimum value gap (in your favor) required to counteract the history.
+  var net = intel.counterparties[cpName].net || 0;
+  if (net < -3000) return 800;
+  if (net < -1500) return 400;
+  return 0;
+}
+
+function finderCounterpartyBuysVet(profile, player) {
+  // Replaces the coarse ownerBuysVets check. Reads the counterparty's actual
+  // `buys` array and requires an archetype match — position + age band + value.
+  if (!profile || !profile.buys || !player) return false;
+  var buys = (profile.buys || []).join(' ').toLowerCase();
+  var age = player.age || 0;
+  var pos = player.pos;
+  var val = player.value || 0;
+
+  // Match "aging veterans" — position-specific age thresholds.
+  if (/aging|veteran/.test(buys)) {
+    if (pos === 'RB' && age >= 27) return true;
+    if (pos === 'WR' && age >= 28) return true;
+    if (pos === 'QB' && age >= 32) return true;
+    if (pos === 'TE' && age >= 30) return true;
+  }
+  // Match "proven veterans / stars / proven names" — high-value regardless of age.
+  if (/proven|star/.test(buys) && val >= 5000) return true;
+  // Match "young WR/QB/RB" — age-gated by position.
+  if (/young\s*wr/.test(buys) && pos === 'WR' && age <= 25 && val >= 3000) return true;
+  if (/young\s*qb/.test(buys) && pos === 'QB' && age <= 26 && val >= 3000) return true;
+  if (/young\s*rb/.test(buys) && pos === 'RB' && age <= 25 && val >= 3000) return true;
+  if (/upside\s*wr/.test(buys) && pos === 'WR' && age <= 27) return true;
+  if (/upside\s*rb/.test(buys) && pos === 'RB' && age <= 26) return true;
+  // "rookies" — very young only.
+  if (/rookie/.test(buys) && age <= 23) return true;
+  return false;
 }
 
 function findTrades() {
@@ -4028,10 +4148,22 @@ function findTrades() {
               if (!iGivePlayer) continue;
               if (theyGive.value < 1000 || iGivePlayer.value < 1000) continue;
 
+              // Rule 1: FPS floor — both players must be startable or trade-worthy
+              if (!finderIsSuggestableAsset(theyGive) || !finderIsSuggestableAsset(iGivePlayer)) continue;
+              // Rule 3: value symmetry — both sides must clear 2.5k
+              if (!finderHasValueSymmetry(theyGive, null, iGivePlayer, null, null)) continue;
+              // Rule 4: rebuild-mode gate — tanks don't take player-for-player
+              // deficit-fills unless the incoming asset is genuinely elite (6k+).
+              if (finderIsRebuildMode() && theyGive.value < 6000) continue;
+
               var rawDiff = theyGive.value - iGivePlayer.value;
               if (rawDiff < -1500) continue;
               var valueDiff = Math.abs(rawDiff);
               if (valueDiff > 3000) continue;
+
+              // Rule 7: negative-history counterparty needs a bigger edge
+              var headwind = finderLedgerHeadwind(teamName);
+              if (headwind > 0 && rawDiff < headwind) continue;
 
               var mutualBenefit = (theirNeeds[iGivePos].needScore + myNeeds[iGetPos].needScore) / 2;
               var activityBonus = profile && profile.activity === 'HIGH' ? 500 : profile && profile.activity === 'MEDIUM' ? 200 : 0;
@@ -4083,8 +4215,19 @@ function findTrades() {
           if (!myAging || !theirYoung) continue;
           if (myAging.value < 1500 || theirYoung.value < 1500) continue;
 
+          // Rule 2: age-swap role floor — "younger" must actually have a role
+          if (!finderAgeSwapRoleFloor(theirYoung)) continue;
+          // Rule 3: value symmetry
+          if (!finderHasValueSymmetry(theirYoung, null, myAging, null, null)) continue;
+          // Rule 4: rebuild mode — skip age-swaps unless incoming is elite
+          if (finderIsRebuildMode() && theirYoung.value < 5000) continue;
+
           var swapDiff = theirYoung.value - myAging.value;
           if (swapDiff < -500 || swapDiff > 2500) continue; // They give a younger player, slight value edge ok
+
+          // Rule 7: negative-history counterparty needs a bigger edge
+          var swapHeadwind = finderLedgerHeadwind(teamName);
+          if (swapHeadwind > 0 && swapDiff < swapHeadwind) continue;
 
           var swapScore = 300 + (profile && profile.activity === 'HIGH' ? 400 : 100) - Math.abs(swapDiff) * 0.2;
 
@@ -4164,6 +4307,10 @@ function findTrades() {
     if (tName === CONFIG.MY_TEAM_NAME) continue;
     var tProfile = OWNER_PROFILES[tName];
     if (!ownerSellsPicks(tProfile) || !ownerBuysVets(tProfile)) continue; // capital-in gate
+    // Rule 5: recency cooldown — if they just emptied their pick reserve on
+    // you (Mahomes/Kittle/etc within the last 45 days), skip pitching them
+    // for more pick capital. They need time to reload appetite.
+    if (finderCounterpartyPickedOut(tName)) continue;
     var tNeeds = teamNeeds[tName];
 
     // Their future picks we could pry loose (this year through +3)
@@ -4196,6 +4343,10 @@ function findTrades() {
 
     for (var spi = 0; spi < Math.min(mySellPlayers.length, 3); spi++) {
       var sellPl = mySellPlayers[spi];
+      // Rule 6: archetype-specific vet gate. Wazimo buys "young WR/QB + aging vets"
+      // — DK Metcalf (28.5 WR) doesn't cleanly match either. This kills the
+      // top-pick Metcalf→wazimo suggestion at the source.
+      if (!finderCounterpartyBuysVet(tProfile, sellPl)) continue;
       var sHealth = getRosterHealthFlag(sellPl);
       var healthBonus = sHealth && (sHealth.flag === 'SELL' || sHealth.flag === 'CUT') ? 600 : 0;
 
@@ -4243,13 +4394,24 @@ function findTrades() {
   }
 
   // Deduplicate — remove same team+player combos
-
   var seen = new Set();
   var deduped = suggestions.filter(function(s) {
     var key = s.team + '|' + (s.iGet ? s.iGet.name : s.iGetPick ? s.iGetPick.label : 'pick') + '|' + (s.iGive ? s.iGive.name : s.iGivePick ? s.iGivePick.label : 'pick');
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
+  });
+
+  // Rule 8: dedupe by sell asset — one player-you-send doesn't get to spam
+  // the board across 4 counterparties. Keep the top 2 highest-scoring
+  // destinations per sell asset so you see choice without noise.
+  var perSellCount = {};
+  deduped.sort(function(a, b) { return (b.score || 0) - (a.score || 0); });
+  deduped = deduped.filter(function(s) {
+    var sellKey = s.iGive ? s.iGive.name : (s.iGivePick ? s.iGivePick.label : null);
+    if (!sellKey) return true;
+    perSellCount[sellKey] = (perSellCount[sellKey] || 0) + 1;
+    return perSellCount[sellKey] <= 2;
   });
 
   // ── Balance filter: only show trades where value gap ≤ 20% of total ──────
@@ -5365,13 +5527,22 @@ async function buildLedgerIntel(force) {
     (t.roster_ids || []).forEach(function(rid) {
       if (myRosterIds.indexOf(rid) !== -1) return;
       var cp = (STATE.rosterIdMap && STATE.rosterIdMap[rid]) || ('R' + rid);
-      if (!perCP[cp]) perCP[cp] = { trades: 0, net: 0, pickCap: 0, shapes: {}, lastDate: 0 };
+      if (!perCP[cp]) perCP[cp] = { trades: 0, net: 0, pickCap: 0, shapes: {}, lastDate: 0, recentPickCapReceived: 0, recentPickCapPaid: 0 };
       var s = perCP[cp];
       s.trades += 1;
       s.net += net;
       s.pickCap += pickCap;
       s.shapes[shape] = (s.shapes[shape] || 0) + 1;
       if (when > s.lastDate) s.lastDate = when;
+      // 45-day recency window — if a counterparty just paid heavy pick capital
+      // (from THEIR side), they're temporarily picked-out and unlikely to pay
+      // more capital for another vet. Tracked from Joe's side: pickCap > 0 = we
+      // received pick capital = they paid it.
+      var daysAgo = (Date.now() - when) / 86400000;
+      if (daysAgo <= 45) {
+        if (pickCap > 0) s.recentPickCapReceived += pickCap;
+        else s.recentPickCapPaid += -pickCap;
+      }
     });
 
     if (!perShape[shape]) perShape[shape] = { count: 0, netSum: 0, pickCapSum: 0, positives: 0 };
