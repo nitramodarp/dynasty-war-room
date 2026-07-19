@@ -3719,6 +3719,41 @@ function renderTradeCard(s, i) {
   html += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:3px">✅ For you: ' + s.whyYouAccept + '</div>';
   html += '<div style="font-size:12px;color:var(--text-dim)">✅ For them: ' + s.whyTheyAccept + '</div>';
   if (s.profile && s.profile.notes) html += '<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:4px">💬 ' + s.profile.notes + '</div>';
+
+  // ── LEDGER INTEL — pulled from your actual trade history ──────────
+  var cpBlurb = ledgerCounterpartyBlurb(s.team);
+  var proposedShape = ledgerProposedShape(s.iGet, s.iGive, s.iGivePick, s.iGetPick, s.iGetPick2);
+  var shapeVerdict = ledgerShapeVerdict(proposedShape);
+  if (cpBlurb || shapeVerdict) {
+    html += '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">';
+    html += '<div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.5px">📒 LEDGER INTEL</div>';
+    if (cpBlurb) {
+      var netColor = cpBlurb.net > 500 ? 'var(--green)' : cpBlurb.net < -500 ? 'var(--red)' : 'var(--yellow)';
+      var pickColor = cpBlurb.pickCap > 500 ? 'var(--green)' : cpBlurb.pickCap < -500 ? 'var(--red)' : 'var(--yellow)';
+      html += '<div style="font-size:11px;color:var(--text-dim);line-height:1.6">';
+      html += '<strong style="color:var(--text)">' + cpBlurb.trades + '</strong> prior trade' + (cpBlurb.trades === 1 ? '' : 's') + ' with ' + s.team + ' · ';
+      html += 'net <span style="color:' + netColor + ';font-family:\'IBM Plex Mono\',monospace">' + (cpBlurb.net >= 0 ? '+' : '') + fmt(cpBlurb.net) + '</span> value · ';
+      html += '2027+ pick cap <span style="color:' + pickColor + ';font-family:\'IBM Plex Mono\',monospace">' + (cpBlurb.pickCap >= 0 ? '+' : '') + fmt(cpBlurb.pickCap) + '</span>';
+      if (cpBlurb.lastDays != null) html += ' · last ' + cpBlurb.lastDays + 'd ago';
+      html += '</div>';
+    }
+    if (shapeVerdict) {
+      var isPositivePattern = shapeVerdict.avgNet > 200;
+      var isNegativePattern = shapeVerdict.avgNet < -500;
+      var shapeBg = isNegativePattern ? 'rgba(255,68,68,0.10)' : isPositivePattern ? 'rgba(76,255,145,0.10)' : 'rgba(255,215,0,0.08)';
+      var shapeColor = isNegativePattern ? 'var(--red)' : isPositivePattern ? 'var(--green)' : 'var(--yellow)';
+      var icon = isNegativePattern ? '⚠️' : isPositivePattern ? '✅' : '➖';
+      html += '<div style="margin-top:6px;padding:6px 10px;border-radius:6px;background:' + shapeBg + ';font-size:11px;line-height:1.5">';
+      html += icon + ' <strong style="color:' + shapeColor + '">' + ledgerShapeLabel(proposedShape) + '</strong> — ';
+      html += 'this shape has averaged <span style="font-family:\'IBM Plex Mono\',monospace;color:' + shapeColor + '">' + (shapeVerdict.avgNet >= 0 ? '+' : '') + fmt(shapeVerdict.avgNet) + '</span> net';
+      html += ' across your <strong>' + shapeVerdict.count + '</strong> prior deals of this type';
+      if (isNegativePattern) html += ' — historically a losing pattern for you';
+      else if (isPositivePattern) html += ' — historically a winning pattern for you';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
   html += '</div></div>';
   return html;
 }
@@ -3816,22 +3851,104 @@ function runTradeFinder() {
   const container = document.getElementById('tradeFinderResults');
   renderPriorityMoves();
   DISMISSED_TRADES.clear();
-  container.innerHTML = '<div class="mono" style="color:var(--accent);padding:20px;text-align:center">🔍 Scanning league...</div>';
-  
-  setTimeout(function() {
-    try {
-      const results = findTrades();
-      if (!results.length) {
-        container.innerHTML = '<div class="mono muted" style="text-align:center;padding:40px">No mutually beneficial deals found right now.</div>';
-        return;
+  container.innerHTML = '<div class="mono" style="color:var(--accent);padding:20px;text-align:center">🔍 Loading ledger intel + scanning league...</div>';
+
+  buildLedgerIntel(false).then(function() {
+    setTimeout(function() {
+      try {
+        const results = findTrades();
+        var headline = renderLedgerHeadlinePanel();
+        var cpPanel = renderCounterpartyIntelPanelHTML();
+        if (!results.length) {
+          container.innerHTML = headline + cpPanel + '<div class="mono muted" style="text-align:center;padding:40px">No mutually beneficial deals found right now.</div>';
+          return;
+        }
+        container.innerHTML = headline + cpPanel
+          + '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px">' + results.length + ' potential deals found — dismiss ones you\'re not interested in</div>'
+          + results.map(function(s, i) { return renderTradeCard(s, i); }).join('');
+      } catch(e) {
+        container.innerHTML = '<div class="error-msg">Error finding trades: ' + e.message + '</div>';
+        console.error('Trade finder error:', e);
       }
-      container.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px">' + results.length + ' potential deals found — dismiss ones you\'re not interested in</div>' +
-        results.map(function(s, i) { return renderTradeCard(s, i); }).join('');
-    } catch(e) {
-      container.innerHTML = '<div class="error-msg">Error finding trades: ' + e.message + '</div>';
-      console.error('Trade finder error:', e);
-    }
-  }, 50);
+    }, 50);
+  }).catch(function(e) {
+    // If ledger intel fails, fall back to non-intel mode rather than breaking the finder.
+    console.warn('Ledger intel unavailable, running finder without it:', e);
+    setTimeout(function() {
+      try {
+        const results = findTrades();
+        if (!results.length) {
+          container.innerHTML = '<div class="mono muted" style="text-align:center;padding:40px">No mutually beneficial deals found right now.</div>';
+          return;
+        }
+        container.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px">' + results.length + ' potential deals found</div>'
+          + results.map(function(s, i) { return renderTradeCard(s, i); }).join('');
+      } catch(e2) {
+        container.innerHTML = '<div class="error-msg">Error finding trades: ' + e2.message + '</div>';
+      }
+    }, 50);
+  });
+}
+
+// Headline panel: one-line summary of what the ledger says right now,
+// naming your worst and best patterns so the reader can decode the
+// red/green flags on individual cards below.
+function renderLedgerHeadlinePanel() {
+  var intel = STATE.ledgerIntel;
+  if (!intel || !intel.tradeCount) return '';
+  var shapes = intel.shapes || {};
+  var worst = null, best = null;
+  Object.keys(shapes).forEach(function(k) {
+    var s = shapes[k];
+    if (s.count < 2) return;
+    if (!worst || s.avgNet < worst.stats.avgNet) worst = { key: k, stats: s };
+    if (!best  || s.avgNet > best.stats.avgNet)  best  = { key: k, stats: s };
+  });
+  var html = '<div class="card" style="margin-bottom:14px;border:1px solid var(--border)">';
+  html += '<div class="card-title" style="font-size:12px">📒 Ledger Signal — What Your Trade History Says</div>';
+  html += '<div style="font-size:11px;color:var(--text-dim);line-height:1.7">';
+  html += 'Analyzing <strong style="color:var(--text)">' + intel.tradeCount + '</strong> completed trade' + (intel.tradeCount === 1 ? '' : 's') + ' across ' + Object.keys(intel.counterparties).length + ' counterparties. ';
+  if (worst && worst.stats.avgNet < -500) {
+    html += 'Your <strong style="color:var(--red)">weakest pattern</strong> is <em>' + ledgerShapeLabel(worst.key) + '</em> (' + worst.stats.count + ' deals, avg ' + fmt(worst.stats.avgNet) + ' net). Suggestions matching this shape are flagged red. ';
+  }
+  if (best && best.stats.avgNet > 200) {
+    html += 'Your <strong style="color:var(--green)">strongest pattern</strong> is <em>' + ledgerShapeLabel(best.key) + '</em> (' + best.stats.count + ' deals, avg +' + fmt(best.stats.avgNet) + ' net). Green-flagged suggestions match this shape.';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+// Counterparty ledger table — who's paid you, who you've paid, sorted
+// by net value flow so favourable counterparties surface at the top.
+function renderCounterpartyIntelPanelHTML() {
+  var intel = STATE.ledgerIntel;
+  if (!intel || !Object.keys(intel.counterparties).length) return '';
+  var rows = Object.entries(intel.counterparties).map(function(e) {
+    return { name: e[0], stats: e[1] };
+  }).sort(function(a, b) { return b.stats.net - a.stats.net; });
+  var html = '<div class="card" style="margin-bottom:14px">';
+  html += '<div class="card-title" style="font-size:12px">📒 Counterparty Ledger</div>';
+  html += '<div style="overflow-x:auto"><table class="data-table"><thead><tr>'
+    + '<th>Team</th><th class="text-right">Trades</th><th class="text-right">Net Value</th>'
+    + '<th class="text-right">2027+ Pick Δ</th><th>Dominant Shape</th><th class="text-right">Last</th></tr></thead><tbody>';
+  rows.forEach(function(r) {
+    var s = r.stats;
+    var domShape = null, mx = 0;
+    Object.keys(s.shapes).forEach(function(k) { if (s.shapes[k] > mx) { mx = s.shapes[k]; domShape = k; } });
+    var netColor = s.net > 500 ? 'var(--green)' : s.net < -500 ? 'var(--red)' : 'var(--yellow)';
+    var pickColor = s.pickCap > 500 ? 'var(--green)' : s.pickCap < -500 ? 'var(--red)' : 'var(--yellow)';
+    var lastDays = s.lastDate ? Math.round((Date.now() - s.lastDate) / 86400000) + 'd' : '—';
+    html += '<tr><td>' + r.name + '</td>'
+      + '<td class="text-right mono">' + s.trades + '</td>'
+      + '<td class="text-right mono" style="color:' + netColor + '">' + (s.net >= 0 ? '+' : '') + fmt(s.net) + '</td>'
+      + '<td class="text-right mono" style="color:' + pickColor + '">' + (s.pickCap >= 0 ? '+' : '') + fmt(s.pickCap) + '</td>'
+      + '<td class="mono" style="font-size:10px;color:var(--text-dim)">' + (domShape ? ledgerShapeLabel(domShape) : '—') + '</td>'
+      + '<td class="text-right mono" style="font-size:10px;color:var(--text-muted)">' + lastDays + '</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:8px;line-height:1.6">Net Value is at current KTC (drifts from what values were when trades happened). Green net = market currently prefers what you got. Red = it prefers what you gave up. Read this before scanning the suggestion cards below — it tells you who has actually paid you in past deals and who has extracted from you.</div>';
+  html += '</div>';
+  return html;
 }
 
 function findTrades() {
@@ -5168,6 +5285,148 @@ function renderContenderGap() {
     + '</div>';
 
   host.innerHTML = html;
+}
+
+// ============================================================
+// LEDGER INTEL — turns your Sleeper trade history into signals
+// the Trade Finder can actually use.
+//
+// What we compute from real transactions:
+//   • Per-counterparty flow: how many trades, net value direction,
+//     pick-capital direction, last time you dealt with them.
+//   • Deal shapes: pattern-classify every past trade (e.g.
+//     "you-send-multi-picks-for-one" or "you-send-vet-for-picks").
+//   • Shape performance: for each shape, what your ledger says
+//     about it — average net value, average pick capital delta,
+//     and how often it landed positive. This is how the Trade
+//     Finder can red-flag proposed deals that reproduce your
+//     historical losing patterns.
+// ============================================================
+function ledgerClassifyShape(rec, gave) {
+  var recPlayers = rec.filter(function(x) { return x.pos !== 'PICK'; }).length;
+  var recPicks   = rec.filter(function(x) { return x.pos === 'PICK'; }).length;
+  var gavePlayers = gave.filter(function(x) { return x.pos !== 'PICK'; }).length;
+  var gavePicks   = gave.filter(function(x) { return x.pos === 'PICK'; }).length;
+  // Multi-pick-for-one is the loudest failure shape, so it wins even if
+  // a token player is on the other side.
+  if (gavePicks >= 2 && recPlayers === 1 && recPicks === 0) return 'SEND_MULTI_PICKS_FOR_ONE';
+  if (gavePicks >= 2 && recPlayers <= 1) return 'SEND_MULTI_PICKS_FOR_ONE';
+  if (recPicks >= 2 && gavePlayers === 1 && gavePicks === 0) return 'RECEIVE_MULTI_PICKS_FOR_ONE';
+  if (recPicks >= 1 && gavePlayers >= 1 && gavePicks === 0 && recPlayers === 0) return 'VET_FOR_PICKS';
+  if (gavePicks >= 1 && recPlayers >= 1 && gavePlayers === 0 && recPicks === 0) return 'PICKS_FOR_VET';
+  if (recPlayers === 1 && gavePlayers === 1 && recPicks === 0 && gavePicks === 0) return 'PLAYER_SWAP';
+  if (recPicks >= 1 && gavePicks >= 1 && recPlayers === 0 && gavePlayers === 0) return 'PICK_SWAP';
+  return 'MIXED';
+}
+
+function ledgerShapeLabel(k) {
+  return ({
+    SEND_MULTI_PICKS_FOR_ONE:    'You send 2+ picks for one player',
+    RECEIVE_MULTI_PICKS_FOR_ONE: 'You receive 2+ picks for one player',
+    VET_FOR_PICKS:               'You send a proven vet for picks',
+    PICKS_FOR_VET:               'You send picks for a vet',
+    PLAYER_SWAP:                 '1-for-1 player swap',
+    PICK_SWAP:                   'Pick-for-pick swap',
+    MIXED:                       'Mixed multi-asset'
+  })[k] || k;
+}
+
+async function buildLedgerIntel(force) {
+  if (STATE.ledgerIntel && !force) return STATE.ledgerIntel;
+  if (!STATE.rosterIdMap || !STATE.ktcPlayers) return null;
+  var myRosterIds = ledgerMyRosterIds();
+  var txs;
+  try { txs = await fetchAllTransactions(); } catch (e) { return null; }
+  var myTrades = txs.filter(function(t) {
+    return t.type === 'trade' && t.status === 'complete'
+      && Array.isArray(t.roster_ids)
+      && t.roster_ids.some(function(rid) { return myRosterIds.indexOf(rid) !== -1; });
+  });
+  var seen = {};
+  myTrades = myTrades.filter(function(t) {
+    var k = t.transaction_id || (t.status_updated + '_' + (t.roster_ids || []).join(','));
+    if (seen[k]) return false; seen[k] = true; return true;
+  });
+
+  var perCP = {};
+  var perShape = {};
+
+  myTrades.forEach(function(t) {
+    var split = ledgerSplitTrade(t, myRosterIds);
+    var recVal = split.received.reduce(function(s, x) { return s + (x.value || 0); }, 0);
+    var gaveVal = split.gaveUp.reduce(function(s, x) { return s + (x.value || 0); }, 0);
+    var net = recVal - gaveVal;
+    var pickCap = 0;
+    split.received.forEach(function(x) { if (x.pos === 'PICK' && x.season >= 2027) pickCap += (x.value || 0); });
+    split.gaveUp.forEach(function(x) { if (x.pos === 'PICK' && x.season >= 2027) pickCap -= (x.value || 0); });
+    var shape = ledgerClassifyShape(split.received, split.gaveUp);
+    var when = t.status_updated || t.created || 0;
+
+    (t.roster_ids || []).forEach(function(rid) {
+      if (myRosterIds.indexOf(rid) !== -1) return;
+      var cp = (STATE.rosterIdMap && STATE.rosterIdMap[rid]) || ('R' + rid);
+      if (!perCP[cp]) perCP[cp] = { trades: 0, net: 0, pickCap: 0, shapes: {}, lastDate: 0 };
+      var s = perCP[cp];
+      s.trades += 1;
+      s.net += net;
+      s.pickCap += pickCap;
+      s.shapes[shape] = (s.shapes[shape] || 0) + 1;
+      if (when > s.lastDate) s.lastDate = when;
+    });
+
+    if (!perShape[shape]) perShape[shape] = { count: 0, netSum: 0, pickCapSum: 0, positives: 0 };
+    perShape[shape].count += 1;
+    perShape[shape].netSum += net;
+    perShape[shape].pickCapSum += pickCap;
+    if (net > 0) perShape[shape].positives += 1;
+  });
+
+  var shapeStats = {};
+  Object.keys(perShape).forEach(function(k) {
+    var s = perShape[k];
+    shapeStats[k] = {
+      count: s.count,
+      avgNet: Math.round(s.netSum / s.count),
+      avgPickCap: Math.round(s.pickCapSum / s.count),
+      winRate: s.positives / s.count
+    };
+  });
+
+  STATE.ledgerIntel = {
+    counterparties: perCP,
+    shapes: shapeStats,
+    tradeCount: myTrades.length,
+    computedAt: Date.now()
+  };
+  return STATE.ledgerIntel;
+}
+
+// Signals used by Trade Finder card rendering.
+function ledgerCounterpartyBlurb(team) {
+  var intel = STATE.ledgerIntel;
+  if (!intel || !intel.counterparties[team]) return null;
+  var s = intel.counterparties[team];
+  var lastDays = s.lastDate ? Math.round((Date.now() - s.lastDate) / 86400000) : null;
+  return { trades: s.trades, net: s.net, pickCap: s.pickCap, lastDays: lastDays };
+}
+
+function ledgerShapeVerdict(shape) {
+  var intel = STATE.ledgerIntel;
+  if (!intel || !intel.shapes[shape]) return null;
+  var s = intel.shapes[shape];
+  // Only return verdicts backed by 2+ data points — one trade doesn't make a pattern.
+  if (s.count < 2) return null;
+  return s;
+}
+
+function ledgerProposedShape(iGet, iGive, iGivePick, iGetPick, iGetPick2) {
+  var rec = [], gave = [];
+  if (iGet) rec.push({ pos: iGet.pos || 'P' });
+  if (iGetPick) rec.push({ pos: 'PICK' });
+  if (iGetPick2) rec.push({ pos: 'PICK' });
+  if (iGive) gave.push({ pos: iGive.pos || 'P' });
+  if (iGivePick) gave.push({ pos: 'PICK' });
+  return ledgerClassifyShape(rec, gave);
 }
 
 // ============================================================
