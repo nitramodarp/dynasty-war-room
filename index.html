@@ -2794,9 +2794,12 @@ function generateGMBrief() {
     var names = sellList.slice(0,2).map(function(p){return p.name;}).join(' and ');
     narrative = sellList.length + ' aging assets are burning value — the sell clock is running on ' + names + '.';
     priority = 'Move sell candidates now before value decays further.';
-  } else if (win.years >= 1 && myPickVal > 12000) {
+  } else if (win.years <= 0 && myPickVal > 12000) {
     narrative = 'Strong pick capital of ' + fmtK(myPickVal) + ' with window ' + win.label.toLowerCase() + ' — conditions are right to buy proven contributors.';
     priority = 'Deploy pick capital to accelerate the contention timeline.';
+  } else if (win.years >= 1 && myPickVal > 12000) {
+    narrative = 'Pick capital of ' + fmtK(myPickVal) + ' is ahead of the roster — window is still ' + win.label.toLowerCase() + '. Hold and convert via the rookie draft rather than buying now.';
+    priority = 'Stockpile through the 2027 rookie draft; shift to buying once the window hits PRIME.';
   } else if (teVorp < -1500) {
     narrative = 'TE room is a liability in TEP format — Kittle recovery is the single biggest value unlock on the roster.';
     priority = 'Hold Kittle through recovery; once healthy, sell to a proven-vet buyer (wazimo or NateDawg726) for future capital.';
