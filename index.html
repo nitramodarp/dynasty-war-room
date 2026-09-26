@@ -1133,6 +1133,7 @@
     <div class="card">
       <div class="card-title">📦 League Asset Rankings</div>
       <div style="font-size:10px;color:var(--text-dim);margin:-4px 0 10px;line-height:1.45">Total dynasty asset depth (roster value + pick capital) — a portfolio-size stat, not a title-odds stat. For actual championship probability and $EV, see <b style="color:var(--text)">💵 Equity</b>.</div>
+      <div id="projPtsBlendStatus" style="font-size:9px;color:var(--text-muted);margin:-6px 0 10px;font-family:'DM Mono',monospace"></div>
       <div id="powerRankingsContainer">Loading...</div>
     </div>
 
@@ -1414,10 +1415,12 @@
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">💵 Championship Equity — Dollars, Not Vibes</div>
       <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">
-        The league mints one pot per year. A dynasty asset is worth real money only insofar as it moves your <strong style="color:var(--text)">probability of capturing a pot</strong>. This tab converts every player and pick into title odds and dollars: 2026 odds come from the <strong style="color:var(--text)">Ciely optimal-lineup projection</strong> (taxi excluded — they can't start); 2027–2028 window odds come from <strong style="color:var(--text)">age-decayed asset bases + matured pick capital</strong>. $EV = odds × pot, discounted. Bench players carry $0 for 2026 by design — insurance isn't equity.
+        The league mints one pot per year, paid three deep. A dynasty asset is worth real money only insofar as it moves your <strong style="color:var(--text)">probability of capturing a payout</strong>. This tab converts every player and pick into placement odds and dollars: 2026 odds come from the <strong style="color:var(--text)">Ciely optimal-lineup projection</strong> (taxi excluded — they can't start), blended with real Sleeper record/points-for once 4+ games are in; 2027–2028 window odds come from <strong style="color:var(--text)">age-decayed asset bases + matured pick capital</strong>. $EV = P(1st)×pot1 + P(2nd)×pot2 + P(3rd)×pot3, discounted — full placement odds via a Plackett-Luce extension of the same softmax, not just title-or-nothing. Bench players carry $0 for 2026 by design — insurance isn't equity.
       </div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;padding-bottom:4px">
-        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">POT TO WINNER ($)</div><input id="eqPayout" type="number" value="1000" onchange="equityCfgChanged()" style="width:90px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">1ST ($)</div><input id="eqPayout1" type="number" value="1000" onchange="equityCfgChanged()" style="width:80px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">2ND ($)</div><input id="eqPayout2" type="number" value="375" onchange="equityCfgChanged()" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">3RD ($)</div><input id="eqPayout3" type="number" value="125" onchange="equityCfgChanged()" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
         <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">ENTRY / YR ($)</div><input id="eqEntry" type="number" value="125" onchange="equityCfgChanged()" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
         <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">DISCOUNT / YR</div><input id="eqDiscount" type="number" step="0.05" min="0.5" max="1" value="0.9" onchange="equityCfgChanged()" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
         <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">SEASONS PAID SO FAR</div><input id="eqPaid" type="number" value="2" onchange="equityCfgChanged()" style="width:60px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
@@ -3077,9 +3080,23 @@ function renderPowerRankings() {
   const rankings = STATE.powerRankings || calcPowerRankings();
   // Optimal-lineup projected points per team + production rank (1 = best), reused by cards + table
   const projByTeam = {};
-  if (STATE.projMap && Object.keys(STATE.projMap).length) rankings.forEach(t => { projByTeam[t.name] = teamProjStarters(t.players); });
+  if (STATE.projMap && Object.keys(STATE.projMap).length) rankings.forEach(t => { projByTeam[t.name] = blendLiveProjection(t.name, teamProjStarters(t.players)); });
   const prodRankMap = {};
   Object.keys(projByTeam).sort((a, b) => projByTeam[b] - projByTeam[a]).forEach((name, i) => { prodRankMap[name] = i + 1; });
+  const blendStatusEl = document.getElementById('projPtsBlendStatus');
+  if (blendStatusEl) {
+    const standings = STATE.standings || {};
+    const gpList = Object.values(standings).map(s => (s.wins||0)+(s.losses||0)+(s.ties||0));
+    const minGp = gpList.length ? Math.min(...gpList) : 0;
+    if (STATE._standingsArePrevSeason || !gpList.length) {
+      blendStatusEl.textContent = 'PROJ PTS: pure preseason Ciely — no live season data yet.';
+    } else if (minGp >= 4) {
+      const liveWeight = Math.min(0.5, minGp / 14);
+      blendStatusEl.textContent = 'PROJ PTS: blending real points-for (' + Math.round(liveWeight*100) + '% live weight, ' + minGp + ' games in) with Ciely projection.';
+    } else {
+      blendStatusEl.textContent = 'PROJ PTS: pure preseason Ciely — live points-for blend activates once every team has 4+ games (currently ' + minGp + ').';
+    }
+  }
   const container = document.getElementById('powerRankingsContainer');
   container.innerHTML = rankings.map((team, i) => {
     const rank = i + 1;
@@ -6012,15 +6029,16 @@ async function renderLedger() {
 //     future pools split by age-projected value (taxi included — they
 //     can start by then). Picks earn from future pools only.
 // ============================================================
-// PLACEHOLDER: payout: 1000 assumes a flat winner-take-most pot. Entry ($125/yr) is
-// confirmed; the real payout structure (2nd place + division winners get something,
-// biggest share to the playoff champion) is NOT — this number needs correcting once
-// that split is confirmed, since every $EV figure in this tab scales off it directly.
-var EQUITY_CFG = { payout: 1000, entry: 125, discount: 0.9, seasonsPaid: 2 };
+// Confirmed payout structure: 1st $1000, 2nd $375, 3rd $125. Entry $125/yr.
+// (Division-winner payouts, if any, aren't modeled here — not part of the
+// confirmed structure as given; revisit if that turns out to be a real 4th tier.)
+var EQUITY_CFG = { payouts: { first: 1000, second: 375, third: 125 }, entry: 125, discount: 0.9, seasonsPaid: 2 };
 
 function equityCfgChanged() {
   var g = function(id, d) { var el = document.getElementById(id); var v = parseFloat(el && el.value); return isNaN(v) ? d : v; };
-  EQUITY_CFG.payout      = g('eqPayout', 1000);
+  EQUITY_CFG.payouts.first  = g('eqPayout1', 1000);
+  EQUITY_CFG.payouts.second = g('eqPayout2', 375);
+  EQUITY_CFG.payouts.third  = g('eqPayout3', 125);
   EQUITY_CFG.entry       = g('eqEntry', 125);
   EQUITY_CFG.discount    = Math.min(1, Math.max(0.5, g('eqDiscount', 0.9)));
   EQUITY_CFG.seasonsPaid = g('eqPaid', 2);
@@ -6107,6 +6125,64 @@ function equityLineupPlayers(players) {
 // it too — same calc/render split already used for calcPowerRankings/renderPowerRankings.
 // Returns null if rosters/projections aren't loaded yet; callers fall back to
 // asset-based rank until then (same pattern renderDashboard already uses).
+// Blends a Ciely-projection points figure with REAL Sleeper record/points-for, once
+// enough of the season has actually happened to trust it over a preseason number.
+// Gated at 4+ games played league-wide (same threshold getPickPosition() already
+// uses — 1-0 vs 0-1 is noise, not signal), then ramps live weight 0->0.5 over a
+// ~14-week regular season so one early lucky/unlucky week can't dominate a
+// full-season estimate. Shared by Championship Equity's 2026 leg AND every
+// "PROJ PTS" figure on the Assets tab (League Asset Rankings + League Positional
+// Breakdown, which both read from the same projByTeam map) — one blend, everywhere
+// a Ciely projection is shown as "this team's projected output," so none of them
+// can silently disagree about whether a real 0-2 start counts for anything.
+function blendLiveProjection(teamName, cielyProj) {
+  var standings = STATE.standings || {};
+  var gpList = Object.values(standings).map(function(s) { return (s.wins||0)+(s.losses||0)+(s.ties||0); });
+  var liveGated = !STATE._standingsArePrevSeason && gpList.length > 0 && Math.min.apply(null, gpList) >= 4;
+  var s = standings[teamName];
+  var gp = s ? (s.wins||0)+(s.losses||0)+(s.ties||0) : 0;
+  if (!liveGated || !s || !gp) return cielyProj;
+  var livePace = (s.pf / gp) * 14;               // real points-for, paced to a full season
+  var liveWeight = Math.min(0.5, gp / 14);
+  return cielyProj * (1 - liveWeight) + livePace * liveWeight;
+}
+
+// Extends single-winner Plackett-Luce probabilities (equitySoftmax's p1 array) into
+// full P(1st)/P(2nd)/P(3rd) placement probabilities for every team. Standard
+// sequential PL extension: condition on who won 1st, renormalize the remaining
+// field's probabilities, repeat for 2nd. The underlying unnormalized softmax
+// weights cancel out of every ratio in this derivation — p(i beats the rest | j
+// already removed) = p1[i]/(1-p1[j]) — so this needs nothing but the p1 array
+// equitySoftmax already returns. O(n^3) for n teams; trivial at league size.
+// Sanity check: for any 3-team subset, p1[i]+p2[i]+p3[i] sums to 1 exactly, since
+// every team must finish somewhere in a 3-team field — verified in testing.
+function plackettLuceTop3(p1) {
+  var n = p1.length;
+  var p2 = new Array(n).fill(0);
+  var p3 = new Array(n).fill(0);
+  for (var i = 0; i < n; i++) {
+    for (var j = 0; j < n; j++) {
+      if (j === i) continue;
+      var rem1 = 1 - p1[j];
+      if (rem1 <= 1e-12) continue;
+      p2[i] += p1[j] * (p1[i] / rem1);
+      for (var k = 0; k < n; k++) {
+        if (k === i || k === j) continue;
+        var rem2 = rem1 - p1[k];
+        if (rem2 <= 1e-12) continue;
+        p3[i] += p1[j] * (p1[k] / rem1) * (p1[i] / rem2);
+      }
+    }
+  }
+  return { p1: p1.slice(), p2: p2, p3: p3 };
+}
+
+// $EV for team index i from a plackettLuceTop3() result, using the confirmed
+// 3-tier payout structure (1st/2nd/3rd) — not just title-or-nothing.
+function payTierEV(pl, i, C) {
+  return pl.p1[i] * C.payouts.first + pl.p2[i] * C.payouts.second + pl.p3[i] * C.payouts.third;
+}
+
 function calcEquity() {
   if (!STATE.allRosters || !Object.keys(STATE.allRosters).length) return null;
   if (!STATE.projMap || !Object.keys(STATE.projMap).length) return null;
@@ -6114,27 +6190,13 @@ function calcEquity() {
   var C = EQUITY_CFG;
   var teams = Object.values(CONFIG.OWNER_MAP);
 
-  // 2026 leg: Ciely optimal-lineup projection, blended with REAL Sleeper record/
-  // points-for once enough of the season has actually happened to trust it over a
-  // preseason number. Same 4-game minimum gate getPickPosition() already uses, for
-  // the same reason — 1-0 vs 0-1 is noise, not signal. Live weight then ramps 0->0.5
-  // over a ~14-week regular season, so results nudge the number without letting one
-  // lucky/unlucky early week dominate a full-season title-odds estimate the way raw
-  // win/loss would. The 2027/2028 legs below are untouched by any of this — they
-  // stay pure age-decayed asset value, so a this-year injury or a rough three-game
-  // stretch doesn't drag down next year's number the way it correctly does this one.
-  var standings = STATE.standings || {};
-  var gpList = Object.values(standings).map(function(s) { return (s.wins||0)+(s.losses||0)+(s.ties||0); });
-  var liveGated = !STATE._standingsArePrevSeason && gpList.length > 0 && Math.min.apply(null, gpList) >= 4;
-
+  // 2026 leg: Ciely optimal-lineup projection, blended with real record/points-for
+  // via blendLiveProjection() above. The 2027/2028 legs below are untouched by any
+  // of this — they stay pure age-decayed asset value, so a this-year injury or a
+  // rough three-game stretch doesn't drag down next year's number the way it
+  // correctly does this one.
   var proj26 = teams.map(function(t) {
-    var ciely = teamProjStarters(STATE.allRosters[t] || []);
-    var s = standings[t];
-    var gp = s ? (s.wins||0)+(s.losses||0)+(s.ties||0) : 0;
-    if (!liveGated || !s || !gp) return ciely;
-    var livePace = (s.pf / gp) * 14;               // real points-for, paced to a full season
-    var liveWeight = Math.min(0.5, gp / 14);
-    return ciely * (1 - liveWeight) + livePace * liveWeight;
+    return blendLiveProjection(t, teamProjStarters(STATE.allRosters[t] || []));
   });
   var sm26 = equitySoftmax(proj26);
   var base27 = teams.map(function(t) { return equityAssetBase(t, 2027); });
@@ -6142,20 +6204,48 @@ function calcEquity() {
   var base28 = teams.map(function(t) { return equityAssetBase(t, 2028); });
   var sm28 = equitySoftmax(base28);
 
+  var pl26 = plackettLuceTop3(sm26.probs);
+  var pl27 = plackettLuceTop3(sm27.probs);
+  var pl28 = plackettLuceTop3(sm28.probs);
+
   var league = teams.map(function(t, i) {
-    var p = { name: t, p26: sm26.probs[i], p27: sm27.probs[i], p28: sm28.probs[i] };
-    p.ev26 = p.p26 * C.payout;
-    p.ev27 = p.p27 * C.payout * C.discount;
-    p.ev28 = p.p28 * C.payout * C.discount * C.discount;
+    // p26/p27/p28 stay P(1st) — existing UI labels these "Title Odds" and that's
+    // still exactly what they are. evTotal below is what actually changed: it now
+    // prices in 2nd ($375) and 3rd ($125) too, so a team can carry real $EV without
+    // ever being the frontrunner.
+    var p = { name: t, p26: sm26.probs[i], p27: sm27.probs[i], p28: sm28.probs[i],
+              p26_2nd: pl26.p2[i], p26_3rd: pl26.p3[i],
+              p27_2nd: pl27.p2[i], p27_3rd: pl27.p3[i],
+              p28_2nd: pl28.p2[i], p28_3rd: pl28.p3[i] };
+    p.ev26 = payTierEV(pl26, i, C);
+    p.ev27 = payTierEV(pl27, i, C) * C.discount;
+    p.ev28 = payTierEV(pl28, i, C) * C.discount * C.discount;
     p.evTotal = p.ev26 + p.ev27 + p.ev28;
     return p;
   });
   league.sort(function(a,b){ return b.evTotal - a.evTotal; });
-  // Softmax temperatures aren't per-team — attach once on the array itself so
-  // renderEquity's trade-leak-cost calc (needs the temp, not a team's prob) can
-  // read them without recomputing the whole softmax a second time.
-  league.temp27 = sm27.temp;
-  league.temp28 = sm28.temp;
+
+  // Trade leak cost, computed NUMERICALLY rather than as a hand-derived analytical
+  // gradient — the 3-tier Plackett-Luce EV has no clean closed-form derivative the
+  // way a single-payout softmax did, and a numerical bump is exact for whatever
+  // payout/discount config is active with zero risk of an algebra error in a
+  // multi-term derivative. Bumps MY team's asset base by 1,000 units, re-runs
+  // softmax + Plackett-Luce for that one what-if, and reads off the $EV delta.
+  var myIdx = teams.indexOf(CONFIG.MY_TEAM_NAME);
+  var leak27 = 0, leak28 = 0;
+  if (myIdx >= 0) {
+    var bump = 1000;
+    var base27Bumped = base27.slice(); base27Bumped[myIdx] += bump;
+    var pl27Bumped = plackettLuceTop3(equitySoftmax(base27Bumped).probs);
+    leak27 = (payTierEV(pl27Bumped, myIdx, C) - payTierEV(pl27, myIdx, C)) * C.discount;
+
+    var base28Bumped = base28.slice(); base28Bumped[myIdx] += bump;
+    var pl28Bumped = plackettLuceTop3(equitySoftmax(base28Bumped).probs);
+    leak28 = (payTierEV(pl28Bumped, myIdx, C) - payTierEV(pl28, myIdx, C)) * C.discount * C.discount;
+  }
+  league.leak27 = leak27;
+  league.leak28 = leak28;
+
   STATE.equityRankings = league;
   return league;
 }
@@ -6191,10 +6281,10 @@ function renderEquity() {
   var uniformP = 1 / teams.length;
 
   // ── Trade leak cost: marginal $ per 1,000 value units leaked ─────
-  // d$/dv for team i under softmax = payout × P(1−P) / T (value-space
-  // years only — 2026 runs on points, and 2026 is a tank anyway).
-  var leak27 = C.payout * C.discount * mine.p27 * (1 - mine.p27) / league.temp27 * 1000;
-  var leak28 = C.payout * C.discount * C.discount * mine.p28 * (1 - mine.p28) / league.temp28 * 1000;
+  // Computed numerically inside calcEquity() (3-tier payout has no clean closed-
+  // form derivative the way single-payout did) — read off here, not recomputed.
+  var leak27 = league.leak27 || 0;
+  var leak28 = league.leak28 || 0;
   var leakTotal = leak27 + leak28;
 
   var html = '';
