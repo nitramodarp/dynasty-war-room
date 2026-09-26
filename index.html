@@ -959,7 +959,8 @@
 <div class="desktop-nav" id="desktopNav">
   <button class="desktop-nav-tab active" id="dtab-dashboard"       onclick="showTab('dashboard')">🏈 Field</button>
   <button class="desktop-nav-tab"        id="dtab-my-roster"       onclick="showTab('my-roster')">👤 Roster</button>
-  <button class="desktop-nav-tab"        id="dtab-power-rankings"  onclick="showTab('power-rankings')">📊 Rankings</button>
+  <button class="desktop-nav-tab"        id="dtab-equity"          onclick="showTab('equity');renderEquity()">💵 Equity</button>
+  <button class="desktop-nav-tab"        id="dtab-power-rankings"  onclick="showTab('power-rankings')">📦 Assets</button>
   <button class="desktop-nav-tab"        id="dtab-trade-analyzer"  onclick="showTab('trade-analyzer')">⚡ Trade</button>
   <button class="desktop-nav-tab"        id="dtab-draft-picks"     onclick="showTab('draft-picks')">📅 Picks</button>
   <button class="desktop-nav-tab"        id="dtab-waivers"         onclick="showTab('waivers')">📋 Waivers</button>
@@ -968,7 +969,6 @@
   <button class="desktop-nav-tab"        id="dtab-qb-arbitrage"    onclick="showTab('qb-arbitrage');renderQBArbitrage()">💹 QB Arb</button>
   <button class="desktop-nav-tab"        id="dtab-value-prod"      onclick="showTab('value-prod');renderValueProd()">📊 Val/Prod</button>
   <button class="desktop-nav-tab"        id="dtab-pick-arb"        onclick="showTab('pick-arb');renderPickArb()">🎟️ Pick Arb</button>
-  <button class="desktop-nav-tab"        id="dtab-equity"          onclick="showTab('equity');renderEquity()">💵 Equity</button>
   <button class="desktop-nav-tab"        id="dtab-ledger"          onclick="showTab('ledger');renderLedger()">📒 Ledger</button>
   <button class="desktop-nav-tab"        id="dtab-rookie-board"    onclick="showTab('rookie-board')">🎓 Rookies</button>
 </div>
@@ -978,14 +978,14 @@
 <div id="moreDrawer" class="more-drawer">
   <div class="drawer-handle"></div>
   <div class="drawer-grid">
-    <button class="drawer-item" id="drawer-power-rankings" onclick="showTab('power-rankings');closeMoreDrawer()"><span class="drawer-icon">📊</span><span class="drawer-label">Rankings</span></button>
+    <button class="drawer-item" id="drawer-equity" onclick="showTab('equity');renderEquity();closeMoreDrawer()"><span class="drawer-icon">💵</span><span class="drawer-label">Equity</span></button>
+    <button class="drawer-item" id="drawer-power-rankings" onclick="showTab('power-rankings');closeMoreDrawer()"><span class="drawer-icon">📦</span><span class="drawer-label">Assets</span></button>
     <button class="drawer-item" id="drawer-trade-finder" onclick="showTab('trade-finder');closeMoreDrawer()"><span class="drawer-icon">🔍</span><span class="drawer-label">Finder</span></button>
     <button class="drawer-item" id="drawer-league-intel" onclick="showTab('league-intel');closeMoreDrawer()"><span class="drawer-icon">🧠</span><span class="drawer-label">Intel</span></button>
     <button class="drawer-item" id="drawer-qb-arbitrage" onclick="showTab('qb-arbitrage');renderQBArbitrage();closeMoreDrawer()"><span class="drawer-icon">💹</span><span class="drawer-label">QB Arb</span></button>
     <button class="drawer-item" id="drawer-value-prod" onclick="showTab('value-prod');renderValueProd();closeMoreDrawer()"><span class="drawer-icon">📊</span><span class="drawer-label">Val/Prod</span></button>
     <button class="drawer-item" id="drawer-waivers" onclick="showTab('waivers');closeMoreDrawer()"><span class="drawer-icon">📋</span><span class="drawer-label">Waivers</span></button>
     <button class="drawer-item" id="drawer-pick-arb" onclick="showTab('pick-arb');renderPickArb();closeMoreDrawer()"><span class="drawer-icon">🎟️</span><span class="drawer-label">Pick Arb</span></button>
-    <button class="drawer-item" id="drawer-equity" onclick="showTab('equity');renderEquity();closeMoreDrawer()"><span class="drawer-icon">💵</span><span class="drawer-label">Equity</span></button>
     <button class="drawer-item" id="drawer-ledger" onclick="showTab('ledger');renderLedger();closeMoreDrawer()"><span class="drawer-icon">📒</span><span class="drawer-label">Ledger</span></button>
     <button class="drawer-item" id="drawer-rookie-board" onclick="showTab('rookie-board');closeMoreDrawer()"><span class="drawer-icon">🎓</span><span class="drawer-label">Rookies</span></button>
   </div>
@@ -1001,7 +1001,7 @@
 <div class="nav" style="display:none">
   <button class="nav-tab active" onclick="showTab('dashboard')">Dashboard</button>
   <button class="nav-tab" onclick="showTab('my-roster')">My Roster</button>
-  <button class="nav-tab" onclick="showTab('power-rankings')">Power Rankings</button>
+  <button class="nav-tab" onclick="showTab('power-rankings')">Asset Rankings</button>
   <button class="nav-tab" onclick="showTab('trade-analyzer')">Trade Analyzer</button>
   <button class="nav-tab" onclick="showTab('draft-picks')">Draft Picks</button>
   <button class="nav-tab" onclick="showTab('waivers')">Waivers</button>
@@ -1131,7 +1131,8 @@
   <!-- POWER RANKINGS TAB -->
   <div class="tab-content" id="tab-power-rankings">
     <div class="card">
-      <div class="card-title">🏆 League Power Rankings</div>
+      <div class="card-title">📦 League Asset Rankings</div>
+      <div style="font-size:10px;color:var(--text-dim);margin:-4px 0 10px;line-height:1.45">Total dynasty asset depth (roster value + pick capital) — a portfolio-size stat, not a title-odds stat. For actual championship probability and $EV, see <b style="color:var(--text)">💵 Equity</b>.</div>
       <div id="powerRankingsContainer">Loading...</div>
     </div>
 
@@ -1417,7 +1418,7 @@
       </div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;padding-bottom:4px">
         <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">POT TO WINNER ($)</div><input id="eqPayout" type="number" value="1000" onchange="equityCfgChanged()" style="width:90px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
-        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">ENTRY / YR ($)</div><input id="eqEntry" type="number" value="100" onchange="equityCfgChanged()" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">ENTRY / YR ($)</div><input id="eqEntry" type="number" value="125" onchange="equityCfgChanged()" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
         <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">DISCOUNT / YR</div><input id="eqDiscount" type="number" step="0.05" min="0.5" max="1" value="0.9" onchange="equityCfgChanged()" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
         <div><div class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px">SEASONS PAID SO FAR</div><input id="eqPaid" type="number" value="2" onchange="equityCfgChanged()" style="width:60px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
       </div>
@@ -1517,10 +1518,24 @@ const CONFIG = {
   },
   // Archetype age brackets
   ARCHETYPES: {
-    QB: [{label:'Young Developing Asset', max:24.99, cls:'young'},{label:'Peak Asset', max:30.99, cls:'peak'},{label:'Aging Contender', max:33.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}],
-    WR: [{label:'Young Developing Asset', max:25.99, cls:'young'},{label:'Peak Asset', max:28.99, cls:'peak'},{label:'Aging Contender', max:30.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}],
-    RB: [{label:'Young Developing Asset', max:22.99, cls:'young'},{label:'Peak Asset', max:25.99, cls:'peak'},{label:'Sell Immediately', max:99, cls:'sell'}],
-    TE: [{label:'Young Developing Asset', max:24.99, cls:'young'},{label:'Peak Asset', max:30.99, cls:'peak'},{label:'Aging Contender', max:32.99, cls:'aging'},{label:'Sell Immediately', max:99, cls:'sell'}]
+    QB: [{label:'Young Developing Asset', max:24.99, cls:'young'},{label:'Peak Asset', max:30.99, cls:'peak'},{label:'Aging Asset', max:33.99, cls:'aging'},{label:'Decline Asset', max:99, cls:'sell'}],
+    WR: [{label:'Young Developing Asset', max:25.99, cls:'young'},{label:'Peak Asset', max:28.99, cls:'peak'},{label:'Aging Asset', max:30.99, cls:'aging'},{label:'Decline Asset', max:99, cls:'sell'}],
+    RB: [{label:'Young Developing Asset', max:22.99, cls:'young'},{label:'Peak Asset', max:25.99, cls:'peak'},{label:'Decline Asset', max:99, cls:'sell'}],
+    TE: [{label:'Young Developing Asset', max:24.99, cls:'young'},{label:'Peak Asset', max:30.99, cls:'peak'},{label:'Aging Asset', max:32.99, cls:'aging'},{label:'Decline Asset', max:99, cls:'sell'}]
+  },
+  // Team-level thresholds (Power Rankings / Contention Window) — centralized here
+  // to match how player ARCHETYPES is editable, instead of hardcoded inline.
+  TEAM_ARCHETYPE: {
+    strongZ: 0.5,       // powerScore z-score above this = top strength tier
+    weakZ: -0.5,        // powerScore z-score below this = bottom strength tier
+    pickHeavyZ: 0.75    // pick-capital z-score above this = "pick-heavy" flavor
+  },
+  CONTENTION_WINDOW: {
+    qbWeight: 1.5,       // Superflex QB weighting in starter-age + archetype-count calc
+    awayMaxAge: 24.5, awayYoungCount: 7,      // weighted starter age/young-count -> "2-3 YRS AWAY"
+    openingMaxAge: 26.5, openingPeakCount: 9, // -> "WINDOW OPENING"
+    primeMaxAge: 28.5, primePeakCount: 7,     // -> "PRIME WINDOW"
+    leftMaxAge: 30, leftAgingCount: 5         // -> "1-2 YRS LEFT", else "WINDOW CLOSING"
   },
   // VORP replacement ranks — 12-team SF TE+ format
   // QB: 2 start/team × 12 = 24 → rank 25
@@ -1867,6 +1882,7 @@ function getRosterHealthFlagRaw(player) {
       if (value >= 3000) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Young TE (age ' + age + ') with 3k+ value — developmental hold' };
       return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Young TE (age ' + age + ') but low KTC — monitor development' };
     }
+    if (getArchetype(pos, age)?.cls === 'sell') return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Archetype: Decline bracket (age ' + age + ')' };
     const teThreshold = getTop6TEVorp();
     if (value >= 4000 && vorp >= teThreshold) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Top-6 VORP + 4k+ value' };
     if (value >= 4000 || vorp >= teThreshold) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one of two TE thresholds' };
@@ -1876,13 +1892,18 @@ function getRosterHealthFlagRaw(player) {
 
   if (pos === 'QB') {
     const arch = getArchetype(pos, age);
-    if (arch?.cls === 'sell') return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Archetype: Sell bracket (age ' + age + ')' };
+    if (arch?.cls === 'sell') return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Archetype: Decline bracket (age ' + age + ')' };
     if (value >= 3000 && vorp > 0) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Above 3k + positive VORP' };
     const hc = isMyQBHandcuff(player);
     if (hc) return { flag: 'HOLD', color: 'var(--blue)', icon: '🧷', reason: 'Injury handcuff — backs up your ' + hc.name + ' (' + (player.team || '') + '). No trade market, full insurance value' };
     if (value >= 3000 || vorp > 0) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one QB threshold' };
     return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Below 3k and negative VORP' };
   }
+
+  // RB/WR: archetype sell bracket overrides the generic value/VORP ladder below —
+  // same pattern as QB/TE above, so this position can't show HOLD/MONITOR next to
+  // a Decline Asset archetype label on the same roster row.
+  if (getArchetype(pos, age)?.cls === 'sell') return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Archetype: Decline bracket (age ' + age + ')' };
 
   if (age < 24) {
     if (value >= 3000) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Under 24 — trajectory hold (3k+)' };
@@ -2590,17 +2611,20 @@ function calcTeamStats(ownerName) {
   // youth stashes are excluded, so a top-heavy room reads thin here even when its total
   // capital is high — this is the honest "room strength" number.
   const posStartable = { QB:0, RB:0, WR:0, TE:0 };
+  const vorpStartable = { QB:0, RB:0, WR:0, TE:0 };
   for (const pos in vorpByPos) {
     const top = vorpByPos[pos]
       .sort((a, b) => b.value - a.value)
       .slice(0, Math.ceil(STARTER_SLOTS[pos]));
-    totalVORP += top.reduce((s, p) => s + p.vorp, 0);
+    const posVorp = top.reduce((s, p) => s + p.vorp, 0);
+    totalVORP += posVorp;
     posStartable[pos] = top.reduce((s, p) => s + p.value, 0);
+    vorpStartable[pos] = posVorp;
   }
   const avgAge = players.length ? players.reduce((s,p) => s+(p.age||0), 0) / players.filter(p=>p.age).length : 0;
   const posValues = { QB:0, RB:0, WR:0, TE:0 };
   for (const p of players) { if (posValues[p.pos] !== undefined) posValues[p.pos] += p.value; }
-  return { totalValue, totalRosterValue, totalPickValue, totalVORP, avgAge, posValues, posStartable, players, picks: myPicksForTeam };
+  return { totalValue, totalRosterValue, totalPickValue, totalVORP, avgAge, posValues, posStartable, vorpStartable, players, picks: myPicksForTeam };
 }
 
 function calcPowerRankings() {
@@ -2637,31 +2661,42 @@ function calcPowerRankings() {
 function getTeamArchetype(stats) {
   // Strength tier = total assets (matches the power ranking, so the #1 franchise
   // never reads as a "rebuilder"). Pick capital vs the league adds build-vs-contend
-  // flavor. Value-weighted core age splits young builds from old declines.
+  // flavor. "Young" is derived from the SAME contention-window calc rendered on the
+  // same team card (calcContentionWindow), instead of a separately-computed whole-
+  // roster age average — so the build/contend label and the years-away label can
+  // never contradict each other on one card.
+  var T = CONFIG.TEAM_ARCHETYPE;
   var ps = stats.powerScore;
   var pickZ = stats.pickZ || 0;
+  var pickHeavy = pickZ > T.pickHeavyZ;   // notably more future capital than the league
 
-  var wSum = 0, aSum = 0;
-  (stats.players || []).forEach(function(p) { if (p.age && p.value) { wSum += p.value; aSum += p.age * p.value; } });
-  var coreAge = wSum ? (aSum / wSum) : (stats.avgAge || 27);
+  var window = calcContentionWindow(stats.players || []);
+  var young = window.years != null && window.years >= 1;   // "2-3 YRS AWAY" / "WINDOW OPENING"
 
-  var young     = coreAge < 26.5;
-  var pickHeavy = pickZ > 0.75;   // notably more future capital than the league
-
-  if (ps > 0.5) {
-    if (pickHeavy) return { label: '🚀 Loaded (Building)', color: 'var(--green)' };   // strong AND hoarding picks (Saturn)
-    return young ? { label: '🚀 The Dynasty', color: 'var(--green)' }
-                 : { label: '🏆 Win-Now Juggernaut', color: 'var(--gold)' };
+  var base;
+  if (ps > T.strongZ) {
+    if (pickHeavy) base = { label: '🚀 Loaded (Building)', color: 'var(--green)' };   // strong AND hoarding picks
+    else base = young ? { label: '🚀 The Dynasty', color: 'var(--green)' }
+                       : { label: '🏆 Win-Now Juggernaut', color: 'var(--gold)' };
+  } else if (ps < T.weakZ) {
+    if (pickHeavy) base = { label: '🧱 Full Rebuild (Pick-Rich)', color: 'var(--blue)' };
+    else base = young ? { label: '🧱 The Rebuilder', color: 'var(--blue)' }
+                       : { label: '💀 Declining Core', color: 'var(--red)' };
+  } else {
+    // middle tier
+    if (pickHeavy) base = { label: '🧱 Retooling (Pick-Rich)', color: 'var(--blue)' };
+    else base = young ? { label: '🔥 Ascending', color: 'var(--accent)' }
+                       : { label: '⚖️ Fading / Retooling', color: 'var(--orange)' };
   }
-  if (ps < -0.5) {
-    if (pickHeavy) return { label: '🧱 Rebuilding (Stockpiling)', color: 'var(--blue)' };
-    return young ? { label: '🧱 The Rebuilder', color: 'var(--blue)' }
-                 : { label: '💀 Aging & Declining', color: 'var(--red)' };
-  }
-  // middle tier
-  if (pickHeavy) return { label: '🧱 Stockpiling', color: 'var(--blue)' };
-  return young ? { label: '🔥 Ascending', color: 'var(--accent)' }
-               : { label: '⚖️ Fading / Retooling', color: 'var(--orange)' };
+
+  // Team-specific flavor: append whichever position is actually carrying this
+  // roster (highest startable VORP), so two teams sharing a category label still
+  // read as genuinely different builds instead of an identical broad bucket.
+  var vs = stats.vorpStartable || {};
+  var anchorPos = null, anchorVorp = -Infinity;
+  for (var p in vs) { if (vs[p] > anchorVorp) { anchorVorp = vs[p]; anchorPos = p; } }
+  if (anchorPos) base.label += ' — ' + anchorPos + '-Anchored';
+  return base;
 }
 
 function isOnTaxi(player) {
@@ -2675,11 +2710,19 @@ function isOnTaxi(player) {
 function renderDashboard() {
   if (!STATE.projMap) fetchProjections().then(() => { const t = document.getElementById('tab-dashboard'); if (t && t.classList.contains('active')) renderDashboard(); }).catch(() => {});
   const stats = calcTeamStats(CONFIG.MY_TEAM_NAME);
-  const rankings = STATE.powerRankings || calcPowerRankings();
+  // Primary rank = Championship Equity's title-EV order (real power: this-year odds
+  // blended with real record + discounted multi-year odds). Falls back to the asset-
+  // value rank only until projections have loaded for the first time — same
+  // fetchProjections-then-rerender pattern as the rest of this function, so it
+  // corrects itself automatically once Equity data is available.
+  const equityRankings = STATE.equityRankings || calcEquity();
+  const rankings = equityRankings || STATE.powerRankings || calcPowerRankings();
   const myRank = rankings.findIndex(r => r.name === CONFIG.MY_TEAM_NAME) + 1;
 
   // Stat cards
   document.getElementById('ds-rank').textContent = '#' + myRank;
+  const rankSubEl = document.getElementById('ds-rank-sub');
+  if (rankSubEl) rankSubEl.textContent = equityRankings ? 'of 12 · Title Equity' : 'of 12 · Asset Value (Equity loading…)';
   document.getElementById('ds-value').textContent = fmtK(stats.totalValue);
   document.getElementById('ds-vorp').textContent = fmtK(stats.totalVORP);
   document.getElementById('ds-age').textContent = stats.avgAge.toFixed(1);
@@ -2989,40 +3032,40 @@ function toggleTeamRoster(teamName) {
 // Returns contention window label and color for a team's roster
 function calcContentionWindow(players) {
   if (!players || !players.length) return { label: 'Unknown', color: 'var(--text-muted)', years: null };
+  const W = CONFIG.CONTENTION_WINDOW;
   // Get top starters by value (top 10 non-QB + top 2 QB)
   const qbs = players.filter(p => p.pos === 'QB').sort((a,b) => b.value - a.value).slice(0, 2);
   const skill = players.filter(p => p.pos !== 'QB').sort((a,b) => b.value - a.value).slice(0, 10);
   const starters = [...qbs, ...skill];
   if (!starters.length) return { label: 'Unknown', color: 'var(--text-muted)', years: null };
 
-  // In Superflex, QBs are disproportionately valuable — weight 1.5x in window calc
-  // Use effectiveValue (injury-adjusted) for realism
-  const QB_WINDOW_MULT = 1.5;
+  // In Superflex, QBs are disproportionately valuable — weight per CONFIG in window calc.
+  // Use effectiveValue (injury-adjusted) for realism.
   const weightedStarters = starters.map(p => ({
     ...p,
-    windowVal: (p.effectiveValue ?? p.value) * (p.pos === 'QB' ? QB_WINDOW_MULT : 1)
+    windowVal: (p.effectiveValue ?? p.value) * (p.pos === 'QB' ? W.qbWeight : 1)
   }));
   const totalVal = weightedStarters.reduce((s,p) => s + p.windowVal, 0);
   const weightedAge = weightedStarters.reduce((s,p) => s + (p.age * p.windowVal), 0) / (totalVal || 1);
 
-  // Count archetypes — QBs count 1.5x toward window totals
+  // Count archetypes — QBs count at CONFIG.qbWeight toward window totals
   let youngCount = 0, peakCount = 0, agingCount = 0, sellCount = 0;
   for (const p of starters) {
     const cls = getArchetype(p.pos, p.age)?.cls;
-    const w = p.pos === 'QB' ? 1.5 : 1;
+    const w = p.pos === 'QB' ? W.qbWeight : 1;
     if (cls === 'young')  youngCount  += w;
     if (cls === 'peak')   peakCount   += w;
     if (cls === 'aging')  agingCount  += w;
     if (cls === 'sell')   sellCount   += w;
   }
 
-  if (weightedAge < 24.5 || youngCount >= 7) {
+  if (weightedAge < W.awayMaxAge || youngCount >= W.awayYoungCount) {
     return { label: '2-3 YRS AWAY', color: 'var(--blue)', years: 2.5 };
-  } else if (weightedAge < 26.5 || (youngCount + peakCount >= 9)) {
+  } else if (weightedAge < W.openingMaxAge || (youngCount + peakCount >= W.openingPeakCount)) {
     return { label: 'WINDOW OPENING', color: 'var(--accent)', years: 1 };
-  } else if (weightedAge < 28.5 || peakCount >= 7) {
+  } else if (weightedAge < W.primeMaxAge || peakCount >= W.primePeakCount) {
     return { label: 'PRIME WINDOW', color: 'var(--green)', years: 0 };
-  } else if (weightedAge < 30 || agingCount >= 5) {
+  } else if (weightedAge < W.leftMaxAge || agingCount >= W.leftAgingCount) {
     return { label: '1-2 YRS LEFT', color: 'var(--yellow)', years: -1 };
   } else {
     return { label: 'WINDOW CLOSING', color: 'var(--red)', years: -2 };
@@ -5969,12 +6012,16 @@ async function renderLedger() {
 //     future pools split by age-projected value (taxi included — they
 //     can start by then). Picks earn from future pools only.
 // ============================================================
-var EQUITY_CFG = { payout: 1000, entry: 100, discount: 0.9, seasonsPaid: 2 };
+// PLACEHOLDER: payout: 1000 assumes a flat winner-take-most pot. Entry ($125/yr) is
+// confirmed; the real payout structure (2nd place + division winners get something,
+// biggest share to the playoff champion) is NOT — this number needs correcting once
+// that split is confirmed, since every $EV figure in this tab scales off it directly.
+var EQUITY_CFG = { payout: 1000, entry: 125, discount: 0.9, seasonsPaid: 2 };
 
 function equityCfgChanged() {
   var g = function(id, d) { var el = document.getElementById(id); var v = parseFloat(el && el.value); return isNaN(v) ? d : v; };
   EQUITY_CFG.payout      = g('eqPayout', 1000);
-  EQUITY_CFG.entry       = g('eqEntry', 100);
+  EQUITY_CFG.entry       = g('eqEntry', 125);
   EQUITY_CFG.discount    = Math.min(1, Math.max(0.5, g('eqDiscount', 0.9)));
   EQUITY_CFG.seasonsPaid = g('eqPaid', 2);
   renderEquity();
@@ -6056,6 +6103,58 @@ function equityLineupPlayers(players) {
   return out;
 }
 
+// Core equity calc, split from render so other views (Dashboard rank) can consume
+// it too — same calc/render split already used for calcPowerRankings/renderPowerRankings.
+// Returns null if rosters/projections aren't loaded yet; callers fall back to
+// asset-based rank until then (same pattern renderDashboard already uses).
+function calcEquity() {
+  if (!STATE.allRosters || !Object.keys(STATE.allRosters).length) return null;
+  if (!STATE.projMap || !Object.keys(STATE.projMap).length) return null;
+
+  var C = EQUITY_CFG;
+  var teams = Object.values(CONFIG.OWNER_MAP);
+
+  // 2026 leg: Ciely optimal-lineup projection, blended with REAL Sleeper record/
+  // points-for once enough of the season has actually happened to trust it over a
+  // preseason number. Same 4-game minimum gate getPickPosition() already uses, for
+  // the same reason — 1-0 vs 0-1 is noise, not signal. Live weight then ramps 0->0.5
+  // over a ~14-week regular season, so results nudge the number without letting one
+  // lucky/unlucky early week dominate a full-season title-odds estimate the way raw
+  // win/loss would. The 2027/2028 legs below are untouched by any of this — they
+  // stay pure age-decayed asset value, so a this-year injury or a rough three-game
+  // stretch doesn't drag down next year's number the way it correctly does this one.
+  var standings = STATE.standings || {};
+  var gpList = Object.values(standings).map(function(s) { return (s.wins||0)+(s.losses||0)+(s.ties||0); });
+  var liveGated = !STATE._standingsArePrevSeason && gpList.length > 0 && Math.min.apply(null, gpList) >= 4;
+
+  var proj26 = teams.map(function(t) {
+    var ciely = teamProjStarters(STATE.allRosters[t] || []);
+    var s = standings[t];
+    var gp = s ? (s.wins||0)+(s.losses||0)+(s.ties||0) : 0;
+    if (!liveGated || !s || !gp) return ciely;
+    var livePace = (s.pf / gp) * 14;               // real points-for, paced to a full season
+    var liveWeight = Math.min(0.5, gp / 14);
+    return ciely * (1 - liveWeight) + livePace * liveWeight;
+  });
+  var sm26 = equitySoftmax(proj26);
+  var base27 = teams.map(function(t) { return equityAssetBase(t, 2027); });
+  var sm27 = equitySoftmax(base27);
+  var base28 = teams.map(function(t) { return equityAssetBase(t, 2028); });
+  var sm28 = equitySoftmax(base28);
+
+  var league = teams.map(function(t, i) {
+    var p = { name: t, p26: sm26.probs[i], p27: sm27.probs[i], p28: sm28.probs[i] };
+    p.ev26 = p.p26 * C.payout;
+    p.ev27 = p.p27 * C.payout * C.discount;
+    p.ev28 = p.p28 * C.payout * C.discount * C.discount;
+    p.evTotal = p.ev26 + p.ev27 + p.ev28;
+    return p;
+  });
+  league.sort(function(a,b){ return b.evTotal - a.evTotal; });
+  STATE.equityRankings = league;
+  return league;
+}
+
 function renderEquity() {
   var host = document.getElementById('equityHost');
   if (!host) return;
@@ -6073,23 +6172,8 @@ function renderEquity() {
   var teams = Object.values(CONFIG.OWNER_MAP);
   var YEARS = [2026, 2027, 2028];
 
-  // ── League-wide title odds per year ──────────────────────────────
-  var proj26 = teams.map(function(t) { return teamProjStarters(STATE.allRosters[t] || []); });
-  var sm26 = equitySoftmax(proj26);
-  var base27 = teams.map(function(t) { return equityAssetBase(t, 2027); });
-  var sm27 = equitySoftmax(base27);
-  var base28 = teams.map(function(t) { return equityAssetBase(t, 2028); });
-  var sm28 = equitySoftmax(base28);
-
-  var league = teams.map(function(t, i) {
-    var p = { name: t, p26: sm26.probs[i], p27: sm27.probs[i], p28: sm28.probs[i] };
-    p.ev26 = p.p26 * C.payout;
-    p.ev27 = p.p27 * C.payout * C.discount;
-    p.ev28 = p.p28 * C.payout * C.discount * C.discount;
-    p.evTotal = p.ev26 + p.ev27 + p.ev28;
-    return p;
-  });
-  var mine = league.find(function(x) { return x.name === CONFIG.MY_TEAM_NAME; });
+  var league = calcEquity();
+  var mine = league && league.find(function(x) { return x.name === CONFIG.MY_TEAM_NAME; });
   if (!mine) { host.innerHTML = '<div class="mono muted" style="padding:12px">Roster not found</div>'; return; }
 
   var pct = function(p) { return (p * 100).toFixed(1) + '%'; };
