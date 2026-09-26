@@ -6280,6 +6280,15 @@ function renderEquity() {
   var netEV = mine.evTotal - feesThruWindow;
   var uniformP = 1 / teams.length;
 
+  // Same live-blend gate check as blendLiveProjection() — used here only to label
+  // the 2026 stat card honestly, not to recompute anything.
+  var _standings = STATE.standings || {};
+  var _gpList = Object.values(_standings).map(function(s) { return (s.wins||0)+(s.losses||0)+(s.ties||0); });
+  var _minGp = _gpList.length ? Math.min.apply(null, _gpList) : 0;
+  var live2026Label = (STATE._standingsArePrevSeason || !_gpList.length || _minGp < 4)
+    ? 'Ciely lineup · league avg ' + pct(uniformP)
+    : 'Ciely + real record · league avg ' + pct(uniformP);
+
   // ── Trade leak cost: marginal $ per 1,000 value units leaked ─────
   // Computed numerically inside calcEquity() (3-tier payout has no clean closed-
   // form derivative the way single-payout did) — read off here, not recomputed.
@@ -6291,7 +6300,7 @@ function renderEquity() {
 
   // Stat cards
   html += '<div class="grid-4" style="margin-bottom:16px">'
-    + '<div class="stat-card"><div class="stat-value" style="color:' + (mine.p26 >= uniformP ? 'var(--green)' : 'var(--red)') + '">' + pct(mine.p26) + '</div><div class="stat-label">2026 Title Odds</div><div class="stat-sub">Ciely lineup · league avg ' + pct(uniformP) + '</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:' + (mine.p26 >= uniformP ? 'var(--green)' : 'var(--red)') + '">' + pct(mine.p26) + '</div><div class="stat-label">2026 Title Odds</div><div class="stat-sub">' + live2026Label + '</div></div>'
     + '<div class="stat-card"><div class="stat-value" style="color:' + (mine.p27 >= uniformP ? 'var(--green)' : 'var(--yellow)') + '">' + pct(mine.p27) + '</div><div class="stat-label">2027 Window Odds</div><div class="stat-sub">age-proj assets + picks</div></div>'
     + '<div class="stat-card"><div class="stat-value" style="color:' + (mine.p28 >= uniformP ? 'var(--green)' : 'var(--yellow)') + '">' + pct(mine.p28) + '</div><div class="stat-label">2028 Window Odds</div><div class="stat-sub">age-proj assets + picks</div></div>'
     + '<div class="stat-card"><div class="stat-value" style="color:var(--gold)">' + fmtUSD(mine.evTotal) + '</div><div class="stat-label">Franchise EV 26–28</div><div class="stat-sub">expected winnings, discounted</div></div>'
@@ -6396,7 +6405,7 @@ function renderEquity() {
   });
   html += '</tbody></table></div>'
     + '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:10px;border-top:1px solid var(--border);margin-top:8px;line-height:1.6">'
-    + 'Methodology: P(title) via softmax over league scores, temperature = league spread ÷ 0.75 (best roster ≈ 20-25%, tank ≈ 1-2% — fantasy variance is real). Age decay per year past prime: RB 0.72× (25+), WR 0.82× (28+), TE 0.85× (30+), QB 0.85× (33+). All dollar figures are expected value, not guarantees — one actual banner dwarfs every number on this page.'
+    + 'Methodology: P(1st) via softmax over league scores, temperature = league spread ÷ 0.75 (best roster ≈ 20-25%, tank ≈ 1-2% — fantasy variance is real). P(2nd)/P(3rd) via a Plackett-Luce extension of that same softmax — condition on who wins, renormalize the remaining field, repeat. $ splits below price all three placements ($1000/$375/$125), not just the title. Age decay per year past prime: RB 0.72× (25+), WR 0.82× (28+), TE 0.85× (30+), QB 0.85× (33+). All dollar figures are expected value, not guarantees — one actual banner dwarfs every number on this page.'
     + '</div></div>';
 
   host.innerHTML = html;
