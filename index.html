@@ -1537,10 +1537,6 @@ const CONFIG = {
   // 6pt and hoards QBs hard. Calibrated to 1.6 from two clean non-QB Burrow comps
   // (Achane+Kraft ~1.55 TEP-adj, Burden+picks ~1.65). Tunable — QB only.
   QB_PASSTD_MULT: 1.6,
-  // Core assets never to be suggested in Trade Finder
-  // Intentionally empty — no player is auto-hidden from SELL/HOLD/MONITOR logic.
-  // If a player needs a manual hold, use MANUAL_LEVERS instead (status stays visible + reasoned).
-  PROTECTED: [],
   // Name corrections: Sleeper name -> KTC name (only where cleanName() can't resolve)
   NAME_CORRECTIONS: {
     'Marvin Harrison': 'Marvin Harrison Jr.',
@@ -1684,7 +1680,6 @@ let STATE = {
   rosterFilter: 'ALL',
   rookieFilter: 'ALL',
   draftSlotMap: {},     // {year: {rosterId: slot}}
-  aiComps: {},          // {playerName: {comp, rationale}} — cached AI comps
   prospectLastFetch: null,
 };
 
@@ -1936,19 +1931,52 @@ function fetchWithTimeout(url, opts, ms) {
   return fetch(url, opts).finally(function() { clearTimeout(timer); });
 }
 
+// ============================================================
+// SHEET DATA LAYER — single choke point for every Google Sheets CSV pull
+// (KTC values, Anatomy/prospect sheet). Every caller gets, for free:
+//   - UTF-8 BOM stripping
+//   - detection of Google silently returning an HTML permissions page
+//     instead of CSV (happens if a sheet's sharing setting ever changes)
+//   - a per-source trace in STATE.fetchTraces, for surfacing what
+//     succeeded/failed/when without guessing from a generic error string
+// Returns parsed rows (array of arrays); throws on any failure so callers
+// keep their existing try/catch behavior unchanged.
+// ============================================================
+async function fetchSheetCSV(url, sourceName) {
+  STATE.fetchTraces = STATE.fetchTraces || {};
+  const trace = { sourceName, url, status: null, statusText: null, rowCount: null, headers: null, error: null, fetchedAt: null };
+  STATE.fetchTraces[sourceName] = trace;
+  try {
+    const resp = await fetchWithTimeout(url, {}, 10000);
+    trace.status = resp.status; trace.statusText = resp.statusText;
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    let text = await resp.text();
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // strip BOM
+    const trimmed = text.trim();
+    if (trimmed.startsWith('<')) {
+      throw new Error('Got HTML instead of CSV \u2014 sheet is likely not shared as "Anyone with the link", or the URL is wrong.');
+    }
+    const rows = trimmed.split('\n').map(parseCSVLine);
+    trace.rowCount = rows.length;
+    trace.headers = rows[0] || [];
+    trace.fetchedAt = new Date().toLocaleTimeString();
+    return rows;
+  } catch (e) {
+    trace.error = e.message;
+    throw e;
+  }
+}
+
 async function fetchKTC() {
   setLoadingProgress(10, 'FETCHING KTC VALUES...');
-  const url = CONFIG.KTC_CSV_URL;
-  const resp = await fetch(url);
-  const text = await resp.text();
-  const lines = text.trim().split('\n');
+  const lines = await fetchSheetCSV(CONFIG.KTC_CSV_URL, 'KTC values');
   const players = [];
   const pickPattern = /^\d{4}\s+(Early|Mid|Late)\s+\d(st|nd|rd|th)$/i;
   // Skip picks from the SF TE+ CSV — their scale is inflated vs standard SF.
   // fetchKTCPicks() handles live pick values; corrected fallbacks cover offline.
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = parseCSVLine(lines[i]);
+    const cols = lines[i];
     if (!cols[0]) continue;
     const name = cols[0]?.trim() || '';
     if (!name || name.startsWith('Updated') || name === 'Name' || name.startsWith('KTC') || name.startsWith('Fantasy')) continue;
@@ -2010,7 +2038,38 @@ async function fetchKTCPicks() {
   } catch(e) { console.warn('fetchKTCPicks failed:', e.message); return 0; }
 }
 
+// This is a ~5MB payload re-downloaded on every single Sync click with no caching.
+// Names/positions are effectively static, but injury_status/injury_notes are NOT —
+// they feed the app's injury-gated SELL/HOLD logic directly, so the TTL here is
+// short (6h, not the 20-24h you'd use for a pure name/ID lookup) to keep that gating
+// reasonably current without re-pulling 5MB on every manual sync in the same day.
+const SLEEPER_PLAYERS_CACHE_KEY = 'dwr_sleeperPlayers_v1';
+const SLEEPER_PLAYERS_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+
+function loadSleeperPlayersCache() {
+  try {
+    const raw = localStorage.getItem(SLEEPER_PLAYERS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.fetchedAt && parsed.data && (Date.now() - parsed.fetchedAt) < SLEEPER_PLAYERS_TTL_MS) {
+      return parsed.data;
+    }
+  } catch (e) { /* corrupt cache — fall through to network */ }
+  return null;
+}
+
+function saveSleeperPlayersCache(map) {
+  try { localStorage.setItem(SLEEPER_PLAYERS_CACHE_KEY, JSON.stringify({ fetchedAt: Date.now(), data: map })); }
+  catch (e) { /* quota exceeded or storage unavailable — fine, just won't persist this session */ }
+}
+
 async function fetchSleeperPlayers() {
+  const cached = loadSleeperPlayersCache();
+  if (cached) {
+    setLoadingProgress(25, 'SLEEPER PLAYER DATABASE (cached)...');
+    STATE.sleeperPlayers = cached;
+    return;
+  }
   setLoadingProgress(25, 'FETCHING SLEEPER PLAYER DATABASE...');
   const resp = await fetch('https://api.sleeper.app/v1/players/nfl');
   const data = await resp.json();
@@ -2026,6 +2085,7 @@ async function fetchSleeperPlayers() {
     }
   }
   STATE.sleeperPlayers = map;
+  saveSleeperPlayersCache(map);
 }
 
 async function fetchRosters() {
@@ -3767,11 +3827,6 @@ function renderTradeCard(s, i) {
 // ============================================================
 var MANUAL_LEVERS = [
   {
-    label: "Swift \u2192 future capital", asset: "D'Andre Swift", status: 'SELL NOW',
-    trigger: 'FIRED 9/11/26 \u2014 Bears signed Swift to a 3yr/$33.75M extension ($27.5M gtd), locking his role through 2029',
-    note: "Trigger resolved \u2014 role/contract uncertainty is gone, locked-in RB1 commands full value now. Saturn75 is NOT the buyer \u2014 his RB room is the league's most desperate and you hold his 2027 1st; selling him a starting RB risks inflating his win total and devaluing that pick. Route to a proven-RB buyer instead (christinanesmith, NateDawg726)."
-  },
-  {
     label: "Mowens54's distant firsts", asset: '2028-2029 1st', status: 'MANUAL',
     trigger: 'Offer youth + closer mid-round picks',
     note: 'Mowens sheds distant 2028-2029 firsts for roster quantity \u2014 a manual path to more window-adjacent capital.'
@@ -3793,7 +3848,6 @@ function renderPriorityMoves() {
 
   // Auto SELL-NOW — sell-flagged, healthy, valuable assets
   roster.forEach(function(p) {
-    if (CONFIG.PROTECTED.indexOf(p.name) >= 0) return;
     if (!p.value || p.value < 1500) return;
     if (coveredByManual(p.name)) return; // shown as a manual lever instead
     if (p.injuryFlag) return; // handled as a gated hold below
@@ -4159,9 +4213,7 @@ function findTrades() {
           var theirPlayers = (STATE.allRosters[teamName] || []).filter(function(p) { return p.pos === iGetPos; }).sort(function(a,b) { return b.value - a.value; });
           var myPlayers = (STATE.myRoster || [])
             .filter(function(p) { 
-              if (p.pos !== iGivePos) return false;
-              if (CONFIG.PROTECTED.indexOf(p.name) >= 0) return false;
-              return true;
+              return p.pos === iGivePos;
             })
             .sort(function(a,b) {
               var aArch = getArchetype(a.pos, a.age);
@@ -4232,7 +4284,6 @@ function findTrades() {
       var pos = poses[p];
       var myAgingAtPos = (STATE.myRoster || []).filter(function(pl) {
         if (pl.pos !== pos) return false;
-        if (CONFIG.PROTECTED.indexOf(pl.name) >= 0) return false;
         var arch = getArchetype(pl.pos, pl.age);
         return arch && (arch.cls === 'sell' || arch.cls === 'aging');
       }).sort(function(a,b) { return b.value - a.value; });
@@ -4365,7 +4416,6 @@ function findTrades() {
     theirPicks.sort(function(a, b) { return capitalWeight(b) - capitalWeight(a); });
 
     var mySellPlayers = (STATE.myRoster || []).filter(function(pl) {
-      if (CONFIG.PROTECTED.indexOf(pl.name) >= 0) return false;
       if (!pl.value || pl.value <= 1500) return false;
       var arch = getArchetype(pl.pos, pl.age);
       var h = getRosterHealthFlag(pl);
@@ -4696,22 +4746,52 @@ async function syncAll() {
     document.getElementById('lastSync').textContent = 'Sync timed out';
     btn.disabled = false; btn.textContent = '⧳ Sync Data';
   }, 15000);
+
+  // Fail-soft: each source's failure is caught individually so one dead
+  // endpoint (KTC sheet down, Sleeper rate-limited, etc.) doesn't blank out
+  // data that DID load successfully, and doesn't abort the sync before
+  // build/render ever runs. Failures collect into `failed` and are named
+  // in the status line instead of one generic "Sync failed" message that
+  // gives no idea which number on screen is actually stale.
+  var failed = [];
+  async function attempt(label, fn) {
+    try { await fn(); }
+    catch (e) { console.error(label + ' failed:', e); failed.push(label); }
+  }
+
   try {
-    await fetchKTC();
+    await attempt('KTC values', fetchKTC);
     setLoadingProgress(35, 'FETCHING SLEEPER DATA...');
-    await Promise.all([fetchSleeperPlayers(), fetchStandings(), fetchDraftOrder(), fetchKTCPicks()]);
-    await fetchRosters();
-    await fetchTradedPicks();
+    await Promise.allSettled([
+      attempt('Sleeper players', fetchSleeperPlayers),
+      attempt('Standings', fetchStandings),
+      attempt('Draft order', fetchDraftOrder),
+      attempt('KTC picks', fetchKTCPicks)
+    ]);
+    await attempt('Rosters', fetchRosters);
+    await attempt('Traded picks', fetchTradedPicks);
     fetchProspectData(false).then(function(res) {
       if (res) console.log('Prospect refresh: ' + res.wr + ' WRs, ' + res.rb + ' RBs');
-    });
+    }).catch(function(e) { console.warn('Prospect data failed:', e); });
+
     setLoadingProgress(80, 'PROCESSING DATA...');
     buildAllRosters(); buildPickMap(); calcPowerRankings();
     setLoadingProgress(95, 'RENDERING...');
     renderDashboard(); generateGMBrief(); populatePickDropdowns();
-    document.getElementById('lastSync').textContent = 'Synced ' + new Date().toLocaleTimeString();
-    setLoadingProgress(100, 'COMPLETE');
+
+    var stamp = 'Synced ' + new Date().toLocaleTimeString();
+    if (failed.length) {
+      document.getElementById('lastSync').innerHTML = stamp +
+        ' <span style="color:var(--red)">\u2014 ' + failed.join(', ') + ' failed, showing last-known data</span>';
+    } else {
+      document.getElementById('lastSync').textContent = stamp;
+    }
+    setLoadingProgress(100, failed.length ? 'COMPLETE (with errors)' : 'COMPLETE');
   } catch(e) {
+    // Only reachable for a failure outside the per-source attempts above
+    // (e.g. a bug in build/render itself) — individual fetches no longer
+    // throw past this point, so this is a real code-path error, not a
+    // network hiccup.
     console.error(e);
     document.getElementById('lastSync').textContent = 'Sync failed: ' + e.message;
     setLoadingProgress(100, 'ERROR');
@@ -4915,12 +4995,6 @@ function toggleProspectPos(pos, btn) {
 function renderProspectScorer() {
   const container = document.getElementById('prospectScorerContent');
   if (!container) return;
-  if (!STATE.aiComps) STATE.aiComps = {};
-  // Pre-seed AI comp cache from static comps so they survive fetch overwrites
-  [...(PROSPECT_PROFILES.WR_2025||[]), ...(PROSPECT_PROFILES.WR_2026||[]), ...(PROSPECT_PROFILES.WR_2027||[]),
-   ...(PROSPECT_PROFILES.RB_2025||[]), ...(PROSPECT_PROFILES.RB_2026||[]), ...(PROSPECT_PROFILES.RB_2027||[])].forEach(p => {
-    if (p && p.comp && !STATE.aiComps[p.name]) STATE.aiComps[p.name] = { comp: p.comp, rationale: '' };
-  });
   const lastFetchEl = document.getElementById('prospectLastFetch');
   if (lastFetchEl) lastFetchEl.textContent = STATE.prospectLastFetch ? 'Last sync: ' + STATE.prospectLastFetch : '2026: static data';
 
@@ -5041,10 +5115,10 @@ function renderProspectScorer() {
         <td>${boaPass === null ? na : hitDot(boaPass, 'BOY: Year '+p.boy+' (need Yr1-3)')}<span class="mono" style="font-size:10px;color:var(--text-muted)"> Yr${p.boy||'—'}</span></td>
         <td>${rasPass === null ? na : hitDot(rasPass, 'RAS: '+p.ras+' (need ≥8.0)')}<span class="mono" style="font-size:10px;color:${p.ras>=8?'var(--green)':'var(--text-muted)'}"> ${p.ras||'—'}</span></td>
         <td>${hitBar(p.hits, 6, pendingCount)}</td>
-        <td id="${'comp-wr-' + p.name}" style="white-space:nowrap;min-width:130px">${
-          (p.comp || (STATE.aiComps && STATE.aiComps[p.name] && STATE.aiComps[p.name].comp))
-            ? '<span style="color:var(--accent);font-weight:600;font-size:11px">' + (p.comp || STATE.aiComps[p.name].comp) + '</span>'
-            : '<button onclick="triggerAiCompByName(\'' + p.name.replace(/'/g,"\\'") + '\',\'WR\',this)" style="font-size:9px;padding:2px 6px;background:rgba(0,212,255,0.1);border:1px solid var(--accent);border-radius:3px;color:var(--accent);cursor:pointer">&#x26A1; AI</button>'
+        <td style="white-space:nowrap;min-width:130px">${
+          p.comp
+            ? '<span style="color:var(--accent);font-weight:600;font-size:11px">' + p.comp + '</span>'
+            : '<span class="mono muted" style="font-size:10px">—</span>'
         }</td>
         <td style="font-size:10px;color:var(--text-muted);max-width:180px;white-space:normal">${p.note}</td>
       </tr>`;
@@ -5101,10 +5175,10 @@ function renderProspectScorer() {
         <td>${bdrPass === null ? na : hitDot(bdrPass, 'BDR: '+(p.comp_bdr?p.comp_bdr.toFixed(1):'—')+' (need ≥50)')}<span class="mono" style="font-size:9px;color:${p.comp_bdr>=50?'var(--green)':'var(--text-muted)'}"> ${p.comp_bdr?p.comp_bdr.toFixed(0):'—'}</span></td>
         <td>${ypaPass === null ? na : hitDot(ypaPass, 'ColYPA: '+(p.col_ypa||'—')+' (need ≥6.0)')}<span class="mono" style="font-size:9px;color:${p.col_ypa>=6?'var(--green)':'var(--text-muted)'}"> ${p.col_ypa||'—'}</span></td>
         <td>${hitBar(p.hits, 5, pendingCount)}</td>
-        <td id="${'comp-rb-' + p.name}" style="white-space:nowrap;min-width:130px">${
-          (p.comp || (STATE.aiComps && STATE.aiComps[p.name] && STATE.aiComps[p.name].comp))
-            ? '<span style="color:var(--green);font-weight:600;font-size:11px">' + (p.comp || STATE.aiComps[p.name].comp) + '</span>'
-            : '<button onclick="triggerAiCompByName(\'' + p.name.replace(/'/g,"\\'") + '\',\'RB\',this)" style="font-size:9px;padding:2px 6px;background:rgba(76,255,145,0.1);border:1px solid var(--green);border-radius:3px;color:var(--green);cursor:pointer">&#x26A1; AI</button>'
+        <td style="white-space:nowrap;min-width:130px">${
+          p.comp
+            ? '<span style="color:var(--green);font-weight:600;font-size:11px">' + p.comp + '</span>'
+            : '<span class="mono muted" style="font-size:10px">—</span>'
         }</td>
         <td style="font-size:10px;color:var(--text-muted);max-width:180px;white-space:normal">${p.note}</td>
       </tr>`;
@@ -5131,10 +5205,7 @@ async function fetchProspectData(showStatus) {
   const cls = CONFIG.PROSPECT_CLASS_YEAR || '2026'; // which class the live sheet holds
   if (showStatus) setLoadingProgress(50, 'FETCHING PROSPECT DATA...');
   try {
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const text = await resp.text();
-    const rows = text.trim().split('\n').map(parseCSVLine);
+    const rows = await fetchSheetCSV(url, 'Prospect data (Anatomy sheet)');
     if (rows.length < 2) throw new Error('No data rows');
     const headers = rows[0].map(h => h.toLowerCase().trim());
     const dataRows = rows.slice(1);
@@ -5199,68 +5270,6 @@ async function fetchProspectData(showStatus) {
     if (showStatus) setLoadingProgress(100,'PROSPECT DATA LOADED');
     return {wr:newWR.length,rb:newRB.length};
   } catch(e) { console.warn('Prospect fetch failed:',e.message); return null; }
-}
-
-
-// ============================================================
-// AI PRO COMP
-// ============================================================
-async function fetchAiComp(playerName, pos, profileData) {
-  if (STATE.aiComps[playerName]) return STATE.aiComps[playerName];
-  const prompt = 'You are a dynasty fantasy football analyst. Based on this ' + pos + ' prospect\'s college threshold data, give a concise NFL pro comparison.\n\nPlayer: ' + playerName + '\nPosition: ' + pos + '\nProfile: ' + JSON.stringify(profileData) + '\n\nRespond ONLY with a JSON object, no markdown:\n{\"comp\": \"First Last\", \"rationale\": \"One sentence max explaining why this comp fits.\"}';
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await resp.json();
-    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-    STATE.aiComps[playerName] = parsed;
-    return parsed;
-  } catch(e) { console.warn('AI comp failed:', playerName, e); return null; }
-}
-
-
-function triggerAiCompByName(playerName, pos, btnEl) {
-  // Build profile from PROSPECT_PROFILES lookup
-  const allProspects = [
-    ...(PROSPECT_PROFILES['WR_2025']||[]), ...(PROSPECT_PROFILES['WR_2026']||[]),
-    ...(PROSPECT_PROFILES['RB_2025']||[]), ...(PROSPECT_PROFILES['RB_2026']||[])
-  ];
-  const p = allProspects.find(x => x.name === playerName);
-  const profile = p
-    ? (pos === 'WR'
-        ? {dc:p.dc, t40:p.t40, wdom:p.wdom, boy:p.boy, ras:p.ras, hits:p.hits}
-        : {dc:p.dc, speed:p.speed, burst:p.burst, comp_bdr:p.comp_bdr, col_ypa:p.col_ypa, hits:p.hits})
-    : {};
-  triggerAiComp(playerName, pos, profile, btnEl);
-}
-
-async function triggerAiComp(playerName, pos, profileData, btnEl) {
-  if (!STATE.aiComps) STATE.aiComps = {};
-  btnEl.disabled = true;
-  btnEl.textContent = '...';
-  const result = await fetchAiComp(playerName, pos, profileData);
-  if (result) {
-    const compCell = document.getElementById('comp-wr-' + CSS.escape(playerName)) ||
-                   document.getElementById('comp-rb-' + CSS.escape(playerName));
-    if (compCell) {
-      const nameSpan = document.createElement('span');
-      nameSpan.style.cssText = 'color:var(--accent);font-weight:600;font-size:11px';
-      nameSpan.textContent = result.comp;
-      const rationale = document.createElement('div');
-      rationale.style.cssText = 'font-size:9px;color:var(--text-muted);margin-top:2px';
-      rationale.textContent = result.rationale;
-      compCell.innerHTML = '';
-      compCell.appendChild(nameSpan);
-      compCell.appendChild(rationale);
-    }
-  } else {
-    btnEl.textContent = '\u26A1 AI';
-    btnEl.disabled = false;
-  }
 }
 
 
