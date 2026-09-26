@@ -6311,7 +6311,7 @@ function renderEquity() {
   var verdict;
   if (netEV >= 0) verdict = 'Positive expected value through the window — the rebuild math is working. One actual title puts you massively in the black.';
   else if (mine.p27 + mine.p28 > 2.4 * uniformP) verdict = 'Slightly under water on pure EV, but your 2027–28 odds run well above league average — this is what a correctly-priced tank looks like mid-build. Every 2027 pick reclaimed moves this line.';
-  else verdict = 'Under water and the window odds aren\'t above average yet — the 2027 capital moves (Mahomes deal, pick reclamation) are what close this gap. This number is the argument for making them.';
+  else verdict = 'Under water and 2027–28 odds aren\'t above league average yet, even after the capital already moved (Mahomes, pick reclamation) closed months ago. That\'s not a "make more trades" gap — a pick-heavy rebuild prices as asset VALUE long before it prices as title ODDS, because this model can\'t credit a pick for what its player becomes until that player actually develops. Watch this number rise as the 2027 class lands and produces, not from further dealing alone.';
   html += '<div class="card" style="margin-bottom:16px"><div class="card-title">📒 Franchise P&L</div>'
     + '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px">'
     + '<div><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">FEES PAID TO DATE</span><span class="mono" style="font-size:18px;color:var(--red)">−' + fmtUSD(feesPaid) + '</span></div>'
