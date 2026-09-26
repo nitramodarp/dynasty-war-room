@@ -6151,6 +6151,11 @@ function calcEquity() {
     return p;
   });
   league.sort(function(a,b){ return b.evTotal - a.evTotal; });
+  // Softmax temperatures aren't per-team — attach once on the array itself so
+  // renderEquity's trade-leak-cost calc (needs the temp, not a team's prob) can
+  // read them without recomputing the whole softmax a second time.
+  league.temp27 = sm27.temp;
+  league.temp28 = sm28.temp;
   STATE.equityRankings = league;
   return league;
 }
@@ -6188,8 +6193,8 @@ function renderEquity() {
   // ── Trade leak cost: marginal $ per 1,000 value units leaked ─────
   // d$/dv for team i under softmax = payout × P(1−P) / T (value-space
   // years only — 2026 runs on points, and 2026 is a tank anyway).
-  var leak27 = C.payout * C.discount * mine.p27 * (1 - mine.p27) / sm27.temp * 1000;
-  var leak28 = C.payout * C.discount * C.discount * mine.p28 * (1 - mine.p28) / sm28.temp * 1000;
+  var leak27 = C.payout * C.discount * mine.p27 * (1 - mine.p27) / league.temp27 * 1000;
+  var leak28 = C.payout * C.discount * C.discount * mine.p28 * (1 - mine.p28) / league.temp28 * 1000;
   var leakTotal = leak27 + leak28;
 
   var html = '';
