@@ -7,38 +7,38 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #05080F;
-    --surface: #0C1120;
-    --surface2: #121A2C;
-    --surface3: #1A2438;
-    --border: #243048;
-    --accent: #FF6B1A;
-    --accent2: #00CFFF;
-    --accent3: #00FF88;
-    --gold: #FFD700;
-    --text: #E2EAF6;
-    --text-dim: #7A8EAE;
-    --text-muted: #3C4E68;
-    --red: #FF3050;
-    --orange: #FF6B1A;
-    --yellow: #FFCF00;
-    --green: #00FF88;
-    --blue: #00CFFF;
-    --purple: #B060FF;
+    --bg: #04060C;
+    --surface: #0A0E1B;
+    --surface2: #101728;
+    --surface3: #172037;
+    --border: #212B46;
+    --accent: #FF7A2E;
+    --accent2: #22D3EE;
+    --accent3: #2ED573;
+    --gold: #FFD84D;
+    --text: #ECF2FC;
+    --text-dim: #8592B0;
+    --text-muted: #45526C;
+    --red: #FF4D6D;
+    --orange: #FF7A2E;
+    --yellow: #FFCF33;
+    --green: #2ED573;
+    --blue: #22D3EE;
+    --purple: #B978FF;
 
     /* Archetype colors */
-    --young: #00CFFF;
-    --peak: #00FF88;
-    --aging: #FFCF00;
-    --sell: #FF3050;
+    --young: #22D3EE;
+    --peak: #2ED573;
+    --aging: #FFCF33;
+    --sell: #FF4D6D;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
     background: var(--bg);
-    background-image: radial-gradient(ellipse 90% 50% at 15% 0%, #0e0e24 0%, transparent 70%),
-                      radial-gradient(ellipse 60% 40% at 85% 100%, #050D1A 0%, transparent 60%);
+    background-image: radial-gradient(ellipse 90% 50% at 15% 0%, #101130 0%, transparent 70%),
+                      radial-gradient(ellipse 60% 40% at 85% 100%, #061424 0%, transparent 60%);
     color: var(--text);
     font-family: 'Barlow', sans-serif;
     min-height: 100vh;
@@ -1940,6 +1940,30 @@ function vorpColor(v) {
   return 'var(--red)';
 }
 
+// Continuous red→neutral→green shading for signed values (trade deltas, net
+// value, etc.), so magnitude reads as intensity instead of a flat on/off
+// green-or-red. `maxMagnitude` is the value at which the color fully
+// saturates — anything beyond it just stays capped at full green/red.
+function gradientRGB(value, maxMagnitude) {
+  const t = Math.max(-1, Math.min(1, (value || 0) / (maxMagnitude || 1)));
+  const neutral = [90, 104, 132];   // ~ --text-dim, "no read" gray
+  const pos = [46, 213, 115];       // ~ --green
+  const neg = [255, 77, 109];       // ~ --red
+  const target = t >= 0 ? pos : neg;
+  const f = Math.abs(t);
+  return target.map((c, i) => Math.round(neutral[i] + (c - neutral[i]) * f));
+}
+function shadeColor(value, maxMagnitude) {
+  const [r, g, b] = gradientRGB(value, maxMagnitude);
+  return `rgb(${r},${g},${b})`;
+}
+function shadeBg(value, maxMagnitude, baseAlpha) {
+  const [r, g, b] = gradientRGB(value, maxMagnitude);
+  const f = Math.abs(Math.max(-1, Math.min(1, (value || 0) / (maxMagnitude || 1))));
+  const a = (baseAlpha == null ? 0.16 : baseAlpha) * (0.35 + 0.65 * f);
+  return `rgba(${r},${g},${b},${a.toFixed(2)})`;
+}
+
 function posPill(pos) {
   return `<span class="pos-pill pos-${pos}">${pos}</span>`;
 }
@@ -2493,7 +2517,7 @@ function renderPickArb() {
     + '<th style="padding:4px 6px">APP</th><th style="padding:4px 6px">MARKET</th><th style="padding:4px 6px;text-align:right">1st &Delta;</th></tr>';
   for (const t of teams) {
     const mine = t.name === CONFIG.MY_TEAM_NAME;
-    const c = t.spread1 > 0 ? 'var(--green)' : (t.spread1 < 0 ? 'var(--red)' : 'var(--text-muted)');
+    const c = shadeColor(t.spread1, 800);
     html += '<tr style="border-top:1px solid var(--border)' + (mine ? ';background:var(--surface2)' : '') + '">'
       + '<td style="padding:5px 6px 5px 0;color:' + (mine ? 'var(--accent)' : 'var(--text)') + ';font-weight:' + (mine ? '700' : '400') + '">' + (mine ? '⚔ ' : '') + t.name + '</td>'
       + '<td style="padding:5px 6px;color:var(--text-dim)">' + fmt(t.projPts) + '</td>'
@@ -3460,25 +3484,26 @@ function analyzeTrade() {
   document.getElementById('verdictBarA').style.width = aPct + '%';
   document.getElementById('verdictBarB').style.width = bPct + '%';
 
+  // Signed gap %, same magnitude as `pct` above but keeps direction —
+  // this is what drives the continuous shade (50%+ gap = fully saturated).
+  const signedPct = rawA + rawB > 0 ? (diff / ((rawA + rawB) / 2) * 100) : 0;
+  const shade = shadeColor(signedPct, 50);
+  const shadeChip = shadeBg(signedPct, 50, 0.18);
+
   if (Math.abs(diff) < 200) {
     label.textContent = '✅ FAIR TRADE';
-    label.style.color = 'var(--green)';
-    const deltaColor = 'var(--green)';
-    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${deltaColor}">±${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">gap</span><br><span style="font-size:11px">Raw values nearly equal (${fmt(rawA)} vs ${fmt(rawB)}) — both sides can feel good</span>`;
+    label.style.color = shade;
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">±${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">gap</span><br><span style="font-size:11px">Raw values nearly equal (${fmt(rawA)} vs ${fmt(rawB)}) — both sides can feel good</span>`;
   } else if (diff > 0) {
     const severity = pct > 40 ? '🛑 MASSIVE OVERPAY' : pct > 20 ? '⚠️ YOU WIN THIS TRADE' : '✅ SLIGHT EDGE TO YOU';
-    const color = pct > 40 ? 'var(--green)' : pct > 20 ? 'var(--accent)' : 'var(--accent)';
     label.textContent = severity;
-    label.style.color = color;
-    const winColor = pct > 40 ? 'var(--green)' : 'var(--accent)';
-    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${winColor}">+${fmt(diff)}</span> <span style="color:var(--text-muted);font-size:11px">in your favor (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
+    label.style.color = shade;
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">+${fmt(diff)}</span> <span style="color:var(--text-muted);font-size:11px">in your favor (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
   } else {
     const severity = pct > 40 ? '🛑 VETO: MASSIVE OVERPAY' : pct > 20 ? '⚠️ THEY WIN THIS TRADE' : '⚠️ SLIGHT EDGE TO THEM';
-    const color = pct > 40 ? 'var(--red)' : 'var(--yellow)';
     label.textContent = severity;
-    label.style.color = color;
-    const loseColor = pct > 40 ? 'var(--red)' : 'var(--yellow)';
-    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${loseColor}">-${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">against you (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
+    label.style.color = shade;
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">-${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">against you (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
   }
 
   // Health context: flag SELL/CUT assets and warn on giving away HOLDs
@@ -5958,7 +5983,13 @@ async function renderLedger() {
   // Aggregates
   var totalNet = rows.reduce(function(s, r) { return s + r.net; }, 0);
   var totalPickCap = rows.reduce(function(s, r) { return s + r.pickCapDelta; }, 0);
-  var pct = function(v) { return v >= 0 ? 'var(--green)' : 'var(--red)'; };
+  // Continuous shade instead of flat green/red — intensity scales with size
+  // of the delta. Aggregates (summed across trades) saturate at a wider
+  // scale than a single trade's net.
+  var pct = function(v) { return shadeColor(v, 3000); };
+  var pctAgg = function(v) { return shadeColor(v, 6000); };
+  var chip = function(v) { return shadeBg(v, 3000, 0.16); };
+  var chipAgg = function(v) { return shadeBg(v, 6000, 0.16); };
   var sign = function(v) { return (v >= 0 ? '+' : '') + fmt(v); };
 
   var html = '';
@@ -5966,8 +5997,8 @@ async function renderLedger() {
   // Summary strip
   html += '<div class="grid-4" style="margin-bottom:16px">'
     + '<div class="stat-card"><div class="stat-value" style="color:var(--accent)">' + rows.length + '</div><div class="stat-label">Completed Trades</div><div class="stat-sub">every deal on record</div></div>'
-    + '<div class="stat-card"><div class="stat-value" style="color:' + pct(totalNet) + '">' + sign(totalNet) + '</div><div class="stat-label">Net Value Δ</div><div class="stat-sub">at current KTC</div></div>'
-    + '<div class="stat-card"><div class="stat-value" style="color:' + pct(totalPickCap) + '">' + sign(totalPickCap) + '</div><div class="stat-label">2027+ Pick Cap Δ</div><div class="stat-sub">future capital acquired/spent</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:' + pctAgg(totalNet) + ';background:' + chipAgg(totalNet) + ';border-radius:6px;padding:2px 6px;display:inline-block">' + sign(totalNet) + '</div><div class="stat-label">Net Value Δ</div><div class="stat-sub">at current KTC</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:' + pctAgg(totalPickCap) + ';background:' + chipAgg(totalPickCap) + ';border-radius:6px;padding:2px 6px;display:inline-block">' + sign(totalPickCap) + '</div><div class="stat-label">2027+ Pick Cap Δ</div><div class="stat-sub">future capital acquired/spent</div></div>'
     + '<div class="stat-card"><div class="stat-value" style="color:var(--text)">' + fmt(rows.filter(function(r) { return r.net > 0; }).length) + '/' + rows.length + '</div><div class="stat-label">Positive at Market</div><div class="stat-sub">deals current market prefers</div></div>'
     + '</div>';
 
@@ -5988,8 +6019,8 @@ async function renderLedger() {
       + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:8px">'
       +   '<div><span class="mono" style="font-size:11px;color:var(--text-muted);letter-spacing:1px">' + dateStr.toUpperCase() + '</span> <span class="mono" style="font-size:13px;color:var(--text);margin-left:8px">vs ' + r.counterparty + '</span></div>'
       +   '<div style="display:flex;gap:14px">'
-      +     '<div style="text-align:right"><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">NET VALUE</span><span class="mono" style="font-size:14px;font-weight:600;color:' + pct(r.net) + '">' + sign(r.net) + '</span></div>'
-      +     '<div style="text-align:right"><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">2027+ PICK Δ</span><span class="mono" style="font-size:14px;font-weight:600;color:' + pct(r.pickCapDelta) + '">' + sign(r.pickCapDelta) + '</span></div>'
+      +     '<div style="text-align:right"><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">NET VALUE</span><span class="mono" style="font-size:14px;font-weight:600;color:' + pct(r.net) + ';background:' + chip(r.net) + ';border-radius:5px;padding:1px 6px">' + sign(r.net) + '</span></div>'
+      +     '<div style="text-align:right"><span class="mono" style="font-size:9px;color:var(--text-muted);letter-spacing:1px;display:block">2027+ PICK Δ</span><span class="mono" style="font-size:14px;font-weight:600;color:' + pct(r.pickCapDelta) + ';background:' + chip(r.pickCapDelta) + ';border-radius:5px;padding:1px 6px">' + sign(r.pickCapDelta) + '</span></div>'
       +   '</div>'
       + '</div>'
       + '<div class="grid-2" style="gap:12px">'
