@@ -1184,11 +1184,11 @@
         <div id="pickCheckStatus" style="font-size:10px;color:var(--text-dim);margin:6px 0 8px;line-height:1.5;font-family:'DM Mono',monospace"></div>
         <div style="overflow-x:auto">
           <table class="data-table">
-            <thead><tr><th>Pick</th><th class="text-right">Sheet (TE+)</th><th class="text-right">App uses</th><th class="text-right">Diff</th></tr></thead>
+            <thead><tr><th>Pick</th><th class="text-right">Sheet (TE+)</th><th class="text-right">Old built-in</th><th class="text-right">Diff</th></tr></thead>
             <tbody id="pickCheckBody"></tbody>
           </table>
         </div>
-        <div style="font-size:9px;color:var(--text-muted);margin-top:6px;line-height:1.45">Read-only comparison. "App uses" is what trades and totals currently price picks at (live leaguemate value if it loaded, otherwise the built-in fallback). "Sheet" is the pick row in the same Google Sheet that supplies player values.</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-top:6px;line-height:1.45">The app now prices picks from the Sheet column (same TE+ sheet as player values). "Old built-in" is the previous hard-coded value, shown for comparison and still used for any pick the sheet lacks (2026, 5ths). Diff = how much higher/lower the sheet is.</div>
       </details>
     </div>
   </div>
@@ -1597,6 +1597,11 @@ const CONFIG = {
   //   blended = ciely*(1-w) + (livePts/gamesPlayed*seasonGames)*w,  w = min(maxWeight, gp/rampGames)
   // Ciely FPS are a 17-game basis. Players under minGames stay on pure Ciely. Set enabled:false
   // to fall back to preseason-only everywhere.
+  // Pick prices come from the pick rows in the same SF TE+ sheet as player values (same scale,
+  // same sync). Built-in PICK_VALUES stay as the gap-filler (2026 picks, 5ths). Flip to false to
+  // go back to built-ins + the (CORS-blocked) leaguemate feed.
+  PICKS_FROM_SHEET: true,
+  STALE_SHEET_DAYS: 3,       // header warns when the sheet's own "Updated" stamp is older than this
   LIVE_BLEND: { enabled: true, maxWeight: 0.5, rampGames: 14, minGames: 2, seasonGames: 17 },
   // Deliberate roster decisions the value/VORP/age logic can't know about. A name here
   // overrides a CUT or SELL flag with a HOLD carrying the reason. Applies to YOUR roster
@@ -2136,6 +2141,24 @@ async function fetchKTC() {
   console.log('KTC players loaded:', players.length);
   STATE.sheetPicks = sheetPicks;
   STATE.sheetUpdated = ((lines[0] && lines[0][0]) || '').trim();
+  // Age of the sheet's own stamp ("Updated 09/25/26 at 07:00am", EST), so stale data is visible.
+  STATE.sheetAgeDays = null;
+  const sm = STATE.sheetUpdated.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if (sm) {
+    const yr = +sm[3] < 100 ? 2000 + +sm[3] : +sm[3];
+    const d = new Date(yr, +sm[1] - 1, +sm[2]);
+    if (!isNaN(d)) STATE.sheetAgeDays = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+  }
+  // Price picks from the sheet (idempotent: reset to built-ins first, then overlay sheet values).
+  if (!CONFIG.PICK_FALLBACKS) CONFIG.PICK_FALLBACKS = Object.assign({}, CONFIG.PICK_VALUES);
+  STATE.pickSheetCount = 0;
+  for (const k in CONFIG.PICK_FALLBACKS) CONFIG.PICK_VALUES[k] = CONFIG.PICK_FALLBACKS[k];
+  if (CONFIG.PICKS_FROM_SHEET) {
+    for (const k in sheetPicks) {
+      if (Object.prototype.hasOwnProperty.call(CONFIG.PICK_FALLBACKS, k) && sheetPicks[k] > 0) { CONFIG.PICK_VALUES[k] = sheetPicks[k]; STATE.pickSheetCount++; }
+    }
+    console.log('Pick values from sheet:', STATE.pickSheetCount, 'of', Object.keys(CONFIG.PICK_FALLBACKS).length);
+  }
 
   STATE.ktcPlayers = players.filter(p => p.value > 0 && ['QB','RB','WR','TE'].includes(p.pos));
   STATE.ktcPlayers.sort((a,b) => b.value - a.value);
@@ -4972,7 +4995,7 @@ async function syncAll() {
       attempt('Sleeper players', fetchSleeperPlayers),
       attempt('Standings', fetchStandings),
       attempt('Draft order', fetchDraftOrder),
-      attempt('KTC picks', fetchKTCPicks)
+      (CONFIG.PICKS_FROM_SHEET && STATE.pickSheetCount > 0) ? Promise.resolve() : attempt('KTC picks', fetchKTCPicks)
     ]);
     await attempt('Live stats', fetchLiveStats);       // needs sleeperPlayers; failure => preseason Ciely only
     try { applyLiveBlend(); } catch (e) { console.warn('applyLiveBlend failed:', e.message); }
@@ -4989,9 +5012,13 @@ async function syncAll() {
 
     var stamp = 'Synced ' + new Date().toLocaleTimeString();
     if (STATE.liveBlendInfo && STATE.liveBlendInfo.active) stamp += ' \u00b7 live blend thru wk ' + STATE.liveBlendInfo.throughWeek;
+    var staleNote = (STATE.sheetAgeDays != null && STATE.sheetAgeDays > CONFIG.STALE_SHEET_DAYS)
+      ? ' <span style="color:var(--yellow)">\u00b7 KTC sheet ' + STATE.sheetAgeDays + 'd old</span>' : '';
     if (failed.length) {
-      document.getElementById('lastSync').innerHTML = stamp +
+      document.getElementById('lastSync').innerHTML = stamp + staleNote +
         ' <span style="color:var(--red)">\u2014 ' + failed.join(', ') + ' failed, showing last-known data</span>';
+    } else if (staleNote) {
+      document.getElementById('lastSync').innerHTML = stamp + staleNote;
     } else {
       document.getElementById('lastSync').textContent = stamp;
     }
@@ -5795,11 +5822,13 @@ function renderPickCheckPanel() {
   const body = document.getElementById('pickCheckBody');
   if (!det || !body || !det.open) return;
   const sheet = STATE.sheetPicks || {};
-  const used = CONFIG.PICK_VALUES || {};
+  const used = CONFIG.PICK_FALLBACKS || CONFIG.PICK_VALUES || {};   // old built-ins, for comparison
   const st = document.getElementById('pickCheckStatus');
-  const live = STATE.pickLiveCount > 0;
-  if (st) st.textContent = 'Sheet stamp: ' + (STATE.sheetUpdated || 'n/a') + '  |  Live pick feed (leaguemate): ' +
-    (live ? STATE.pickLiveCount + ' picks loaded' : 'not loaded, using built-in fallbacks') + '  |  Sheet picks found: ' + Object.keys(sheet).length;
+  const src = (CONFIG.PICKS_FROM_SHEET && STATE.pickSheetCount > 0)
+    ? 'PRICING FROM SHEET (' + STATE.pickSheetCount + ' picks; built-ins fill gaps)'
+    : (STATE.pickLiveCount > 0 ? 'pricing from leaguemate feed' : 'pricing from built-in fallbacks');
+  if (st) st.textContent = src + '  |  Sheet stamp: ' + (STATE.sheetUpdated || 'n/a') +
+    (STATE.sheetAgeDays != null ? ' (' + STATE.sheetAgeDays + ' days ago)' : '');
   const keys = Object.keys(used);
   Object.keys(sheet).forEach(k => { if (keys.indexOf(k) < 0) keys.push(k); });
   if (!Object.keys(sheet).length) { body.innerHTML = '<tr><td colspan="4" class="muted" style="padding:14px">No pick rows found in the sheet (sync first).</td></tr>'; return; }
