@@ -1563,6 +1563,12 @@ const CONFIG = {
   // Ciely QBs split cleanly: 34 project >=122 FPS, the rest <=38.5, nobody in between.
   QB_BACKUP_FPS_MAX: 60,
   QB_BACKUP_MULT: 1.0,
+  // Player-level live blend: Ciely preseason projection blended with real 2026 production
+  // (Sleeper weekly stats scored with THIS league's scoring_settings). Per player:
+  //   blended = ciely*(1-w) + (livePts/gamesPlayed*seasonGames)*w,  w = min(maxWeight, gp/rampGames)
+  // Ciely FPS are a 17-game basis. Players under minGames stay on pure Ciely. Set enabled:false
+  // to fall back to preseason-only everywhere.
+  LIVE_BLEND: { enabled: true, maxWeight: 0.5, rampGames: 14, minGames: 2, seasonGames: 17 },
   // Deliberate roster decisions the value/VORP/age logic can't know about. A name here
   // overrides a CUT or SELL flag with a HOLD carrying the reason. Applies to YOUR roster
   // only. Delete the entry when the plan changes.
@@ -2083,7 +2089,7 @@ async function fetchKTC() {
     let qbMult = CONFIG.QB_PASSTD_MULT;
     if (pos === 'QB' && projReady && age && getArchetype('QB', age)?.cls !== 'young') {
       const pr = projFor(name, 'QB');
-      if (pr && pr.fps < CONFIG.QB_BACKUP_FPS_MAX) qbMult = CONFIG.QB_BACKUP_MULT;
+      if (pr && (pr.fpsCiely ?? pr.fps) < CONFIG.QB_BACKUP_FPS_MAX) qbMult = CONFIG.QB_BACKUP_MULT;  // preseason role, stable across syncs
     }
     const value = pos === 'QB' ? Math.round(rawValue * qbMult) : rawValue;
 
@@ -3171,7 +3177,9 @@ function renderPowerRankings() {
     const standings = STATE.standings || {};
     const gpList = Object.values(standings).map(s => (s.wins||0)+(s.losses||0)+(s.ties||0));
     const minGp = gpList.length ? Math.min(...gpList) : 0;
-    if (STATE._standingsArePrevSeason || !gpList.length) {
+    if (STATE.liveBlendInfo && STATE.liveBlendInfo.active) {
+      blendStatusEl.textContent = 'PROJ PTS: player-level live blend — ' + STATE.liveBlendInfo.blended + ' players, weeks 1\u2013' + STATE.liveBlendInfo.throughWeek + ' of real production blended with Ciely.';
+    } else if (STATE._standingsArePrevSeason || !gpList.length) {
       blendStatusEl.textContent = 'PROJ PTS: pure preseason Ciely — no live season data yet.';
     } else if (minGp >= 4) {
       const liveWeight = Math.min(0.5, minGp / 14);
@@ -4931,6 +4939,8 @@ async function syncAll() {
       attempt('Draft order', fetchDraftOrder),
       attempt('KTC picks', fetchKTCPicks)
     ]);
+    await attempt('Live stats', fetchLiveStats);       // needs sleeperPlayers; failure => preseason Ciely only
+    try { applyLiveBlend(); } catch (e) { console.warn('applyLiveBlend failed:', e.message); }
     await attempt('Rosters', fetchRosters);
     await attempt('Traded picks', fetchTradedPicks);
     fetchProspectData(false).then(function(res) {
@@ -4943,6 +4953,7 @@ async function syncAll() {
     renderDashboard(); generateGMBrief(); populatePickDropdowns();
 
     var stamp = 'Synced ' + new Date().toLocaleTimeString();
+    if (STATE.liveBlendInfo && STATE.liveBlendInfo.active) stamp += ' \u00b7 live blend thru wk ' + STATE.liveBlendInfo.throughWeek;
     if (failed.length) {
       document.getElementById('lastSync').innerHTML = stamp +
         ' <span style="color:var(--red)">\u2014 ' + failed.join(', ') + ' failed, showing last-known data</span>';
@@ -5583,6 +5594,7 @@ async function fetchProjections(force) {
       map[projClean(name) + '|' + pos] = { name, pos, fps: parseFloat(c[iF]) || 0, vorp: parseFloat(c[iV]) || 0, posRank: parseInt(c[iR]) || null, passTD: iT >= 0 ? (parseFloat(c[iT]) || 0) : 0 };
     }
     STATE.projMap = map;
+    try { applyLiveBlend(); } catch (e) { console.warn('applyLiveBlend failed:', e.message); }
   } catch (e) {
     console.warn('fetchProjections failed:', e.message);
     STATE.projMap = map; // may be empty; UI shows dashes
@@ -5591,6 +5603,123 @@ async function fetchProjections(force) {
 }
 
 // Synchronous projection lookup (reads warmed cache; null if not loaded/matched)
+// ============================================================
+// LIVE PLAYER-LEVEL BLEND (see CONFIG.LIVE_BLEND)
+// ============================================================
+// Fantasy points for one weekly stat line under the league's own scoring_settings.
+function scoreStatLine(s, pos, sc) {
+  let pts = 0;
+  for (const k in sc) { const v = s[k]; if (typeof v === 'number' && v) pts += v * sc[k]; }
+  // TE premium: if the stat line lacks a bonus_rec_te counter, derive it from receptions.
+  if (pos === 'TE' && sc.bonus_rec_te && typeof s.bonus_rec_te !== 'number' && typeof s.rec === 'number') pts += s.rec * sc.bonus_rec_te;
+  return pts;
+}
+
+async function fetchLiveStats() {
+  const LB = CONFIG.LIVE_BLEND;
+  STATE.liveStats = null;
+  STATE.liveBlendInfo = null;
+  if (!LB.enabled) return;
+  const st = await (await fetchWithTimeout('https://api.sleeper.app/v1/state/nfl', {}, 8000)).json();
+  const season = st.season, week = parseInt(st.week, 10);
+  if (st.season_type !== 'regular' || !(week > 1)) return;      // no completed regular-season week yet
+  const lg = await (await fetchWithTimeout('https://api.sleeper.app/v1/league/' + CONFIG.LEAGUE_ID, {}, 8000)).json();
+  const sc = lg && lg.scoring_settings;
+  if (!sc || !Object.keys(sc).length) throw new Error('no scoring_settings');
+  STATE.scoringSettings = sc;
+  const weeks = []; for (let w = 1; w < week; w++) weeks.push(w);   // completed weeks only
+  const results = await Promise.allSettled(weeks.map(w =>
+    fetchWithTimeout('https://api.sleeper.app/v1/stats/nfl/regular/' + season + '/' + w, {}, 12000)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })));
+  const live = {};
+  let okWeeks = 0;
+  for (const res of results) {
+    if (res.status !== 'fulfilled' || !res.value) continue;
+    let data = res.value;
+    if (Array.isArray(data)) {                                   // tolerate [{player_id, stats}] shape
+      const m = {}; for (const row of data) if (row && row.player_id) m[row.player_id] = row.stats || row; data = m;
+    }
+    if (!Object.keys(data).length) continue;
+    okWeeks++;
+    for (const pid in data) {
+      const sp = STATE.sleeperPlayers && STATE.sleeperPlayers[pid];
+      if (!sp || !['QB','RB','WR','TE'].includes(sp.pos)) continue;
+      let s = data[pid]; if (!s) continue;
+      if (s.stats && typeof s.stats === 'object') s = s.stats;      // tolerate {pid: {stats: {...}}}
+      const pts = scoreStatLine(s, sp.pos, sc);
+      if (!((s.gp > 0) || (s.off_snp > 0) || pts !== 0)) continue;   // didn't play that week
+      const L = live[pid] || (live[pid] = { gp: 0, pts: 0, passTD: 0 });
+      L.gp += 1; L.pts += pts; L.passTD += (s.pass_td || 0);
+    }
+  }
+  if (!okWeeks) throw new Error('no weekly stats returned');
+  // Sanity guard: an unexpected response shape would score everyone at ~0 and silently drag
+  // every projection down. A real slate has hundreds of scoring players; reject otherwise.
+  const scored = Object.values(live).filter(L => L.pts > 5).length;
+  if (scored < 50) throw new Error('weekly stats look empty or mis-shaped (' + scored + ' scoring players)');
+  STATE.liveStats = live;
+  STATE.liveBlendInfo = { season, throughWeek: week - 1, weeksLoaded: okWeeks, players: Object.keys(live).length, blended: 0, active: false };
+}
+
+// Idempotent: always rebuilds from the pristine Ciely numbers, so calling it twice (or after a
+// projection reload) can never compound the blend.
+function applyLiveBlend() {
+  const LB = CONFIG.LIVE_BLEND;
+  const map = STATE.projMap;
+  if (!map || !Object.keys(map).length) return;
+  for (const key in map) {
+    const pr = map[key];
+    if (pr.fpsCiely === undefined) {
+      pr.fpsCiely = pr.fps; pr.vorpCiely = pr.vorp; pr.posRankCiely = pr.posRank; pr.passTDCiely = pr.passTD;
+      pr.baseline = pr.fps - pr.vorp;          // Ciely VORP = fps - a constant per-position replacement level
+    } else {
+      pr.fps = pr.fpsCiely; pr.vorp = pr.vorpCiely; pr.posRank = pr.posRankCiely; pr.passTD = pr.passTDCiely;
+    }
+    pr.liveGp = 0; pr.liveW = 0; pr.livePace = null;
+  }
+  const info = STATE.liveBlendInfo;
+  if (!LB.enabled || !STATE.liveStats || !STATE.sleeperPlayers) { if (info) info.active = false; return; }
+  const byKey = {};
+  for (const pid in STATE.liveStats) {
+    const sp = STATE.sleeperPlayers[pid]; if (!sp) continue;
+    byKey[projClean(sp.name) + '|' + sp.pos] = STATE.liveStats[pid];
+  }
+  let blended = 0;
+  for (const key in map) {
+    const pr = map[key], L = byKey[key];
+    if (!L || L.gp < LB.minGames) continue;
+    const w = Math.min(LB.maxWeight, L.gp / LB.rampGames);
+    const pace = L.pts / L.gp * LB.seasonGames;
+    pr.fps = pr.fpsCiely * (1 - w) + pace * w;
+    if (pr.pos === 'QB') pr.passTD = pr.passTDCiely * (1 - w) + (L.passTD / L.gp * LB.seasonGames) * w;
+    pr.vorp = pr.fps - pr.baseline;
+    pr.liveGp = L.gp; pr.liveW = w; pr.livePace = pace;
+    blended++;
+  }
+  if (blended) {                                // re-rank within position on blended fps
+    const byPos = {};
+    for (const key in map) (byPos[map[key].pos] = byPos[map[key].pos] || []).push(map[key]);
+    for (const pos in byPos) byPos[pos].sort((a, b) => b.fps - a.fps).forEach((pr, i) => { pr.posRank = i + 1; });
+  }
+  if (info) { info.blended = blended; info.active = blended > 0; }
+}
+
+// Console spot-check: liveBlendReport() or liveBlendReport('Metcalf')
+window.liveBlendReport = function (filter) {
+  const rows = [];
+  for (const key in (STATE.projMap || {})) {
+    const pr = STATE.projMap[key];
+    if (!pr.liveGp) continue;
+    if (filter && pr.name.toLowerCase().indexOf(String(filter).toLowerCase()) < 0) continue;
+    rows.push({ player: pr.name, pos: pr.pos, gp: pr.liveGp, ciely: +pr.fpsCiely.toFixed(1), livePace: +pr.livePace.toFixed(1),
+      weight: +pr.liveW.toFixed(2), blended: +pr.fps.toFixed(1), rankCiely: pr.posRankCiely, rankNow: pr.posRank });
+  }
+  rows.sort((a, b) => b.ciely - a.ciely);
+  console.log('Live blend:', JSON.stringify(STATE.liveBlendInfo));
+  console.table(filter ? rows : rows.slice(0, 40));
+  return rows.length;
+};
+
 function projFor(name, pos) {
   if (!STATE.projMap) return null;
   return STATE.projMap[projClean(name) + '|' + pos] || null;
@@ -6245,6 +6374,9 @@ function equityLineupPlayers(players) {
 // a Ciely projection is shown as "this team's projected output," so none of them
 // can silently disagree about whether a real 0-2 start counts for anything.
 function blendLiveProjection(teamName, cielyProj) {
+  // Player-level live blend already folds real production into these numbers; blending the
+  // team's points-for on top would count the same signal twice.
+  if (STATE.liveBlendInfo && STATE.liveBlendInfo.active) return cielyProj;
   var standings = STATE.standings || {};
   var gpList = Object.values(standings).map(function(s) { return (s.wins||0)+(s.losses||0)+(s.ties||0); });
   var liveGated = !STATE._standingsArePrevSeason && gpList.length > 0 && Math.min.apply(null, gpList) >= 4;
