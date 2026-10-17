@@ -2630,8 +2630,10 @@ async function fetchRosters() {
   const rosterMap = {};
   const rosterIdMap = {};
   const leagueTaxiIds = new Set();
+  STATE.taxiPlayerIds = new Set();   // MY taxi squad (🚕 badge on the rookie-draft report)
   for (const r of rosters) {
     const name = CONFIG.OWNER_MAP[r.owner_id];
+    if (name === CONFIG.MY_TEAM_NAME) STATE.taxiPlayerIds = new Set(r.taxi || []);
     if (name) {
       // Combine players + taxi, deduplicated (Sleeper includes taxi players in r.players already)
       const allIds = [...new Set([...(r.players || []), ...(r.taxi || [])])];
@@ -5932,10 +5934,11 @@ function filterRookieBoard(filter, btn) {
 }
 
 // Init
+// Nothing is fetched on page load: the app only pulls data when you tap Sync Data (syncAll also loads the
+// projections). Until then the page is empty, so drop the splash screen and say so.
 window.addEventListener('load', () => {
-  setLoadingProgress(5, 'LOADING WAR ROOM...');
-  syncAll();
-  fetchProjections().catch(() => {});   // warm projection cache for trade analyzer + rookie board
+  document.getElementById('loadingOverlay').style.display = 'none';
+  document.getElementById('lastSync').textContent = 'Not synced \u2014 tap Sync Data';
 });
 
 // ============================================================
@@ -7555,17 +7558,7 @@ function vpSetFilter(f, btn) { STATE.vpFilter = f; document.querySelectorAll('#v
     }
   };
 
-  // ---------- capture taxi player IDs (for the 🚕 badge) — safe if it fails ----------
-  (async function loadTaxi() {
-    try {
-      const r  = await fetch(`https://api.sleeper.app/v1/league/${CONFIG.LEAGUE_ID}/rosters`);
-      const rs = await r.json();
-      const me = rs.find(x => CONFIG.OWNER_MAP[x.owner_id] === CONFIG.MY_TEAM_NAME);
-      STATE.taxiPlayerIds = new Set((me && me.taxi) || []);
-    } catch (e) {
-      STATE.taxiPlayerIds = new Set();
-    }
-  })();
+  // (taxi IDs now come from fetchRosters during Sync — no fetch on page load)
 })();
 </script>
 </body>
