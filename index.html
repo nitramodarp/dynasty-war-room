@@ -2981,7 +2981,10 @@ function renderRosterTable(tbodyId, players) {
   tbody.innerHTML = sorted.map(p => {
     const a = getArchetype(p.pos, p.age);
     const taxi = isOnTaxi(p);
-    const urgency = getSellUrgency(p.pos, p.age);
+    // A manual hold means you're keeping him on purpose, so no age-based SELL NOW countdown.
+    const heldOnPurpose = CONFIG.MANUAL_HOLDS && CONFIG.MANUAL_HOLDS[p.name] &&
+      (STATE.myRoster || []).some(m => m.name === p.name);
+    const urgency = heldOnPurpose ? null : getSellUrgency(p.pos, p.age);
     const vorpStyle = `color:${vorpColor(p.vorp)}`;
     const tepTag = p.pos === 'TE' ? `<span style="font-family:DM Mono,monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
     const injBadge = p.injuryFlag
