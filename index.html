@@ -1555,12 +1555,20 @@ const CONFIG = {
   // 6pt and hoards QBs hard. Calibrated to 1.6 from two clean non-QB Burrow comps
   // (Achane+Kraft ~1.55 TEP-adj, Burden+picks ~1.65). Tunable — QB only.
   QB_PASSTD_MULT: 1.6,
+  // The 1.6 above is a STARTER calibration (6pt passing TDs + SF hoarding). A veteran who
+  // isn't playing throws ~0 TDs, so the 6pt edge doesn't exist for him. Non-young QBs whose
+  // Ciely projection is below QB_BACKUP_FPS_MAX get QB_BACKUP_MULT instead (1.0 = raw KTC).
+  // Young QBs (archetype 'young') keep the full multiplier: their price is a future-starter
+  // price, not a 2026 one. No projection found => keep 1.6 (missing data isn't evidence).
+  // Ciely QBs split cleanly: 34 project >=122 FPS, the rest <=38.5, nobody in between.
+  QB_BACKUP_FPS_MAX: 60,
+  QB_BACKUP_MULT: 1.0,
   // Deliberate roster decisions the value/VORP/age logic can't know about. A name here
   // overrides a CUT or SELL flag with a HOLD carrying the reason. Applies to YOUR roster
   // only. Delete the entry when the plan changes.
   MANUAL_HOLDS: {
     'Justin Fields': 'Keeper: Chiefs QB2 with rushing upside (deliberate hold)',
-    'Joe Flacco': 'Keeper: 6pt format edge; holding until a QB-needy buyer appears'
+    'Joe Flacco': 'Keeper: free QB depth and trade chip; holding until a QB-needy buyer appears'
   },
   // Name corrections: Sleeper name -> KTC name (only where cleanName() can't resolve)
   NAME_CORRECTIONS: {
@@ -2052,6 +2060,8 @@ async function fetchKTC() {
   setLoadingProgress(10, 'FETCHING KTC VALUES...');
   const lines = await fetchSheetCSV(CONFIG.KTC_CSV_URL, 'KTC values');
   const players = [];
+  // Projections drive the QB role check below; sync loads them first (see sync sequence).
+  const projReady = !!(STATE.projMap && Object.keys(STATE.projMap).length);
   const pickPattern = /^\d{4}\s+(Early|Mid|Late)\s+\d(st|nd|rd|th)$/i;
   // Skip picks from the SF TE+ CSV — their scale is inflated vs standard SF.
   // fetchKTCPicks() handles live pick values; corrected fallbacks cover offline.
@@ -2066,9 +2076,16 @@ async function fetchKTC() {
     if (/^\d{4}\s+(Early|Mid|Late)\s+\d(st|nd|rd|th)$/i.test(name)) continue; // skip picks
 
     const pos = cols[2]?.trim() || '';
+    const age = parseFloat(cols[5]) || 0;
     // Correct KTC's 4pt-PassTD values up to our 6pt league — QB only. Single source
     // of the fix: everything downstream (VORP, baselines, rankings, trade evals) inherits it.
-    const value = pos === 'QB' ? Math.round(rawValue * CONFIG.QB_PASSTD_MULT) : rawValue;
+    // Role-aware: a non-young QB projected as a true backup doesn't get the starter lift.
+    let qbMult = CONFIG.QB_PASSTD_MULT;
+    if (pos === 'QB' && projReady && age && getArchetype('QB', age)?.cls !== 'young') {
+      const pr = projFor(name, 'QB');
+      if (pr && pr.fps < CONFIG.QB_BACKUP_FPS_MAX) qbMult = CONFIG.QB_BACKUP_MULT;
+    }
+    const value = pos === 'QB' ? Math.round(rawValue * qbMult) : rawValue;
 
     players.push({
       name,
@@ -2076,7 +2093,7 @@ async function fetchKTC() {
       pos,
       team: cols[3]?.trim() || '',
       value,
-      age: parseFloat(cols[5]) || 0,
+      age,
       rookie: ['true','1','yes','y'].includes((cols[6]?.trim() || '').toLowerCase())
     });
   }
@@ -2894,6 +2911,9 @@ function renderDashboard() {
       const rf = getRosterHealthFlag(p);
       if (rf && (rf.flag === 'SELL' || rf.flag === 'CUT')) continue;
       const pr = projFor(p.name, 'QB'); if (!pr || !pr.passTD) continue;
+      // Volume floor: a backup projected for ~1 passing TD shows a big edge % only because his
+      // total is tiny (Flacco: 1.5 TD on 16 pts = "22%"). The edge isn't realizable at 0 volume.
+      if (pr.fps < CONFIG.QB_BACKUP_FPS_MAX) continue;
       const edge = pr.passTD * 2, fps4 = pr.fps - edge, edgePct = fps4 > 0 ? edge / fps4 * 100 : 0;
       if (edgePct >= 18) actions.push({ tier: 2, _name: p.name, color: 'var(--green)',
         msg: `💹 <strong>HOLD</strong> ${p.name} (QB) — high 6pt format edge (${edgePct.toFixed(0)}%); KTC's 4pt model underprices him, don't sell at a KTC-even price` });
@@ -4884,6 +4904,9 @@ async function syncAll() {
   }
 
   try {
+    // Projections first: fetchKTC uses them to tell starting QBs from backups. Cached after
+    // the first load; a failure just leaves the flat QB multiplier in place.
+    await attempt('Projections', () => fetchProjections(false));
     await attempt('KTC values', fetchKTC);
     setLoadingProgress(35, 'FETCHING SLEEPER DATA...');
     await Promise.allSettled([
