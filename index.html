@@ -1177,6 +1177,20 @@
         <div style="font-size:9px;color:var(--text-muted);margin-top:6px;line-height:1.45">Ciely = preseason 17-game projection. Pace = real points per game x 17, scored with this league's settings. Blend = Ciely x (1-Wt) + Pace x Wt. Rank = position rank, Ciely then now.</div>
       </details>
     </div>
+
+    <div class="card">
+      <details id="pickCheckDetails" ontoggle="renderPickCheckPanel()">
+        <summary class="card-title" style="cursor:pointer">🎯 Pick Values Check</summary>
+        <div id="pickCheckStatus" style="font-size:10px;color:var(--text-dim);margin:6px 0 8px;line-height:1.5;font-family:'DM Mono',monospace"></div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>Pick</th><th class="text-right">Sheet (TE+)</th><th class="text-right">App uses</th><th class="text-right">Diff</th></tr></thead>
+            <tbody id="pickCheckBody"></tbody>
+          </table>
+        </div>
+        <div style="font-size:9px;color:var(--text-muted);margin-top:6px;line-height:1.45">Read-only comparison. "App uses" is what trades and totals currently price picks at (live leaguemate value if it loaded, otherwise the built-in fallback). "Sheet" is the pick row in the same Google Sheet that supplies player values.</div>
+      </details>
+    </div>
   </div>
 
   <!-- TRADE ANALYZER TAB -->
@@ -2084,6 +2098,7 @@ async function fetchKTC() {
   // Projections drive the QB role check below; sync loads them first (see sync sequence).
   const projReady = !!(STATE.projMap && Object.keys(STATE.projMap).length);
   const pickPattern = /^\d{4}\s+(Early|Mid|Late)\s+\d(st|nd|rd|th)$/i;
+  const sheetPicks = {};   // read-only capture for the Pick Values Check panel (not used in valuations)
   // Skip picks from the SF TE+ CSV — their scale is inflated vs standard SF.
   // fetchKTCPicks() handles live pick values; corrected fallbacks cover offline.
 
@@ -2094,7 +2109,7 @@ async function fetchKTC() {
     if (!name || name.startsWith('Updated') || name === 'Name' || name.startsWith('KTC') || name.startsWith('Fantasy')) continue;
     const rawValue = parseFloat(cols[4]) || 0;
     if (!rawValue) continue;
-    if (/^\d{4}\s+(Early|Mid|Late)\s+\d(st|nd|rd|th)$/i.test(name)) continue; // skip picks
+    if (/^\d{4}\s+(Early|Mid|Late)\s+\d(st|nd|rd|th)$/i.test(name)) { sheetPicks[name] = rawValue; continue; } // picks: captured for comparison only
 
     const pos = cols[2]?.trim() || '';
     const age = parseFloat(cols[5]) || 0;
@@ -2119,6 +2134,8 @@ async function fetchKTC() {
     });
   }
   console.log('KTC players loaded:', players.length);
+  STATE.sheetPicks = sheetPicks;
+  STATE.sheetUpdated = ((lines[0] && lines[0][0]) || '').trim();
 
   STATE.ktcPlayers = players.filter(p => p.value > 0 && ['QB','RB','WR','TE'].includes(p.pos));
   STATE.ktcPlayers.sort((a,b) => b.value - a.value);
@@ -2153,8 +2170,9 @@ async function fetchKTCPicks() {
         CONFIG.PICK_VALUES[pick.playerName] = val; updated++;
       }
     }
+    STATE.pickLiveCount = updated;
     console.log('KTC live picks: ' + updated + ' updated'); return updated;
-  } catch(e) { console.warn('fetchKTCPicks failed:', e.message); return 0; }
+  } catch(e) { STATE.pickLiveCount = 0; console.warn('fetchKTCPicks failed:', e.message); return 0; }
 }
 
 // This is a ~5MB payload re-downloaded on every single Sync click with no caching.
@@ -3204,6 +3222,7 @@ function renderPowerRankings() {
     }
   }
   renderLiveBlendPanel();
+  renderPickCheckPanel();
   const container = document.getElementById('powerRankingsContainer');
   container.innerHTML = rankings.map((team, i) => {
     const rank = i + 1;
@@ -5768,6 +5787,32 @@ function renderLiveBlendPanel() {
       '<td class="text-right" style="color:' + col + ';font-weight:600">' + r.blended.toFixed(1) + '</td>' +
       '<td class="text-right">' + r.rankCiely + '\u2192' + r.rankNow + '</td></tr>';
   }).join('');
+}
+
+// Read-only: compare the sheet's pick rows to the values the app actually uses.
+function renderPickCheckPanel() {
+  const det = document.getElementById('pickCheckDetails');
+  const body = document.getElementById('pickCheckBody');
+  if (!det || !body || !det.open) return;
+  const sheet = STATE.sheetPicks || {};
+  const used = CONFIG.PICK_VALUES || {};
+  const st = document.getElementById('pickCheckStatus');
+  const live = STATE.pickLiveCount > 0;
+  if (st) st.textContent = 'Sheet stamp: ' + (STATE.sheetUpdated || 'n/a') + '  |  Live pick feed (leaguemate): ' +
+    (live ? STATE.pickLiveCount + ' picks loaded' : 'not loaded, using built-in fallbacks') + '  |  Sheet picks found: ' + Object.keys(sheet).length;
+  const keys = Object.keys(used);
+  Object.keys(sheet).forEach(k => { if (keys.indexOf(k) < 0) keys.push(k); });
+  if (!Object.keys(sheet).length) { body.innerHTML = '<tr><td colspan="4" class="muted" style="padding:14px">No pick rows found in the sheet (sync first).</td></tr>'; return; }
+  let sum = 0, n = 0;
+  const rows = keys.map(k => {
+    const sv = sheet[k], av = used[k];
+    let diff = '', col = 'var(--text)';
+    if (sv != null && av) { const d = (sv - av) / av * 100; sum += d; n++; diff = (d > 0 ? '+' : '') + d.toFixed(1) + '%'; col = Math.abs(d) >= 5 ? (d > 0 ? 'var(--green)' : 'var(--red)') : 'var(--text-dim)'; }
+    return '<tr><td>' + k + '</td><td class="text-right">' + (sv != null ? sv.toLocaleString() : '\u2014') + '</td><td class="text-right">' + (av ? av.toLocaleString() : '\u2014') +
+      '</td><td class="text-right" style="color:' + col + '">' + diff + '</td></tr>';
+  });
+  if (n) rows.push('<tr><td><b>Average difference</b></td><td></td><td></td><td class="text-right"><b>' + (sum / n > 0 ? '+' : '') + (sum / n).toFixed(1) + '%</b></td></tr>');
+  body.innerHTML = rows.join('');
 }
 
 function projFor(name, pos) {
