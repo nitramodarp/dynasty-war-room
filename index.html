@@ -1162,6 +1162,21 @@
         </table>
       </div>
     </div>
+
+    <div class="card">
+      <details id="liveBlendDetails" ontoggle="renderLiveBlendPanel()">
+        <summary class="card-title" style="cursor:pointer">🔬 Live Blend Check</summary>
+        <div id="liveBlendStatus" style="font-size:10px;color:var(--text-dim);margin:6px 0 8px;line-height:1.45;font-family:'DM Mono',monospace"></div>
+        <input id="liveBlendSearch" type="search" placeholder="Search a player (blank = biggest movers)" oninput="renderLiveBlendPanel()" style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:8px;background:var(--bg-card,#161616);color:var(--text);border:1px solid var(--border,#333);border-radius:6px;font-size:13px">
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>Player</th><th class="text-right">GP</th><th class="text-right">Ciely</th><th class="text-right">Pace</th><th class="text-right">Wt</th><th class="text-right">Blend</th><th class="text-right">Rank</th></tr></thead>
+            <tbody id="liveBlendBody"></tbody>
+          </table>
+        </div>
+        <div style="font-size:9px;color:var(--text-muted);margin-top:6px;line-height:1.45">Ciely = preseason 17-game projection. Pace = real points per game x 17, scored with this league's settings. Blend = Ciely x (1-Wt) + Pace x Wt. Rank = position rank, Ciely then now.</div>
+      </details>
+    </div>
   </div>
 
   <!-- TRADE ANALYZER TAB -->
@@ -3188,6 +3203,7 @@ function renderPowerRankings() {
       blendStatusEl.textContent = 'PROJ PTS: pure preseason Ciely — live points-for blend activates once every team has 4+ games (currently ' + minGp + ').';
     }
   }
+  renderLiveBlendPanel();
   const container = document.getElementById('powerRankingsContainer');
   container.innerHTML = rankings.map((team, i) => {
     const rank = i + 1;
@@ -5704,8 +5720,8 @@ function applyLiveBlend() {
   if (info) { info.blended = blended; info.active = blended > 0; }
 }
 
-// Console spot-check: liveBlendReport() or liveBlendReport('Metcalf')
-window.liveBlendReport = function (filter) {
+// Rows for the live-blend check (used by the console helper and the in-app panel)
+function liveBlendRows(filter) {
   const rows = [];
   for (const key in (STATE.projMap || {})) {
     const pr = STATE.projMap[key];
@@ -5714,11 +5730,45 @@ window.liveBlendReport = function (filter) {
     rows.push({ player: pr.name, pos: pr.pos, gp: pr.liveGp, ciely: +pr.fpsCiely.toFixed(1), livePace: +pr.livePace.toFixed(1),
       weight: +pr.liveW.toFixed(2), blended: +pr.fps.toFixed(1), rankCiely: pr.posRankCiely, rankNow: pr.posRank });
   }
+  return rows;
+}
+
+// Console spot-check: liveBlendReport() or liveBlendReport('Metcalf')
+window.liveBlendReport = function (filter) {
+  const rows = liveBlendRows(filter);
   rows.sort((a, b) => b.ciely - a.ciely);
   console.log('Live blend:', JSON.stringify(STATE.liveBlendInfo));
   console.table(filter ? rows : rows.slice(0, 40));
   return rows.length;
 };
+
+// In-app version of the same check (Assets tab, collapsible) so it works on a phone.
+function renderLiveBlendPanel() {
+  const det = document.getElementById('liveBlendDetails');
+  const body = document.getElementById('liveBlendBody');
+  if (!det || !body || !det.open) return;
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const info = STATE.liveBlendInfo;
+  const st = document.getElementById('liveBlendStatus');
+  if (st) st.textContent = info && info.active
+    ? 'Active: weeks 1\u2013' + info.throughWeek + ' loaded, ' + info.blended + ' players blended.'
+    : 'Not active \u2014 no live stats loaded (preseason, or the Sleeper stats call failed). Projections are pure Ciely.';
+  const q = (document.getElementById('liveBlendSearch').value || '').trim();
+  let rows = liveBlendRows(q);
+  if (!q) { rows.sort((a, b) => Math.abs(b.blended - b.ciely) - Math.abs(a.blended - a.ciely)); rows = rows.slice(0, 30); }
+  else rows.sort((a, b) => b.ciely - a.ciely);
+  rows = rows.slice(0, 40);
+  if (!rows.length) { body.innerHTML = '<tr><td colspan="7" class="muted" style="padding:14px">' + (info && info.active ? 'No match.' : 'Nothing to show yet.') + '</td></tr>'; return; }
+  body.innerHTML = rows.map(r => {
+    const d = r.blended - r.ciely;
+    const col = d > 0.05 ? 'var(--green)' : d < -0.05 ? 'var(--red)' : 'var(--text)';
+    return '<tr><td>' + esc(r.player) + ' <span class="muted" style="font-size:10px">' + esc(r.pos) + '</span></td>' +
+      '<td class="text-right">' + r.gp + '</td><td class="text-right">' + r.ciely.toFixed(1) + '</td>' +
+      '<td class="text-right">' + r.livePace.toFixed(1) + '</td><td class="text-right">' + r.weight.toFixed(2) + '</td>' +
+      '<td class="text-right" style="color:' + col + ';font-weight:600">' + r.blended.toFixed(1) + '</td>' +
+      '<td class="text-right">' + r.rankCiely + '\u2192' + r.rankNow + '</td></tr>';
+  }).join('');
+}
 
 function projFor(name, pos) {
   if (!STATE.projMap) return null;
@@ -6383,7 +6433,9 @@ function blendLiveProjection(teamName, cielyProj) {
   var s = standings[teamName];
   var gp = s ? (s.wins||0)+(s.losses||0)+(s.ties||0) : 0;
   if (!liveGated || !s || !gp) return cielyProj;
-  var livePace = (s.pf / gp) * 14;               // real points-for, paced to a full season
+  // Ciely team totals are sums of 17-game player projections, so pace per-game points-for
+  // to 17 games too (14 would understate the live side by ~18%).
+  var livePace = (s.pf / gp) * ((CONFIG.LIVE_BLEND && CONFIG.LIVE_BLEND.seasonGames) || 17);
   var liveWeight = Math.min(0.5, gp / 14);
   return cielyProj * (1 - liveWeight) + livePace * liveWeight;
 }
@@ -6526,9 +6578,11 @@ function renderEquity() {
   var _standings = STATE.standings || {};
   var _gpList = Object.values(_standings).map(function(s) { return (s.wins||0)+(s.losses||0)+(s.ties||0); });
   var _minGp = _gpList.length ? Math.min.apply(null, _gpList) : 0;
-  var live2026Label = (STATE._standingsArePrevSeason || !_gpList.length || _minGp < 4)
-    ? 'Ciely lineup · league avg ' + pct(uniformP)
-    : 'Ciely + real record · league avg ' + pct(uniformP);
+  var live2026Label = (STATE.liveBlendInfo && STATE.liveBlendInfo.active)
+    ? 'Ciely + live player stats (wk ' + STATE.liveBlendInfo.throughWeek + ') · league avg ' + pct(uniformP)
+    : (STATE._standingsArePrevSeason || !_gpList.length || _minGp < 4)
+      ? 'Ciely lineup · league avg ' + pct(uniformP)
+      : 'Ciely + real record · league avg ' + pct(uniformP);
 
   // ── Trade leak cost: marginal $ per 1,000 value units leaked ─────
   // Computed numerically inside calcEquity() (3-tier payout has no clean closed-
