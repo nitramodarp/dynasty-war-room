@@ -1064,7 +1064,7 @@
           <button id="cgModeTaxi" class="filter-btn" onclick="setCgMode(true)">+ Taxi</button>
         </div>
       </div>
-      <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:10px;line-height:1.5">Your optimal starting lineup (Ciely 2026 FPS, actual slot assignment: 1QB · 2RB · 2WR · 1TE · 2FLEX · 1SF) vs the league's top-4 contender benchmark, by position. Gap = what separates this roster from contention.</div>
+      <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:10px;line-height:1.5">Your optimal starting lineup (Ciely 2026 FPS, blended with live stats in-season; actual slot assignment: 1QB · 2RB · 2WR · 1TE · 2FLEX · 1SF) vs the league's top-4 contender benchmark, by position. Gap = what separates this roster from contention.</div>
       <div id="contenderGap"><div class="mono muted" style="font-size:12px;padding:12px">Loading projections…</div></div>
     </div>
 
@@ -1996,7 +1996,7 @@ function getRosterHealthFlagRaw(player) {
     const cutoff = (CONFIG.VORP_RANKS[pos] || 0) - 1;
     if (Number.isFinite(rk) && cutoff > 0 && rk <= cutoff) {
       return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️',
-        reason: 'Age ' + age + ' but producing at ' + pos + rk + ' (Ciely) — above replacement level, monitor rather than sell' };
+        reason: 'Age ' + age + ' but producing at ' + pos + rk + (prj.liveGp ? ' (projection blended with ' + prj.liveGp + ' games of live stats)' : ' (Ciely)') + ' — above replacement level, monitor rather than sell' };
     }
   }
 
@@ -2924,7 +2924,7 @@ function renderDashboard() {
     const div = pctRank(posFps[p.pos] || [], pr.fps) - pctRank(posVals[p.pos] || [], p.value || 0);
     const cls = (getArchetype(p.pos, p.age) || {}).cls;
     if (div <= -25 && (cls === 'peak' || cls === 'aging' || cls === 'sell'))
-      return `market prices him ${Math.abs(div)} %ile above his 2026 production (Ciely ${p.pos}${pr.posRank || '?'})`;
+      return `market prices him ${Math.abs(div)} %ile above his 2026 production (${pr.liveGp ? 'blended' : 'Ciely'} ${p.pos}${pr.posRank || '?'})`;
     return null;
   }
 
@@ -3606,6 +3606,16 @@ function analyzeTrade() {
     return s + ((fh && (fh.flag === 'SELL' || fh.flag === 'CUT')) ? x.value : 0);
   }, 0);
   const sellLow = rawB > 0 && flaggedOutValue / rawB >= 0.5;
+  // Mirror case: most of what you're RECEIVING is value the app already flags SELL/CUT, so the
+  // headline value is depreciating and the edge is smaller than it looks.
+  const flaggedInValue = a.reduce((s, x) => {
+    if (x.pos === 'PICK') return s;
+    const fh = getRosterHealthFlag(x);
+    return s + ((fh && (fh.flag === 'SELL' || fh.flag === 'CUT')) ? x.value : 0);
+  }, 0);
+  const buyFlagged = rawA > 0 && flaggedInValue / rawA >= 0.5;
+  const buyFlaggedNote = buyFlagged
+    ? `<br><span style="font-size:11px;color:var(--yellow)">${Math.round(flaggedInValue / rawA * 100)}% of what you're receiving is already flagged SELL/CUT — that value is depreciating, so treat the headline numbers as optimistic.</span>` : '';
 
   const verdict = document.getElementById('tradeVerdict');
   verdict.style.display = 'block';
@@ -3628,12 +3638,16 @@ function analyzeTrade() {
   if (Math.abs(diff) < 200) {
     label.textContent = '✅ FAIR TRADE';
     label.style.color = shade;
-    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">±${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">gap</span><br><span style="font-size:11px">Raw values nearly equal (${fmt(rawA)} vs ${fmt(rawB)}) — both sides can feel good</span>`;
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">±${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">gap</span><br><span style="font-size:11px">Raw values nearly equal (${fmt(rawA)} vs ${fmt(rawB)}) — both sides can feel good</span>` + buyFlaggedNote;
   } else if (diff > 0) {
-    const severity = pct > 40 ? '🛑 MASSIVE OVERPAY' : pct > 20 ? '⚠️ YOU WIN THIS TRADE' : '✅ SLIGHT EDGE TO YOU';
+    const buyFlaggedOn = buyFlagged && pct > 20;
+    const severity = buyFlaggedOn ? '⚖️ BUYING FLAGGED ASSETS — edge may not hold'
+      : pct > 40 ? '🛑 MASSIVE OVERPAY' : pct > 20 ? '⚠️ YOU WIN THIS TRADE' : '✅ SLIGHT EDGE TO YOU';
+    const wColor = buyFlaggedOn ? 'var(--yellow)' : shade;
+    const wChip = buyFlaggedOn ? 'rgba(255,215,0,0.15)' : shadeChip;
     label.textContent = severity;
-    label.style.color = shade;
-    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">+${fmt(diff)}</span> <span style="color:var(--text-muted);font-size:11px">in your favor (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
+    label.style.color = wColor;
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${wColor};background:${wChip};padding:2px 8px;border-radius:5px">+${fmt(diff)}</span> <span style="color:var(--text-muted);font-size:11px">in your favor (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>` + buyFlaggedNote;
   } else {
     const severity = (sellLow && pct > 20) ? '⚖️ SELLING LOW — flagged asset'
       : pct > 40 ? '🛑 VETO: MASSIVE OVERPAY' : pct > 20 ? '⚠️ THEY WIN THIS TRADE' : '⚠️ SLIGHT EDGE TO THEM';
@@ -3644,7 +3658,8 @@ function analyzeTrade() {
     label.textContent = severity;
     label.style.color = vColor;
     detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${vColor};background:${vChip};padding:2px 8px;border-radius:5px">-${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">against you (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`
-      + (sellLow ? `<br><span style="font-size:11px;color:var(--yellow)">${Math.round(flaggedOutValue / rawB * 100)}% of what you're giving is already flagged SELL/CUT — the gap is the cost of exiting, not necessarily an overpay.</span>` : '');
+      + (sellLow ? `<br><span style="font-size:11px;color:var(--yellow)">${Math.round(flaggedOutValue / rawB * 100)}% of what you're giving is already flagged SELL/CUT — the gap is the cost of exiting, not necessarily an overpay.</span>` : '')
+      + buyFlaggedNote;
   }
 
   // Health context: flag SELL/CUT assets and warn on giving away HOLDs
