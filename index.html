@@ -3569,11 +3569,15 @@ function analyzeTrade() {
     label.style.color = shade;
     detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">+${fmt(diff)}</span> <span style="color:var(--text-muted);font-size:11px">in your favor (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
   } else {
-    const severity = (sellLow && pct > 20) ? '🔻 SELLING LOW — flagged asset'
+    const severity = (sellLow && pct > 20) ? '⚖️ SELLING LOW — flagged asset'
       : pct > 40 ? '🛑 VETO: MASSIVE OVERPAY' : pct > 20 ? '⚠️ THEY WIN THIS TRADE' : '⚠️ SLIGHT EDGE TO THEM';
+    // Sell-low is advisory, not a stop sign: neutral yellow instead of the gap-driven red.
+    const sellLowOn = sellLow && pct > 20;
+    const vColor = sellLowOn ? 'var(--yellow)' : shade;
+    const vChip = sellLowOn ? 'rgba(255,215,0,0.15)' : shadeChip;
     label.textContent = severity;
-    label.style.color = shade;
-    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">-${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">against you (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`
+    label.style.color = vColor;
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${vColor};background:${vChip};padding:2px 8px;border-radius:5px">-${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">against you (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`
       + (sellLow ? `<br><span style="font-size:11px;color:var(--yellow)">${Math.round(flaggedOutValue / rawB * 100)}% of what you're giving is already flagged SELL/CUT — the gap is the cost of exiting, not necessarily an overpay.</span>` : '');
   }
 
