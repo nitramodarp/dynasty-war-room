@@ -1406,7 +1406,7 @@
   <div class="tab-content" id="tab-draft-picks">
     <div class="card">
       <div class="card-title">📋 My Pick Capital</div>
-      <div id="pickValuesNotice" style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:6px;border-left:2px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span>📅 Pick values: KTC SF scale, last updated <strong id="pickValuesDate" style="color:var(--text-dim)">—</strong></span><span style="color:var(--text-muted)">Update before NFL Draft (Apr) &amp; season start (Sep) — paste new values from <span style="color:var(--accent)">keeptradecut.com</span> → Superflex → picks</span></div>
+      <div id="pickValuesNotice" style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:6px;border-left:2px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span>📅 Pick values: market feed (Stats Guy Fantasy), last updated <strong id="pickValuesDate" style="color:var(--text-dim)">—</strong></span><span style="color:var(--text-muted)">Update before NFL Draft (Apr) &amp; season start (Sep) — paste new values from <span style="color:var(--accent)">keeptradecut.com</span> → Superflex → picks</span></div>
       <div id="myPicksContainer">Loading...</div>
     </div>
     <div class="card">
@@ -1455,7 +1455,7 @@
     <div class="card">
       <div class="card-title">💹 QB Arbitrage — 6pt vs 4pt Passing-TD Edge</div>
       <div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">
-        Your league pays 6 per passing TD; KTC's model pays 4. The points KTC ignores = <b>2 × projected passing TDs</b> (from Ciely). <b>Edge %</b> = those hidden points as a share of the QB's 4pt output — i.e. how much of his value lives in the currency the market underprices. <span style="color:var(--green)">High Edge %</span> = pure pocket passers the KTC-4pt market underprices → BUY-FROM others / HOLD yours. <span style="color:var(--text-dim)">Low Edge %</span> = rush-tilted QBs KTC already prices fully → selling yours at KTC market is fair. Dual-threats (Allen/Lamar) land mid — much of their value is rushing, which KTC prices correctly.
+        Your league pays 6 per passing TD; the market's values assume the standard 4. The points the market ignores = <b>2 × projected passing TDs</b> (from Ciely). <b>Edge %</b> = those hidden points as a share of the QB's 4pt output — i.e. how much of his value lives in the currency the market underprices. <span style="color:var(--green)">High Edge %</span> = pure pocket passers the 4pt-priced market underprices → BUY-FROM others / HOLD yours. <span style="color:var(--text-dim)">Low Edge %</span> = rush-tilted QBs the market already prices fully → selling yours at market is fair. Dual-threats (Allen/Lamar) land mid — much of their value is rushing, which the market prices correctly.
       </div>
       <div class="filter-row" id="qbArbFilter">
         <button class="filter-btn active" onclick="qbArbSetFilter('ALL', this)">All QBs</button>
@@ -1572,7 +1572,7 @@
       <div class="card-title">📒 Trade Ledger — Every Deal, Honest Math</div>
       <div class="mono" style="font-size:10px;color:var(--text-dim);margin-bottom:6px;line-height:1.6">
         Pulled from Sleeper's transaction log — every completed trade you've made, with two deltas per row:<br>
-        <strong style="color:var(--text)">Net Value</strong> = what you received minus what you gave up, at <em>today's</em> KTC values. Positive = you're up on the deal at current market.<br>
+        <strong style="color:var(--text)">Net Value</strong> = what you received minus what you gave up, at <em>today's</em> market values (Stats Guy Fantasy). Positive = you're up on the deal at current market.<br>
         <strong style="color:var(--text)">Pick Cap Δ</strong> = 2027+ draft capital gained or lost. This is the metric that matters for the 2027-28 window.<br>
         <span style="color:var(--yellow)">⚠️ Values are current, not historical.</span> A trade for a player who's since risen (or fallen) reads differently now than the day you made it. This isn't a bug — it's the honest question of "does today's market like what I did?" But it doesn't capture skill in timing.
       </div>
@@ -1650,7 +1650,7 @@
               <th>Pos</th>
               <th>NFL Team</th>
               <th>Age</th>
-              <th>KTC Value ↓</th>
+              <th>Value ↓</th>
               <th>Fit Score</th>
               <th>Pick Range</th>
             </tr>
@@ -1665,6 +1665,10 @@
 
 </div>
 
+<div id="dataCredit" style="text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);padding:18px 16px 28px">
+  Player &amp; pick values: <a href="https://statsguyfantasy.com" target="_blank" rel="noopener" style="color:var(--accent)">Data from Stats Guy Fantasy</a>
+</div>
+
 <script>
 // ============================================================
 // CONFIG
@@ -1674,6 +1678,13 @@ const CONFIG = {
   MY_TEAM_NAME: 'joecressaty',
   LEAGUE_ID: '1312159330107146240',
   KTC_CSV_URL: 'https://docs.google.com/spreadsheets/d/1n5aqip8iFCpltO8deiS7q9m3u_dFvKTZpwzfZXVTpgs/export?format=csv&gid=2007401808',
+  // Value feed. 'statsguy' = Stats Guy Fantasy API (primary). 'ktc-sheet' = the old Google Sheet,
+  // also used automatically as the fallback when Stats Guy is unreachable. Flip to 'ktc-sheet'
+  // to bypass Stats Guy entirely.
+  VALUE_SOURCE: 'statsguy',
+  STATSGUY_BASE: 'https://api.statsguyfantasy.com/api/v1',
+  STATSGUY_FORMAT: 'sf_dynasty',   // Superflex dynasty values
+  STATSGUY_TEP: 'tep',             // std | tep | bigtep | blend — league is 0.5 TEP
   OWNER_MAP: {
     '699738649817878528': 'bnesmithhicks',
     '699646352681959424': 'Saturn75',
@@ -1724,6 +1735,15 @@ const CONFIG = {
   // 6pt and hoards QBs hard. Calibrated to 1.6 from two clean non-QB Burrow comps
   // (Achane+Kraft ~1.55 TEP-adj, Burden+picks ~1.65). Tunable — QB only.
   QB_PASSTD_MULT: 1.6,
+  // Same lift for the Stats Guy feed — re-derived, NOT copied from 1.6 (Oct 17 2026, live data).
+  // The 1.6 above was calibrated on KTC's flatter curve, where two mid pieces (Achane + Kraft) out-priced
+  // Burrow by ~1.55x. On Stats Guy the same comps price at ~0.9x of Burrow (Achane 2,664 + Kraft 1,644 vs
+  // Burrow 4,738; Burden 1,844 + a mid 1st vs ~0.85x): its steeper curve already pays the star/consolidation
+  // premium that most of the 1.6 was making up for. What is left to correct is the format itself: this
+  // league pays 6 per passing TD, the market's trade data assumes 4. From the Ciely projections that is
+  // FPS6 / (FPS6 - 2 x projected passing TDs) = 1.17 median across QB1-24 (p25 1.16, p75 1.19, range
+  // 1.125-1.225). Tune up if you find your league pays an extra QB-hoarding premium beyond the format.
+  QB_PASSTD_MULT_STATSGUY: 1.17,
   // The 1.6 above is a STARTER calibration (6pt passing TDs + SF hoarding). A veteran who
   // isn't playing throws ~0 TDs, so the 6pt edge doesn't exist for him. Non-young QBs whose
   // Ciely projection is below QB_BACKUP_FPS_MAX get QB_BACKUP_MULT instead (1.0 = raw KTC).
@@ -1741,15 +1761,14 @@ const CONFIG = {
   // same sync). Built-in PICK_VALUES stay as the gap-filler (2026 picks, 5ths). Flip to false to
   // go back to built-ins + the (CORS-blocked) leaguemate feed.
   PICKS_FROM_SHEET: true,
+  // CUT / MONITOR / HOLD lines are pick-anchored (see valueLines()): HOLD = worth a Late 3rd or better,
+  // CUT = below a Late 5th AND VORP <= 0. Raise holdRound to 2 for a stricter HOLD.
+  LADDER: { tier: 'Late', holdRound: 3, cutRound: 5 },
   STALE_SHEET_DAYS: 3,       // header warns when the sheet's own "Updated" stamp is older than this
   LIVE_BLEND: { enabled: true, maxWeight: 0.5, rampGames: 14, minGames: 2, seasonGames: 17 },
-  // Deliberate roster decisions the value/VORP/age logic can't know about. A name here
-  // overrides a CUT or SELL flag with a HOLD carrying the reason. Applies to YOUR roster
-  // only. Delete the entry when the plan changes.
-  MANUAL_HOLDS: {
-    'Justin Fields': 'Keeper: Chiefs QB2 with rushing upside (deliberate hold)',
-    'Joe Flacco': 'Keeper: free QB depth and trade chip; holding until a QB-needy buyer appears'
-  },
+  // Taxi window, in seasons, used only if the league's own setting can't be read from Sleeper
+  // (settings.taxi_years). A player is taxi-eligible while years_exp < this (0 = rookie season).
+  TAXI_YEARS: 2,
   // Name corrections: Sleeper name -> KTC name (only where cleanName() can't resolve)
   NAME_CORRECTIONS: {
     'Marvin Harrison': 'Marvin Harrison Jr.',
@@ -2043,27 +2062,37 @@ function hasNoProjection(player) {
   return !projFor(player.name, player.pos);
 }
 
+// Taxi eligibility is a fact about the player (within his first N pro seasons), not about where you
+// happened to roster him. N comes from the league's own Sleeper setting when readable, else CONFIG.TAXI_YEARS.
+function taxiYears() { return STATE.taxiYears || CONFIG.TAXI_YEARS; }
+function isTaxiEligible(player) {
+  const y = player.yearsExp;
+  return typeof y === 'number' && y >= 0 && y < taxiYears();
+}
+// Is there an open slot on MY taxi squad? Unknown slot count => assume yes (don't hide the suggestion).
+function myTaxiHasRoom() {
+  if (!STATE.taxiSlots) return true;
+  return (STATE.myRoster || []).filter(p => p.onTaxiSquad).length < STATE.taxiSlots;
+}
+
 function getRosterHealthFlag(player) {
   const h = getRosterHealthFlagRaw(player);
-
-  // Manual holds win over the automatic CUT/SELL ladder. The ladder judges assets by
-  // age/value/VORP; it can't know you are keeping someone on purpose. Every consumer
-  // (roster table, action items, trade checks) goes through this function, so one
-  // override here keeps them all consistent.
-  const mh = CONFIG.MANUAL_HOLDS && CONFIG.MANUAL_HOLDS[player.name];
-  if (mh && h && (h.flag === 'CUT' || h.flag === 'SELL') &&
-      (STATE.myRoster || []).some(p => p.name === player.name)) {
-    return { flag: 'HOLD', color: 'var(--blue)', icon: '📌', reason: mh };
-  }
-
   if (!h || h.flag !== 'CUT') return h;
 
-  // A rookie sitting on TAXI in year one has had no chance to prove anything, costs no
-  // active roster spot, and has a two-year development window. Telling you to cut a
-  // player you drafted eleven weeks ago is the flag misfiring, not a recommendation.
-  if (player.rookie && player.onTaxiSquad) {
-    return { flag: 'STASH', color: 'var(--blue)', icon: '🌱',
-      reason: 'Rookie on taxi — year one, no active roster cost, two-year window. Too early to judge.' };
+  // A taxi-eligible player has had a limited window to prove anything. Eligibility is the grace period,
+  // so a CUT read on him is the flag misfiring, not a recommendation. On taxi he is simply stashed (no
+  // active-roster cost). Sitting on the active roster and not starting, he is burning a spot he doesn't
+  // need: the action is to move him to taxi. Other teams' players just keep the raw read.
+  if (isTaxiEligible(player)) {
+    if (player.onTaxiSquad) {
+      return { flag: 'STASH', color: 'var(--blue)', icon: '🌱',
+        reason: 'Taxi-eligible (' + taxiYears() + '-season window, year ' + (player.yearsExp + 1) + ') and on taxi — no active roster cost. Too early to judge.' };
+    }
+    const mine = (STATE.myRoster || []).some(p => p.name === player.name);
+    if (mine && lineupCostOfCutting(player) <= 0 && myTaxiHasRoom()) {
+      return { flag: 'MOVE TO TAXI', color: 'var(--blue)', icon: '🚕',
+        reason: 'Taxi-eligible (' + taxiYears() + '-season window, year ' + (player.yearsExp + 1) + ') but on your active roster and not in your lineup — move him to taxi instead of using a spot.' };
+    }
   }
 
   // No Ciely projection => the CUT was driven by missing data, not bad data.
@@ -2082,64 +2111,131 @@ function getRosterHealthFlag(player) {
   };
 }
 
+// ------------------------------------------------------------------------------------------
+// PICK-ANCHORED VALUE LINES. Picks are the currency these trades are actually paid in, and they come
+// from the same feed as the player values, so a line drawn at "a late 3rd" rescales itself whenever the
+// feed's curve or the season changes. No number below is a KTC-scale constant.
+//   HOLD    = worth a late 3rd-round pick or better
+//   MONITOR = worth at least a late 5th, less than a late 3rd (a 4th sits here on purpose: fuzzy zone)
+//   CUT     = worth less than a late 5th AND at/below replacement level (VORP <= 0)
+// Reference draft year = the second-earliest year the feed prices (skips the nearest class, whose
+// price swings around the draft). Late-slot picks = the conservative reading of "a 3rd" / "a 5th".
+// ------------------------------------------------------------------------------------------
+function liveLadderYear() {
+  const ys = [...new Set(Object.keys(CONFIG.PICK_VALUES || {}).map(k => k.slice(0, 4)))].sort();
+  return ys[1] || ys[0] || null;
+}
+function ladderPickValue(round) {
+  const y = liveLadderYear(); if (!y) return 0;
+  return CONFIG.PICK_VALUES[y + ' ' + CONFIG.LADDER.tier + ' ' + round + getOrdinal(round)] || 0;
+}
+function valueLines() {
+  const hold = ladderPickValue(CONFIG.LADDER.holdRound), cut = ladderPickValue(CONFIG.LADDER.cutRound);
+  return { hold: hold > 0 ? hold : legacyToLive(3000), cut: cut > 0 ? cut : legacyToLive(1500) };   // legacyToLive() only if the feed has no picks at all
+}
+function ladderBand(value, vorp) {
+  const L = valueLines();
+  if (value >= L.hold) return 'HOLD';
+  if (value >= L.cut) return 'MONITOR';
+  return vorp > 0 ? 'MONITOR' : 'CUT';
+}
+function ladderWords(round) { return 'a ' + CONFIG.LADDER.tier.toLowerCase() + ' ' + round + getOrdinal(round); }
+
+// Legacy -> live translator (legacyToLive). ~25 trade-finder / buyer-matching / display thresholds were hand-tuned on
+// KTC's scale (1000, 1500, 3000, 5000...). legacyToLive() re-expresses such a number in today's feed by locating it
+// on the old (built-in, KTC-scale) pick ladder for the reference year and reading off the same spot on
+// the live ladder. With the sheet as the source the two ladders match and legacyToLive() is the identity.
+// Works for levels and for sizes (gaps, VORP magnitudes); the ladder starts at (0,0).
+function buildTLadder() {
+  const y = liveLadderYear(); const legacy = CONFIG.PICK_FALLBACKS; if (!y || !legacy) return null;
+  const pts = [];
+  for (let r = 1; r <= 5; r++) for (const t of ['Early', 'Mid', 'Late']) {
+    const k = y + ' ' + t + ' ' + r + getOrdinal(r);
+    const lv = legacy[k], nv = CONFIG.PICK_VALUES[k];
+    if (lv > 0 && nv > 0) pts.push([lv, nv]);
+  }
+  if (pts.length < 6) return null;
+  pts.sort((a, b) => a[0] - b[0]);
+  const out = [[0, 0]]; let mx = 0;
+  for (const [lv, nv] of pts) { mx = Math.max(mx, nv); if (lv > out[out.length - 1][0]) out.push([lv, mx]); }
+  return out;
+}
+function legacyToLive(legacy) {
+  if (!legacy) return 0;
+  const sign = legacy < 0 ? -1 : 1, x = Math.abs(legacy);
+  if (STATE._tLadder === undefined) STATE._tLadder = buildTLadder();
+  const L = STATE._tLadder; if (!L) return legacy;
+  const top = L[L.length - 1];
+  if (x >= top[0]) return sign * Math.round(x * (top[1] / top[0]));
+  for (let i = 1; i < L.length; i++) {
+    if (x <= L[i][0]) { const a = L[i - 1], b = L[i]; return sign * Math.round(a[1] + (x - a[0]) / (b[0] - a[0]) * (b[1] - a[1])); }
+  }
+  return legacy;
+}
+
 function getRosterHealthFlagRaw(player) {
   const { pos, age, value, vorp } = player;
-  if (!pos || !age) return null;
+  if (!pos) return null;
+  const band = ladderBand(value, vorp);
+  const lines = valueLines();
+  const HOLD = (why) => ({ flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: why });
+  const MON  = (why) => ({ flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: why });
+  const CUT  = (why) => ({ flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: why });
+  const worth3 = 'worth ' + ladderWords(CONFIG.LADDER.holdRound) + ' or better';
+  const below5 = 'worth less than ' + ladderWords(CONFIG.LADDER.cutRound) + ' and not above replacement level';
+  if (!age) return band === 'CUT' ? CUT('No market value (' + below5 + ')') : null;
 
   if (pos === 'TE') {
     if (age < 25) {
-      if (value >= 3000) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Young TE (age ' + age + ') with 3k+ value — developmental hold' };
-      return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Young TE (age ' + age + ') but low KTC — monitor development' };
+      if (band === 'HOLD') return HOLD('Young TE (age ' + age + ') ' + worth3 + ' — developmental hold');
+      return MON('Young TE (age ' + age + ') but market value is under ' + ladderWords(CONFIG.LADDER.holdRound) + ' — monitor development');
     }
     if (getArchetype(pos, age)?.cls === 'sell') return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Archetype: Decline bracket (age ' + age + ')' };
     const teThreshold = getTop6TEVorp();
-    if (value >= 4000 && vorp >= teThreshold) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Top-6 VORP + 4k+ value' };
-    if (value >= 4000 || vorp >= teThreshold) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one of two TE thresholds' };
-    if (value >= 3000) {
-      // Flag stays value-based (rebuild: sell veterans while they still hold value), but say so honestly
+    const starterTier = legacyToLive(4000);   // legacy "starter tier" line, re-expressed on today's feed
+    if (value >= starterTier && vorp >= teThreshold) return HOLD('Top-6 TE VORP + starter-tier value');
+    if (value >= starterTier || vorp >= teThreshold) return MON('Meets one of two TE thresholds');
+    if (band !== 'CUT') {
+      // Flag stays market-based (rebuild: sell veterans while they still hold value), but say so honestly
       // when he's actually producing: that's a sell-high window, not a "below starter" player.
       const prjTE = (typeof projFor === 'function' && STATE.projMap) ? projFor(player.name, 'TE') : null;
       const rkTE = prjTE ? parseInt(prjTE.posRank, 10) : NaN;
       const cutTE = (CONFIG.VORP_RANKS.TE || 0) - 1;
       if (Number.isFinite(rkTE) && cutTE > 0 && rkTE <= cutTE) {
         return { flag: 'SELL', color: 'var(--orange)', icon: '🔶',
-          reason: 'Veteran TE (age ' + age + ') producing at TE' + rkTE + (prjTE.liveGp ? ' (projection blended with ' + prjTE.liveGp + ' games of live stats)' : ' (Ciely)') + ' — sell-high window; KTC value is below the 4k starter-tier line' };
+          reason: 'Veteran TE (age ' + age + ') producing at TE' + rkTE + (prjTE.liveGp ? ' (projection blended with ' + prjTE.liveGp + ' games of live stats)' : ' (Ciely)') + ' — sell-high window; market value is below the starter-tier line' };
       }
       return { flag: 'SELL', color: 'var(--orange)', icon: '🔶', reason: 'Veteran TE — tradeable value but below starter threshold' };
     }
-    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Veteran TE — sub-3k, no meaningful trade market' };
+    return CUT('Veteran TE — ' + below5 + '; no meaningful trade market');
   }
 
   if (pos === 'QB') {
     const arch = getArchetype(pos, age);
     if (arch?.cls === 'sell') return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Archetype: Decline bracket (age ' + age + ')' };
-    if (value >= 3000 && vorp > 0) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Above 3k + positive VORP' };
+    if (band === 'HOLD') return HOLD('QB ' + worth3);
     const hc = isMyQBHandcuff(player);
     if (hc) return { flag: 'HOLD', color: 'var(--blue)', icon: '🧷', reason: 'Injury handcuff — backs up your ' + hc.name + ' (' + (player.team || '') + '). No trade market, full insurance value' };
-    if (value >= 3000 || vorp > 0) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one QB threshold' };
-    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Below 3k and negative VORP' };
+    if (band === 'MONITOR') return MON('QB worth at least ' + ladderWords(CONFIG.LADDER.cutRound) + ' but under ' + ladderWords(CONFIG.LADDER.holdRound));
+    return CUT('QB ' + below5);
   }
 
-  // RB/WR: archetype sell bracket overrides the generic value/VORP ladder below —
+  // RB/WR: archetype sell bracket overrides the generic ladder below —
   // same pattern as QB/TE above, so this position can't show HOLD/MONITOR next to
   // a Decline Asset archetype label on the same roster row.
   if (getArchetype(pos, age)?.cls === 'sell') return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Archetype: Decline bracket (age ' + age + ')' };
 
-  if (age < 24) {
-    if (value >= 3000) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Under 24 — trajectory hold (3k+)' };
-    if (value >= 1500) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Under 24 — developing, below 3k' };
-    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Under 24 — sub-1.5k, roster clog' };
-  }
   if (age < 28) {
-    if (value >= 3000 && vorp > 0) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: '3k+ value + positive VORP' };
-    if (value >= 3000 || vorp > 0) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one of two thresholds' };
-    return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Below 3k and negative VORP' };
+    const tag = age < 24 ? 'Under 24' : 'Age ' + age;
+    if (band === 'HOLD') return HOLD(tag + ' — ' + worth3);
+    if (band === 'MONITOR') return MON(tag + ' — worth at least ' + ladderWords(CONFIG.LADDER.cutRound) + ', under ' + ladderWords(CONFIG.LADDER.holdRound));
+    return CUT(tag + ' — ' + below5 + ', roster clog');
   }
-  if (age >= 30 && value < 1500) return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Age 30+ — sub-1.5k KTC, no realistic trade market' };
+  if (age >= 30 && band === 'CUT') return CUT('Age 30+ — ' + below5 + ', no realistic trade market');
 
   // Production gate: age alone shouldn't force a sell on someone still producing above
-  // replacement level. KTC-based VORP can be negative while Ciely's projection says the
-  // player is a real starter (e.g. Metcalf: KTC VORP -290, Ciely WR37 / +82). Use the same
+  // replacement level. Market-based VORP can be negative while Ciely's projection says the
+  // player is a real starter (e.g. Metcalf: VORP -290, Ciely WR37 / +82). Use the same
   // replacement rank the VORP baselines use, so there's no separate magic number.
   if (typeof projFor === 'function' && STATE.projMap && Object.keys(STATE.projMap).length) {
     const prj = projFor(player.name, pos);
@@ -2165,10 +2261,10 @@ function healthBadge(player) {
 }
 
 function vorpColor(v) {
-  if (v > 2000) return 'var(--green)';
-  if (v > 500) return 'var(--blue)';
+  if (v > legacyToLive(2000)) return 'var(--green)';
+  if (v > legacyToLive(500)) return 'var(--blue)';
   if (v > 0) return 'var(--accent)';
-  if (v > -1000) return 'var(--yellow)';
+  if (v > -legacyToLive(1000)) return 'var(--yellow)';
   return 'var(--red)';
 }
 
@@ -2316,6 +2412,116 @@ async function fetchKTC() {
   return players;
 }
 
+// ============================================================
+// STATS GUY FANTASY FEED — replaces the KTC Google Sheet as the value source.
+// Produces the SAME output shape as fetchKTC() (STATE.ktcPlayers, CONFIG.PICK_VALUES,
+// STATE.sheetPicks/pickSheetCount/sheetUpdated/sheetAgeDays) so nothing downstream changes.
+//   GET /players?tep=...  -> whole dataset in one call (~400 players, Sleeper IDs, sorted by value)
+//   GET /picks            -> pick:YYYY:ROUND:early|mid|late for the next three drafts
+// Players and picks are loaded together and are all-or-nothing: Stats Guy's pick scale is its own
+// (a 2027 early 1st is ~4,200, not the ~6,900 built-in), so mixing Stats Guy players with built-in
+// KTC-scale picks would silently misprice every trade. Any failure throws, and fetchValues()
+// falls back to the sheet (which brings its own matching picks).
+// Not modeled by the feed: 6pt passing TDs (QB lift applied below: CONFIG.QB_PASSTD_MULT_STATSGUY, with fetchKTC's
+// role-aware backup exemption).
+// ============================================================
+async function fetchStatsGuy() {
+  setLoadingProgress(10, 'FETCHING STATS GUY VALUES...');
+  const base = CONFIG.STATSGUY_BASE, fmt = CONFIG.STATSGUY_FORMAT;
+  STATE.fetchTraces = STATE.fetchTraces || {};
+  const trace = { sourceName: 'Stats Guy', url: base, status: null, rowCount: null, error: null, fetchedAt: null };
+  STATE.fetchTraces['Stats Guy'] = trace;
+  try {
+    const [pr, kr] = await Promise.all([
+      fetchWithTimeout(base + '/players?tep=' + encodeURIComponent(CONFIG.STATSGUY_TEP), {}, 12000),
+      fetchWithTimeout(base + '/picks', {}, 12000)
+    ]);
+    trace.status = pr.status;
+    if (!pr.ok) throw new Error('Stats Guy /players HTTP ' + pr.status);
+    if (!kr.ok) throw new Error('Stats Guy /picks HTTP ' + kr.status);
+    const pj = await pr.json(), kj = await kr.json();
+    if (!pj || !Array.isArray(pj.players) || pj.players.length < 100) throw new Error('Stats Guy /players returned an unexpected shape');
+
+    // ---- picks: pick:2028:5:late -> "2028 Late 5th" (the app's existing key format) ----
+    const picks = {};
+    for (const pk of (kj && kj.picks) || []) {
+      const m = /^pick:(\d{4}):([1-5]):(early|mid|late)$/.exec(pk.id || '');
+      if (!m) continue;   // slot-specific entries (e.g. 1.03) are ignored; the app prices by tier
+      const v = Math.round(Number(pk.value && pk.value[fmt]) || 0);
+      if (v > 0) picks[m[1] + ' ' + m[3].charAt(0).toUpperCase() + m[3].slice(1) + ' ' + m[2] + getOrdinal(+m[2])] = v;
+    }
+    if (Object.keys(picks).length < 15) throw new Error('Stats Guy /picks returned too few picks (' + Object.keys(picks).length + ')');
+
+    // ---- players ----
+    const projReady = !!(STATE.projMap && Object.keys(STATE.projMap).length);
+    const players = [];
+    for (const sp of pj.players) {
+      const pos = String(sp.position || '').toUpperCase();
+      if (!['QB','RB','WR','TE'].includes(pos) || !sp.name) continue;
+      const rawValue = Math.round(Number(sp.value && sp.value[fmt]) || 0);
+      if (rawValue <= 0) continue;
+      const age = Number(sp.age) || 0;
+      // 6pt passing-TD lift, QB only — identical rule to fetchKTC (role-aware backup exemption).
+      let qbMult = CONFIG.QB_PASSTD_MULT_STATSGUY;
+      if (pos === 'QB' && projReady && age && getArchetype('QB', age)?.cls !== 'young') {
+        const pq = projFor(sp.name, 'QB');
+        if (pq && (pq.fpsCiely ?? pq.fps) < CONFIG.QB_BACKUP_FPS_MAX) qbMult = CONFIG.QB_BACKUP_MULT;
+      }
+      const yrs = Number.isFinite(Number(sp.yearsExperience)) ? Number(sp.yearsExperience) : null;
+      players.push({
+        sleeperId: String(sp.id),
+        name: sp.name,
+        posRank: pos + ((sp.positionRank && sp.positionRank[fmt]) || ''),
+        pos,
+        team: sp.team || '',
+        value: pos === 'QB' ? Math.round(rawValue * qbMult) : rawValue,
+        age,
+        rookie: yrs === 0,
+        yearsExp: yrs
+      });
+    }
+    if (players.length < 100) throw new Error('Stats Guy yielded only ' + players.length + ' usable players');
+
+    // ---- everything parsed: only now touch shared state ----
+    const asOf = (pj.valuesAsOf && pj.valuesAsOf[fmt]) || null;
+    const asOfMs = asOf ? Date.parse(asOf) : NaN;
+    STATE.valuesSource = 'statsguy';
+    STATE.valuesAsOf = asOf;
+    STATE.sheetUpdated = asOf || '';   // legacy field name: feeds the stale banner
+    STATE.sheetAgeDays = isNaN(asOfMs) ? null : Math.max(0, Math.floor((Date.now() - asOfMs) / 86400000));
+    if (!CONFIG.PICK_FALLBACKS) CONFIG.PICK_FALLBACKS = Object.assign({}, CONFIG.PICK_VALUES);
+    for (const k in CONFIG.PICK_VALUES) delete CONFIG.PICK_VALUES[k];   // built-ins are KTC-scale: drop them, don't mix scales
+    Object.assign(CONFIG.PICK_VALUES, picks);
+    STATE.sheetPicks = picks;
+    STATE.pickSheetCount = Object.keys(picks).length;   // truthy => sync skips the leaguemate pick fetch
+    if (!isNaN(asOfMs)) { CONFIG.PICK_VALUES_DATE = new Date(asOfMs).toISOString().slice(0, 10); CONFIG.PICK_VALUES_UPDATED = 'Stats Guy Fantasy, ' + CONFIG.PICK_VALUES_DATE; }
+    STATE.ktcPlayers = players;
+    STATE.ktcPlayers.sort((a, b) => b.value - a.value);
+    trace.rowCount = players.length; trace.fetchedAt = new Date().toLocaleTimeString();
+    console.log('Stats Guy players loaded:', players.length, '| picks:', STATE.pickSheetCount, '| as of', asOf);
+    return players;
+  } catch (e) {
+    trace.error = e.message;
+    throw e;
+  }
+}
+
+// Single entry point for the sync. Stats Guy first; the Google Sheet is the fallback so a Stats Guy
+// outage degrades to the old (KTC-scale) behavior instead of an empty app.
+async function fetchValues() {
+  STATE._tLadder = undefined;   // legacy->live translator is rebuilt from this sync's pick prices
+  if (CONFIG.VALUE_SOURCE === 'statsguy') {
+    try { return await fetchStatsGuy(); }
+    catch (e) { console.warn('Stats Guy failed, falling back to KTC sheet:', e.message); STATE.valuesFallbackReason = e.message; }
+  }
+  const out = await fetchKTC();
+  STATE.valuesSource = 'ktc-sheet';
+  return out;
+}
+
+// Which feed priced this session's values. Drives the stale banner and header notes.
+function valueSourceName() { return STATE.valuesSource === 'ktc-sheet' ? 'KTC sheet' : 'Stats Guy Fantasy'; }
+
 function parseCSVLine(line) {
   const result = [];
   let current = '';
@@ -2354,7 +2560,9 @@ async function fetchKTCPicks() {
 // they feed the app's injury-gated SELL/HOLD logic directly, so the TTL here is
 // short (6h, not the 20-24h you'd use for a pure name/ID lookup) to keep that gating
 // reasonably current without re-pulling 5MB on every manual sync in the same day.
-const SLEEPER_PLAYERS_CACHE_KEY = 'dwr_sleeperPlayers_v1';
+// v2: map now also keeps age, team and years_exp (taxi eligibility + players the value feed doesn't cover).
+// Bumping the key makes every browser drop its v1 copy, which lacks those fields.
+const SLEEPER_PLAYERS_CACHE_KEY = 'dwr_sleeperPlayers_v2';
 const SLEEPER_PLAYERS_TTL_MS = 6 * 60 * 60 * 1000; // 6h
 
 function loadSleeperPlayersCache() {
@@ -2374,6 +2582,19 @@ function saveSleeperPlayersCache(map) {
   catch (e) { /* quota exceeded or storage unavailable — fine, just won't persist this session */ }
 }
 
+// League taxi settings (settings.taxi_years / taxi_slots). Field names are Sleeper's as I understand them;
+// unreadable or implausible values leave STATE.taxiYears null so CONFIG.TAXI_YEARS applies.
+async function fetchLeagueTaxi() {
+  STATE.taxiYears = null; STATE.taxiSlots = null;
+  const resp = await fetchWithTimeout('https://api.sleeper.app/v1/league/' + CONFIG.LEAGUE_ID, {}, 8000);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const st = ((await resp.json()) || {}).settings || {};
+  const ty = Number(st.taxi_years), ts = Number(st.taxi_slots);
+  if (Number.isFinite(ty) && ty >= 1 && ty <= 5) STATE.taxiYears = ty;
+  if (Number.isFinite(ts) && ts >= 1 && ts <= 20) STATE.taxiSlots = ts;
+  console.log('League taxi settings: years=' + (STATE.taxiYears || ('default ' + CONFIG.TAXI_YEARS)) + ', slots=' + (STATE.taxiSlots || 'unknown'));
+}
+
 async function fetchSleeperPlayers() {
   const cached = loadSleeperPlayersCache();
   if (cached) {
@@ -2390,6 +2611,9 @@ async function fetchSleeperPlayers() {
       map[id] = {
         name: data[id].full_name,
         pos: data[id].position,
+        team: data[id].team || '',
+        age: typeof data[id].age === 'number' ? data[id].age : null,
+        years_exp: typeof data[id].years_exp === 'number' ? data[id].years_exp : null,   // 0 = rookie season
         injury_status: data[id].injury_status || null,
         injury_notes: data[id].injury_notes || null,
       };
@@ -2487,10 +2711,12 @@ async function fetchStandings() {
 // DATA PROCESSING
 // ============================================================
 function buildNameMap() {
-  const map = {};
+  const map = {}, byId = {};
   for (const p of STATE.ktcPlayers) {
     map[cleanName(p.name)] = p;
+    if (p.sleeperId) byId[p.sleeperId] = p;   // Stats Guy rows carry Sleeper IDs: exact match, no name fuzz
   }
+  STATE._ktcIdMap = byId;
   return map;
 }
 
@@ -2584,8 +2810,17 @@ function buildAllRosters() {
 
       const sleeperData = STATE.sleeperPlayers[pid];
       if (!sleeperData) continue;
-      const ktc = resolvePlayer(sleeperData.name);
-      if (!ktc) { if (ownerName === CONFIG.MY_TEAM_NAME) unmatched.push(sleeperData.name); continue; }
+      let ktc = (STATE._ktcIdMap && STATE._ktcIdMap[pid]) || resolvePlayer(sleeperData.name);
+      if (!ktc) {
+        // Not in the value feed (it prices only ~400 players). A skill-position player with no market is a
+        // real roster fact and a CUT candidate: keep him at value 0 instead of silently dropping him.
+        // Guard: only when a value feed actually loaded. With NO values at all (every source down) this
+        // would turn the whole league into "value 0, CUT" and advise cutting your best players.
+        if (!['QB','RB','WR','TE'].includes(sleeperData.pos) || STATE.ktcPlayers.length < 100) continue;
+        ktc = { name: sleeperData.name, pos: sleeperData.pos, team: sleeperData.team || '', value: 0,
+                age: sleeperData.age || 0, rookie: sleeperData.years_exp === 0, posRank: '', unvalued: true };
+        if (ownerName === CONFIG.MY_TEAM_NAME) unmatched.push(sleeperData.name);
+      }
       // TE premium: amplify VORP to reflect 0.5 TEP format advantage over raw KTC baseline
       const rawVorp = ktc.value - (STATE.vorpBaselines[ktc.pos] || 0);
       const teMult = ktc.pos === 'TE' ? CONFIG.TE_PREMIUM_MULT : 1;
@@ -2604,6 +2839,8 @@ function buildAllRosters() {
         age: ktc.age,
         vorp,
         rookie: ktc.rookie,
+        yearsExp: (typeof sleeperData.years_exp === 'number') ? sleeperData.years_exp : (typeof ktc.yearsExp === 'number' ? ktc.yearsExp : (ktc.rookie ? 0 : null)),
+        unvalued: !!ktc.unvalued,
         posRank: ktc.posRank,
         onTaxiSquad: STATE.leagueTaxiIds ? STATE.leagueTaxiIds.has(pid) : false
       });
@@ -2780,7 +3017,7 @@ function renderPickArb() {
     + '<th style="padding:4px 6px">APP</th><th style="padding:4px 6px">MARKET</th><th style="padding:4px 6px;text-align:right">1st &Delta;</th></tr>';
   for (const t of teams) {
     const mine = t.name === CONFIG.MY_TEAM_NAME;
-    const c = shadeColor(t.spread1, 800);
+    const c = shadeColor(t.spread1, legacyToLive(800));
     html += '<tr style="border-top:1px solid var(--border)' + (mine ? ';background:var(--surface2)' : '') + '">'
       + '<td style="padding:5px 6px 5px 0;color:' + (mine ? 'var(--accent)' : 'var(--text)') + ';font-weight:' + (mine ? '700' : '400') + '">' + (mine ? '⚔ ' : '') + t.name + '</td>'
       + '<td style="padding:5px 6px;color:var(--text-dim)">' + fmt(t.projPts) + '</td>'
@@ -2989,9 +3226,9 @@ function getTeamArchetype(stats) {
   return base;
 }
 
+// Actually on a taxi squad (not merely a rookie). Eligibility is isTaxiEligible().
 function isOnTaxi(player) {
-  // Taxi eligible: rookies or players with ≤1 year NFL experience
-  return player.rookie === true;
+  return !!player.onTaxiSquad;
 }
 
 // ============================================================
@@ -3096,6 +3333,9 @@ function renderDashboard() {
     } else if (h.flag === 'STASH') {
       actions.push({ tier: 4, _name: p.name, color: h.color,
         msg: `${h.icon} <strong>STASH</strong> ${p.name} (${p.pos}) — ${h.reason}` });
+    } else if (h.flag === 'MOVE TO TAXI') {
+      actions.push({ tier: 3, _name: p.name, color: h.color,
+        msg: `${h.icon} <strong>MOVE TO TAXI</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}` });
     } else if (h.flag === 'UNKNOWN') {
       actions.push({ tier: 4, _name: p.name, color: h.color,
         msg: `${h.icon} <strong>UNKNOWN</strong> ${p.name} (${p.pos}, ${p.age}) — ${h.reason}` });
@@ -3129,7 +3369,7 @@ function renderDashboard() {
       if (pr.fps < CONFIG.QB_BACKUP_FPS_MAX) continue;
       const edge = pr.passTD * 2, fps4 = pr.fps - edge, edgePct = fps4 > 0 ? edge / fps4 * 100 : 0;
       if (edgePct >= 18) actions.push({ tier: 2, _name: p.name, color: 'var(--green)',
-        msg: `💹 <strong>HOLD</strong> ${p.name} (QB) — high 6pt format edge (${edgePct.toFixed(0)}%); KTC's 4pt model underprices him, don't sell at a KTC-even price` });
+        msg: `💹 <strong>HOLD</strong> ${p.name} (QB) — high 6pt format edge (${edgePct.toFixed(0)}%); the market's 4pt model underprices him, don't sell at a market-even price` });
     }
     // Lineup production summary (leads the briefing)
     const teamProj = Object.entries(STATE.allRosters || {}).map(([name, players]) => ({ name, pts: teamProjStarters(players) })).sort((a, b) => b.pts - a.pts);
@@ -3141,7 +3381,7 @@ function renderDashboard() {
 
   if (STATE.myPicks?.length < 4) actions.push({ tier: 4, color: 'var(--yellow)', msg: `⚠️ Low pick capital — only ${STATE.myPicks?.length || 0} picks` });
   const teVORP = STATE.myRoster.filter(p => p.pos === 'TE').reduce((s, p) => s + p.vorp, 0);
-  if (teVORP < -2000) actions.push({ tier: 4, color: 'var(--orange)', msg: `📍 TE room VORP is weak (${fmt(teVORP)}) — consider upgrading` });
+  if (teVORP < -legacyToLive(2000)) actions.push({ tier: 4, color: 'var(--orange)', msg: `📍 TE room VORP is weak (${fmt(teVORP)}) — consider upgrading` });
 
   // Sort by priority tier; render tiers 0–4, collapse routine cuts (tier 5) behind a toggle
   actions.sort((a, b) => a.tier - b.tier);
@@ -3184,20 +3424,20 @@ function generateGMBrief() {
   var sellList = STATE.myRoster.filter(function(p){var h=getRosterHealthFlag(p);return h&&h.flag==='SELL';});
   var myPickVal = stats.totalPickValue;
   var narrative, priority;
-  if (rbVorp < -2000) {
+  if (rbVorp < -legacyToLive(2000)) {
     narrative = 'RB room is the roster fault line — VORP deficit of ' + fmt(Math.abs(rbVorp)) + ' demands attention before the window opens.';
     priority = 'Target RB depth; convert WR surplus into backfield capital.';
   } else if (sellList.length >= 3) {
     var names = sellList.slice(0,2).map(function(p){return p.name;}).join(' and ');
     narrative = sellList.length + ' aging assets are burning value — the sell clock is running on ' + names + '.';
     priority = 'Move sell candidates now before value decays further.';
-  } else if (win.years <= 0 && myPickVal > 12000) {
+  } else if (win.years <= 0 && myPickVal > legacyToLive(12000)) {
     narrative = 'Strong pick capital of ' + fmtK(myPickVal) + ' with window ' + win.label.toLowerCase() + ' — conditions are right to buy proven contributors.';
     priority = 'Deploy pick capital to accelerate the contention timeline.';
-  } else if (win.years >= 1 && myPickVal > 12000) {
+  } else if (win.years >= 1 && myPickVal > legacyToLive(12000)) {
     narrative = 'Pick capital of ' + fmtK(myPickVal) + ' is ahead of the roster — window is still ' + win.label.toLowerCase() + '. Hold and convert via the rookie draft rather than buying now.';
     priority = 'Stockpile through the 2027 rookie draft; shift to buying once the window hits PRIME.';
-  } else if (teVorp < -1500) {
+  } else if (teVorp < -legacyToLive(1500)) {
     narrative = 'TE room is a liability in TEP format — Kittle recovery is the single biggest value unlock on the roster.';
     priority = 'Hold Kittle through recovery; once healthy, sell to a proven-vet buyer (wazimo or NateDawg726) for future capital.';
   } else if (myRank <= 3) {
@@ -3229,10 +3469,7 @@ function renderRosterTable(tbodyId, players) {
   tbody.innerHTML = sorted.map(p => {
     const a = getArchetype(p.pos, p.age);
     const taxi = isOnTaxi(p);
-    // A manual hold means you're keeping him on purpose, so no age-based SELL NOW countdown.
-    const heldOnPurpose = CONFIG.MANUAL_HOLDS && CONFIG.MANUAL_HOLDS[p.name] &&
-      (STATE.myRoster || []).some(m => m.name === p.name);
-    const urgency = heldOnPurpose ? null : getSellUrgency(p.pos, p.age);
+    const urgency = getSellUrgency(p.pos, p.age);
     const vorpStyle = `color:${vorpColor(p.vorp)}`;
     const tepTag = p.pos === 'TE' ? `<span style="font-family:DM Mono,monospace;font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,215,0,0.12);color:var(--gold);margin-left:4px">TEP ×${CONFIG.TE_PREMIUM_MULT}</span>` : '';
     const injBadge = p.injuryFlag
@@ -3243,7 +3480,7 @@ function renderRosterTable(tbodyId, players) {
       : `<span style="color:var(--accent)">${fmt(p.value)}</span>`;
     return `<tr>
       <td>${posPill(p.pos)}</td>
-      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : ''}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:DM Mono,monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}${injBadge}</td>
+      <td><span style="font-weight:500">${p.name}</span>${taxi ? '<span class="tag tag-taxi">TAXI</span>' : (isTaxiEligible(p) ? '<span class="tag tag-taxi" style="opacity:.55" title="Within his taxi-eligible seasons but on the active roster">TAXI-ELIG</span>' : '')}${p.rookie ? '<span class="tag tag-rookie">ROOKIE</span>' : ''}${urgency ? `<span style="font-family:DM Mono,monospace;font-size:8px;padding:2px 5px;border-radius:3px;background:rgba(255,100,0,0.15);color:${urgency.color};margin-left:4px;vertical-align:middle">⏱ ${urgency.label}</span>` : ''}${injBadge}</td>
       <td class="mono dim" style="font-size:11px">${p.team||'—'}</td>
       <td class="mono" style="font-size:12px">${p.age||'—'}</td>
       <td class="mono" style="font-size:12px">${valueDisplay}</td>
@@ -3272,7 +3509,7 @@ function filterRoster(filter, btn) {
   document.querySelectorAll('#rosterFilter .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   let players = STATE.myRoster;
-  if (filter === 'TAXI') players = players.filter(p => isOnTaxi(p));
+  if (filter === 'TAXI') players = players.filter(p => isOnTaxi(p) || isTaxiEligible(p));
   else if (filter === 'SELL') players = players.filter(p => getArchetype(p.pos, p.age)?.cls === 'sell');
   else if (filter !== 'ALL') players = players.filter(p => p.pos === filter);
   renderRosterTable('fullRosterBody', players);
@@ -3481,7 +3718,7 @@ function renderDraftPicks() {
     const notice = document.getElementById('pickValuesNotice');
     if (notice && ageDays > 120) {
       notice.style.borderLeftColor = 'var(--red)';
-      dateEl.innerHTML = CONFIG.PICK_VALUES_UPDATED + ' <span style="color:var(--red)">— ' + ageDays + ' days old, refresh from KTC</span>';
+      dateEl.innerHTML = CONFIG.PICK_VALUES_UPDATED + ' <span style="color:var(--red)">— ' + ageDays + ' days old, sync to refresh</span>';
     } else if (notice && ageDays > 75) {
       notice.style.borderLeftColor = 'var(--yellow)';
       dateEl.innerHTML = CONFIG.PICK_VALUES_UPDATED + ' <span style="color:var(--yellow)">— ' + ageDays + ' days old</span>';
@@ -3580,7 +3817,7 @@ function renderWaivers() {
     .filter(p => {
       if (ownedKtcNames.has(cleanName(p.name))) return false;
       if (filter !== 'ALL' && p.pos !== filter) return false;
-      if (p.value < 500) return false;
+      if (p.value < legacyToLive(500)) return false;
       return true;
     })
     .slice(0, 100);
@@ -3786,7 +4023,7 @@ function analyzeTrade() {
   const shade = shadeColor(signedPct, 50);
   const shadeChip = shadeBg(signedPct, 50, 0.18);
 
-  if (Math.abs(diff) < 200) {
+  if (Math.abs(diff) < legacyToLive(200)) {
     label.textContent = '✅ FAIR TRADE';
     label.style.color = shade;
     detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">±${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">gap</span><br><span style="font-size:11px">Raw values nearly equal (${fmt(rawA)} vs ${fmt(rawB)}) — both sides can feel good</span>` + buyFlaggedNote;
@@ -4042,8 +4279,8 @@ function capitalInWindow(pk) { return !!(pk && (pk.year === 2027 || pk.year === 
 function windowBonus(pk) {
   if (!pk) return 0;
   var b = 0;
-  if (pk.year === 2027 || pk.year === 2028) b += 400; else if (pk.year === 2029) b += 150;
-  if (pk.round === 1) b += 300; else if (pk.round === 2) b += 120;
+  if (pk.year === 2027 || pk.year === 2028) b += legacyToLive(400); else if (pk.year === 2029) b += legacyToLive(150);
+  if (pk.round === 1) b += legacyToLive(300); else if (pk.round === 2) b += legacyToLive(120);
   return b;
 }
 
@@ -4080,7 +4317,7 @@ function calcPositionalNeeds() {
         avgStarterValue,
         topPlayers: byPos[pos].slice(0, 3),
         needScore: starterVORP < 0 ? Math.abs(starterVORP) : 0, // Higher = more desperate
-        surplusScore: have > ideal ? (have - ideal) * avgStarterValue / 1000 : 0
+        surplusScore: have > ideal ? (have - ideal) * avgStarterValue / legacyToLive(1000) : 0
       };
     }
     teamNeeds[teamName] = needs;
@@ -4104,7 +4341,7 @@ function renderTradeCard(s, i) {
   var getVal  = s.iGet ? s.iGet.value : (s.iGetPick ? (s.iGetPick.value + (s.iGetPick2 ? s.iGetPick2.value : 0)) : 0);
   var giveVal = (s.iGive ? s.iGive.value : 0) + (s.iGivePick ? s.iGivePick.value : 0);
   var valueDiff = getVal - giveVal;
-  var diffColor = valueDiff > 200 ? 'var(--green)' : valueDiff < -200 ? 'var(--red)' : 'var(--yellow)';
+  var diffColor = valueDiff > legacyToLive(200) ? 'var(--green)' : valueDiff < -legacyToLive(200) ? 'var(--red)' : 'var(--yellow)';
   var actColor  = s.profile && s.profile.activity === 'HIGH' ? 'var(--green)' : s.profile && s.profile.activity === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)';
   var isTop = i === 0;
 
@@ -4165,8 +4402,8 @@ function renderTradeCard(s, i) {
   html += '<div class="mono" style="font-size:9px;color:var(--accent2);letter-spacing:1px;margin-bottom:6px">YOU GIVE</div>' + givePanel;
   html += '</div></div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">';
-  html += '<span class="mono" style="font-size:10px;padding:3px 8px;border-radius:4px;background:' + (valueDiff > 200 ? 'rgba(76,255,145,0.15)' : valueDiff < -200 ? 'rgba(255,68,68,0.15)' : 'rgba(255,215,0,0.15)') + ';color:' + diffColor + '">';
-  html += (valueDiff > 0 ? '+' : '') + fmt(valueDiff) + ' value ' + (valueDiff > 200 ? '(you win)' : valueDiff < -200 ? '(they win)' : '(fair)') + '</span>' + typeBadge;
+  html += '<span class="mono" style="font-size:10px;padding:3px 8px;border-radius:4px;background:' + (valueDiff > legacyToLive(200) ? 'rgba(76,255,145,0.15)' : valueDiff < -legacyToLive(200) ? 'rgba(255,68,68,0.15)' : 'rgba(255,215,0,0.15)') + ';color:' + diffColor + '">';
+  html += (valueDiff > 0 ? '+' : '') + fmt(valueDiff) + ' value ' + (valueDiff > legacyToLive(200) ? '(you win)' : valueDiff < -legacyToLive(200) ? '(they win)' : '(fair)') + '</span>' + typeBadge;
   html += '</div>';
   html += '<div style="border-top:1px solid var(--border);padding-top:10px">';
   html += '<div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:4px;letter-spacing:0.5px">WHY IT WORKS</div>';
@@ -4182,8 +4419,8 @@ function renderTradeCard(s, i) {
     html += '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">';
     html += '<div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.5px">📒 LEDGER INTEL</div>';
     if (cpBlurb) {
-      var netColor = cpBlurb.net > 500 ? 'var(--green)' : cpBlurb.net < -500 ? 'var(--red)' : 'var(--yellow)';
-      var pickColor = cpBlurb.pickCap > 500 ? 'var(--green)' : cpBlurb.pickCap < -500 ? 'var(--red)' : 'var(--yellow)';
+      var netColor = cpBlurb.net > legacyToLive(500) ? 'var(--green)' : cpBlurb.net < -legacyToLive(500) ? 'var(--red)' : 'var(--yellow)';
+      var pickColor = cpBlurb.pickCap > legacyToLive(500) ? 'var(--green)' : cpBlurb.pickCap < -legacyToLive(500) ? 'var(--red)' : 'var(--yellow)';
       html += '<div style="font-size:11px;color:var(--text-dim);line-height:1.6">';
       html += '<strong style="color:var(--text)">' + cpBlurb.trades + '</strong> prior trade' + (cpBlurb.trades === 1 ? '' : 's') + ' with ' + s.team + ' · ';
       html += 'net <span style="color:' + netColor + ';font-family:\'IBM Plex Mono\',monospace">' + (cpBlurb.net >= 0 ? '+' : '') + fmt(cpBlurb.net) + '</span> value · ';
@@ -4192,8 +4429,8 @@ function renderTradeCard(s, i) {
       html += '</div>';
     }
     if (shapeVerdict) {
-      var isPositivePattern = shapeVerdict.avgNet > 200;
-      var isNegativePattern = shapeVerdict.avgNet < -500;
+      var isPositivePattern = shapeVerdict.avgNet > legacyToLive(200);
+      var isNegativePattern = shapeVerdict.avgNet < -legacyToLive(500);
       var shapeBg = isNegativePattern ? 'rgba(255,68,68,0.10)' : isPositivePattern ? 'rgba(76,255,145,0.10)' : 'rgba(255,215,0,0.08)';
       var shapeColor = isNegativePattern ? 'var(--red)' : isPositivePattern ? 'var(--green)' : 'var(--yellow)';
       var icon = isNegativePattern ? '⚠️' : isPositivePattern ? '✅' : '➖';
@@ -4240,7 +4477,7 @@ function renderPriorityMoves() {
 
   // Auto SELL-NOW — sell-flagged, healthy, valuable assets
   roster.forEach(function(p) {
-    if (!p.value || p.value < 1500) return;
+    if (!p.value || p.value < legacyToLive(1500)) return;
     if (coveredByManual(p.name)) return; // shown as a manual lever instead
     if (p.injuryFlag) return; // handled as a gated hold below
     var h = getRosterHealthFlag(p);
@@ -4257,7 +4494,7 @@ function renderPriorityMoves() {
   // Auto GATED — injured value assets (hold through recovery)
   roster.forEach(function(p) {
     if (!p.injuryFlag) return;
-    if (!p.value || p.value < 1500) return;
+    if (!p.value || p.value < legacyToLive(1500)) return;
     if (coveredByManual(p.name)) return; // shown as a manual lever instead
     items.push({
       status: 'GATED', color: 'var(--gold)', icon: '\uD83D\uDFE1', sort: 1,
@@ -4358,10 +4595,10 @@ function renderLedgerHeadlinePanel() {
   html += '<div class="card-title" style="font-size:12px">📒 Ledger Signal — What Your Trade History Says</div>';
   html += '<div style="font-size:11px;color:var(--text-dim);line-height:1.7">';
   html += 'Analyzing <strong style="color:var(--text)">' + intel.tradeCount + '</strong> completed trade' + (intel.tradeCount === 1 ? '' : 's') + ' across ' + Object.keys(intel.counterparties).length + ' counterparties. ';
-  if (worst && worst.stats.avgNet < -500) {
+  if (worst && worst.stats.avgNet < -legacyToLive(500)) {
     html += 'Your <strong style="color:var(--red)">weakest pattern</strong> is <em>' + ledgerShapeLabel(worst.key) + '</em> (' + worst.stats.count + ' deals, avg ' + fmt(worst.stats.avgNet) + ' net). Suggestions matching this shape are flagged red. ';
   }
-  if (best && best.stats.avgNet > 200) {
+  if (best && best.stats.avgNet > legacyToLive(200)) {
     html += 'Your <strong style="color:var(--green)">strongest pattern</strong> is <em>' + ledgerShapeLabel(best.key) + '</em> (' + best.stats.count + ' deals, avg +' + fmt(best.stats.avgNet) + ' net). Green-flagged suggestions match this shape.';
   }
   html += '</div>';
@@ -4371,11 +4608,11 @@ function renderLedgerHeadlinePanel() {
   var gateNotes = [];
   if (finderIsRebuildMode()) gateNotes.push('<strong style="color:var(--yellow)">Rebuild mode active</strong> — suppressing player-for-player deficit-fills; capital-in prioritized');
   var pickedOut = Object.keys(intel.counterparties).filter(function(cp) {
-    return (intel.counterparties[cp].recentPickCapReceived || 0) >= 3000;
+    return (intel.counterparties[cp].recentPickCapReceived || 0) >= legacyToLive(3000);
   });
   if (pickedOut.length) gateNotes.push('<strong style="color:var(--yellow)">On pick cooldown (last 45d):</strong> ' + pickedOut.join(', ') + ' — recently paid heavy pick capital, appetite empty');
   var headwinds = Object.keys(intel.counterparties).filter(function(cp) {
-    return (intel.counterparties[cp].net || 0) < -1500;
+    return (intel.counterparties[cp].net || 0) < -legacyToLive(1500);
   });
   if (headwinds.length) gateNotes.push('<strong style="color:var(--yellow)">Ledger headwind:</strong> ' + headwinds.join(', ') + ' — negative net requires bigger edge in your favor');
   if (gateNotes.length) {
@@ -4403,8 +4640,8 @@ function renderCounterpartyIntelPanelHTML() {
     var s = r.stats;
     var domShape = null, mx = 0;
     Object.keys(s.shapes).forEach(function(k) { if (s.shapes[k] > mx) { mx = s.shapes[k]; domShape = k; } });
-    var netColor = s.net > 500 ? 'var(--green)' : s.net < -500 ? 'var(--red)' : 'var(--yellow)';
-    var pickColor = s.pickCap > 500 ? 'var(--green)' : s.pickCap < -500 ? 'var(--red)' : 'var(--yellow)';
+    var netColor = s.net > legacyToLive(500) ? 'var(--green)' : s.net < -legacyToLive(500) ? 'var(--red)' : 'var(--yellow)';
+    var pickColor = s.pickCap > legacyToLive(500) ? 'var(--green)' : s.pickCap < -legacyToLive(500) ? 'var(--red)' : 'var(--yellow)';
     var lastDays = s.lastDate ? Math.round((Date.now() - s.lastDate) / 86400000) + 'd' : '—';
     html += '<tr><td>' + r.name + '</td>'
       + '<td class="text-right mono">' + s.trades + '</td>'
@@ -4414,7 +4651,7 @@ function renderCounterpartyIntelPanelHTML() {
       + '<td class="text-right mono" style="font-size:10px;color:var(--text-muted)">' + lastDays + '</td></tr>';
   });
   html += '</tbody></table></div>';
-  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:8px;line-height:1.6">Net Value is at current KTC (drifts from what values were when trades happened). Green net = market currently prefers what you got. Red = it prefers what you gave up. Read this before scanning the suggestion cards below — it tells you who has actually paid you in past deals and who has extracted from you.</div>';
+  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:8px;line-height:1.6">Net Value is at current market value (drifts from what values were when trades happened). Green net = market currently prefers what you got. Red = it prefers what you gave up. Read this before scanning the suggestion cards below — it tells you who has actually paid you in past deals and who has extracted from you.</div>';
   html += '</div>';
   return html;
 }
@@ -4437,7 +4674,7 @@ function finderIsSuggestableAsset(pl) {
   var fps = proj ? proj.fps : 0;
   // Real starter-tier contribution (100+ FPS) OR real trade asset (2.5k+ value).
   // Both/either catch legit players; neither = bench body we don't waste a slot on.
-  return (fps >= 100) || ((pl.value || 0) >= 2500);
+  return (fps >= 100) || ((pl.value || 0) >= legacyToLive(2500));
 }
 
 function finderAgeSwapRoleFloor(pl) {
@@ -4450,11 +4687,11 @@ function finderAgeSwapRoleFloor(pl) {
 }
 
 function finderHasValueSymmetry(iGet, iGetPick, iGive, iGivePick, iGetPick2) {
-  var recStrong = (iGet && (iGet.value || 0) >= 2500)
-    || (iGetPick && (iGetPick.value || 0) >= 2500)
-    || (iGetPick2 && (iGetPick2.value || 0) >= 2500);
-  var giveStrong = (iGive && (iGive.value || 0) >= 2500)
-    || (iGivePick && (iGivePick.value || 0) >= 2500);
+  var recStrong = (iGet && (iGet.value || 0) >= legacyToLive(2500))
+    || (iGetPick && (iGetPick.value || 0) >= legacyToLive(2500))
+    || (iGetPick2 && (iGetPick2.value || 0) >= legacyToLive(2500));
+  var giveStrong = (iGive && (iGive.value || 0) >= legacyToLive(2500))
+    || (iGivePick && (iGivePick.value || 0) >= legacyToLive(2500));
   return recStrong && giveStrong;
 }
 
@@ -4469,7 +4706,7 @@ function finderIsRebuildMode() {
   var sorted = projs.slice().sort(function(a,b){return a-b;});
   var median = sorted[Math.floor(teams.length / 2)];
   var mine = (typeof teamProjStarters === 'function') ? teamProjStarters(STATE.allRosters[CONFIG.MY_TEAM_NAME] || []) : 0;
-  return mine < median - 200;
+  return mine < median - legacyToLive(200);
 }
 
 function finderCounterpartyPickedOut(cpName) {
@@ -4477,7 +4714,7 @@ function finderCounterpartyPickedOut(cpName) {
   if (!intel || !intel.counterparties[cpName]) return false;
   // If they've paid you 3,000+ in pick capital in the last 45 days, they
   // just emptied their reserve. Don't ask them for more picks yet.
-  return (intel.counterparties[cpName].recentPickCapReceived || 0) >= 3000;
+  return (intel.counterparties[cpName].recentPickCapReceived || 0) >= legacyToLive(3000);
 }
 
 function finderLedgerHeadwind(cpName) {
@@ -4487,8 +4724,8 @@ function finderLedgerHeadwind(cpName) {
   // need a bigger edge in your favor to overcome the pattern. Return the
   // minimum value gap (in your favor) required to counteract the history.
   var net = intel.counterparties[cpName].net || 0;
-  if (net < -3000) return 800;
-  if (net < -1500) return 400;
+  if (net < -legacyToLive(3000)) return legacyToLive(800);
+  if (net < -legacyToLive(1500)) return legacyToLive(400);
   return 0;
 }
 
@@ -4540,11 +4777,11 @@ function finderCounterpartyBuysVet(profile, player) {
     if (pos === 'TE' && age >= 30) return true;
   }
   // Match "proven veterans / stars / proven names" — high-value regardless of age.
-  if (/proven|star/.test(buys) && val >= 5000) return true;
+  if (/proven|star/.test(buys) && val >= legacyToLive(5000)) return true;
   // Match "young WR/QB/RB" — age-gated by position.
-  if (/young\s*wr/.test(buys) && pos === 'WR' && age <= 25 && val >= 3000) return true;
-  if (/young\s*qb/.test(buys) && pos === 'QB' && age <= 26 && val >= 3000) return true;
-  if (/young\s*rb/.test(buys) && pos === 'RB' && age <= 25 && val >= 3000) return true;
+  if (/young\s*wr/.test(buys) && pos === 'WR' && age <= 25 && val >= legacyToLive(3000)) return true;
+  if (/young\s*qb/.test(buys) && pos === 'QB' && age <= 26 && val >= legacyToLive(3000)) return true;
+  if (/young\s*rb/.test(buys) && pos === 'RB' && age <= 25 && val >= legacyToLive(3000)) return true;
   if (/upside\s*wr/.test(buys) && pos === 'WR' && age <= 27) return true;
   if (/upside\s*rb/.test(buys) && pos === 'RB' && age <= 26) return true;
   // "rookies" — very young only.
@@ -4559,11 +4796,11 @@ function findTrades() {
   var idCounter = 0;
 
   const mySurplus = ['QB','RB','WR','TE'].filter(function(pos) {
-    return myNeeds[pos].surplus > 0 || myNeeds[pos].starterVORP > 1500;
+    return myNeeds[pos].surplus > 0 || myNeeds[pos].starterVORP > legacyToLive(1500);
   });
 
   var myDeficits = ['QB','RB','WR','TE'].filter(function(pos) {
-    return myNeeds[pos].needScore > 200 || myNeeds[pos].starterVORP < 500 || myNeeds[pos].count < 2;
+    return myNeeds[pos].needScore > legacyToLive(200) || myNeeds[pos].starterVORP < legacyToLive(500) || myNeeds[pos].count < 2;
   });
 
   if (myDeficits.length === 0) {
@@ -4580,7 +4817,7 @@ function findTrades() {
 
     var theyHaveSurplus = ['QB','RB','WR','TE'].filter(function(pos) {
       return myDeficits.indexOf(pos) >= 0 &&
-        (theirNeeds[pos].surplus > 0 || theirNeeds[pos].starterVORP > 1000 || theirNeeds[pos].count >= 4);
+        (theirNeeds[pos].surplus > 0 || theirNeeds[pos].starterVORP > legacyToLive(1000) || theirNeeds[pos].count >= 4);
     });
 
     var theyNeed = ['QB','RB','WR','TE'].filter(function(pos) {
@@ -4589,9 +4826,9 @@ function findTrades() {
       var minStart = { QB: 2, RB: 3, WR: 3, TE: 2 }[pos];
       // A real need = weak starters. A low count only counts if production ISN'T
       // already strong (e.g. 2 elite TEs at VORP 1803 is set, not a need).
-      return n.needScore > 200                                   // starters below replacement
-          || n.starterVORP < 500                                 // weak starters
-          || (n.count < minStart && n.starterVORP < 1200);       // thin AND not already strong
+      return n.needScore > legacyToLive(200)                                   // starters below replacement
+          || n.starterVORP < legacyToLive(500)                                 // weak starters
+          || (n.count < minStart && n.starterVORP < legacyToLive(1200));       // thin AND not already strong
     });
 
     // Standard positional swap deals
@@ -4625,7 +4862,7 @@ function findTrades() {
             for (var mi = 0; mi < Math.min(myPlayers.length, 3); mi++) {
               var iGivePlayer = myPlayers[mi];
               if (!iGivePlayer) continue;
-              if (theyGive.value < 1000 || iGivePlayer.value < 1000) continue;
+              if (theyGive.value < legacyToLive(1000) || iGivePlayer.value < legacyToLive(1000)) continue;
 
               // Rule 1: FPS floor — both players must be startable or trade-worthy
               if (!finderIsSuggestableAsset(theyGive) || !finderIsSuggestableAsset(iGivePlayer)) continue;
@@ -4633,22 +4870,22 @@ function findTrades() {
               if (!finderHasValueSymmetry(theyGive, null, iGivePlayer, null, null)) continue;
               // Rule 4: rebuild-mode gate — tanks don't take player-for-player
               // deficit-fills unless the incoming asset is genuinely elite (6k+).
-              if (finderIsRebuildMode() && theyGive.value < 6000) continue;
+              if (finderIsRebuildMode() && theyGive.value < legacyToLive(6000)) continue;
 
               var rawDiff = theyGive.value - iGivePlayer.value;
-              if (rawDiff < -1500) continue;
+              if (rawDiff < -legacyToLive(1500)) continue;
               var valueDiff = Math.abs(rawDiff);
-              if (valueDiff > 3000) continue;
+              if (valueDiff > legacyToLive(3000)) continue;
 
               // Rule 7: negative-history counterparty needs a bigger edge
               var headwind = finderLedgerHeadwind(teamName);
               if (headwind > 0 && rawDiff < headwind) continue;
 
               var mutualBenefit = (theirNeeds[iGivePos].needScore + myNeeds[iGetPos].needScore) / 2;
-              var activityBonus = profile && profile.activity === 'HIGH' ? 500 : profile && profile.activity === 'MEDIUM' ? 200 : 0;
+              var activityBonus = profile && profile.activity === 'HIGH' ? legacyToLive(500) : profile && profile.activity === 'MEDIUM' ? legacyToLive(200) : 0;
               var iGiveHealth = getRosterHealthFlag(iGivePlayer);
-              var healthBonus = iGiveHealth && (iGiveHealth.flag === 'SELL' || iGiveHealth.flag === 'CUT') ? 600 : 0;
-              var score = mutualBenefit - (valueDiff * 0.3) + activityBonus + healthBonus + 200;
+              var healthBonus = iGiveHealth && (iGiveHealth.flag === 'SELL' || iGiveHealth.flag === 'CUT') ? legacyToLive(600) : 0;
+              var score = mutualBenefit - (valueDiff * 0.3) + activityBonus + healthBonus + legacyToLive(200);
 
               suggestions.push({
                 id: 'trade-' + (idCounter++),
@@ -4691,23 +4928,23 @@ function findTrades() {
           var myAging = myAgingAtPos[ai];
           var theirYoung = theirYoungAtPos[yi];
           if (!myAging || !theirYoung) continue;
-          if (myAging.value < 1500 || theirYoung.value < 1500) continue;
+          if (myAging.value < legacyToLive(1500) || theirYoung.value < legacyToLive(1500)) continue;
 
           // Rule 2: age-swap role floor — "younger" must actually have a role
           if (!finderAgeSwapRoleFloor(theirYoung)) continue;
           // Rule 3: value symmetry
           if (!finderHasValueSymmetry(theirYoung, null, myAging, null, null)) continue;
           // Rule 4: rebuild mode — skip age-swaps unless incoming is elite
-          if (finderIsRebuildMode() && theirYoung.value < 5000) continue;
+          if (finderIsRebuildMode() && theirYoung.value < legacyToLive(5000)) continue;
 
           var swapDiff = theirYoung.value - myAging.value;
-          if (swapDiff < -500 || swapDiff > 2500) continue; // They give a younger player, slight value edge ok
+          if (swapDiff < -legacyToLive(500) || swapDiff > legacyToLive(2500)) continue; // They give a younger player, slight value edge ok
 
           // Rule 7: negative-history counterparty needs a bigger edge
           var swapHeadwind = finderLedgerHeadwind(teamName);
           if (swapHeadwind > 0 && swapDiff < swapHeadwind) continue;
 
-          var swapScore = 300 + (profile && profile.activity === 'HIGH' ? 400 : 100) - Math.abs(swapDiff) * 0.2;
+          var swapScore = legacyToLive(300) + (profile && profile.activity === 'HIGH' ? legacyToLive(400) : legacyToLive(100)) - Math.abs(swapDiff) * 0.2;
 
           suggestions.push({
             id: 'trade-' + (idCounter++),
@@ -4740,14 +4977,14 @@ function findTrades() {
 
   // Re-examine standard deals and add pick sweetener if gap warrants it
   var sweetenable = suggestions.filter(function(s) {
-    return s.type === 'standard' && s.valueDiff >= 400 && s.valueDiff <= 2800;
+    return s.type === 'standard' && s.valueDiff >= legacyToLive(400) && s.valueDiff <= legacyToLive(2800);
   });
   for (var si = 0; si < sweetenable.length; si++) {
     var deal = sweetenable[si];
     // If they win (they give more value), we add a pick to them
     // If we win (we give more value)... actually sweeteners go to equalise
     var gap = deal.iGet.value - deal.iGive.value; // positive = they give more = we underpay
-    if (Math.abs(gap) < 400) continue;
+    if (Math.abs(gap) < legacyToLive(400)) continue;
 
     // Find pick closest to abs(gap)
     var bestPick = null, bestDiff = Infinity;
@@ -4765,7 +5002,7 @@ function findTrades() {
       iGivePick: bestPick,
       iGetPos: deal.iGetPos,
       iGivePos: deal.iGivePos,
-      score: deal.score + 150,
+      score: deal.score + legacyToLive(150),
       valueDiff: Math.abs(gap - (gap > 0 ? -bestPick.value : bestPick.value)),
       profile: deal.profile,
       type: 'sweetened',
@@ -4802,13 +5039,13 @@ function findTrades() {
       var origTeam = STATE.rosterIdMap ? (STATE.rosterIdMap[origRosterId] || STATE.rosterIdMap[parseInt(origRosterId)] || 'Unknown') : 'Unknown';
       var label = getPickLabel(yr, rd, origTeam);
       var val = getPickValue(yr, rd, origTeam);
-      if (val > 400) theirPicks.push({ label: label, value: val, year: yr, round: rd });
+      if (val > legacyToLive(400)) theirPicks.push({ label: label, value: val, year: yr, round: rd });
     });
     // sort by window-weighted capital value so 2027-2028 firsts come first
     theirPicks.sort(function(a, b) { return capitalWeight(b) - capitalWeight(a); });
 
     var mySellPlayers = (STATE.myRoster || []).filter(function(pl) {
-      if (!pl.value || pl.value <= 1500) return false;
+      if (!pl.value || pl.value <= legacyToLive(1500)) return false;
       var arch = getArchetype(pl.pos, pl.age);
       var h = getRosterHealthFlag(pl);
       // Match Priority Moves: eligible if health-flagged SELL OR aging/sell archetype
@@ -4816,7 +5053,7 @@ function findTrades() {
       return (h && h.flag === 'SELL') || (arch && (arch.cls === 'sell' || arch.cls === 'aging'));
     }).sort(function(a, b) { return b.value - a.value; });
 
-    var actBonus = tProfile && tProfile.activity === 'HIGH' ? 300 : tProfile && tProfile.activity === 'MEDIUM' ? 150 : 0;
+    var actBonus = tProfile && tProfile.activity === 'HIGH' ? legacyToLive(300) : tProfile && tProfile.activity === 'MEDIUM' ? legacyToLive(150) : 0;
 
     for (var spi = 0; spi < Math.min(mySellPlayers.length, 3); spi++) {
       var sellPl = mySellPlayers[spi];
@@ -4825,7 +5062,7 @@ function findTrades() {
       // top-pick Metcalf→wazimo suggestion at the source.
       if (!finderCounterpartyBuysVet(tProfile, sellPl)) continue;
       var sHealth = getRosterHealthFlag(sellPl);
-      var healthBonus = sHealth && (sHealth.flag === 'SELL' || sHealth.flag === 'CUT') ? 600 : 0;
+      var healthBonus = sHealth && (sHealth.flag === 'SELL' || sHealth.flag === 'CUT') ? legacyToLive(600) : 0;
 
       for (var pi2 = 0; pi2 < Math.min(theirPicks.length, 3); pi2++) {
         var pk1 = theirPicks[pi2];
@@ -4901,7 +5138,7 @@ function findTrades() {
 
         // Real projected gain: their pick projects to convey better than mine
         var trueGain = theirPick.projVal - myPick.projVal;
-        if (trueGain < 300) continue;
+        if (trueGain < legacyToLive(300)) continue;
 
         // Market perception check — from CP's KTC view
         var mktBase = Math.max(myPick.mktVal, theirPick.mktVal);
@@ -4920,22 +5157,22 @@ function findTrades() {
 
         // Deep ledger headwind still blocks (arb is low-stakes but not zero)
         var hw = finderLedgerHeadwind(cpName);
-        if (hw >= 800) continue;
+        if (hw >= legacyToLive(800)) continue;
 
         var cpProfile = OWNER_PROFILES[cpName];
-        var truthBonus = cpProfile && /ktc|market|pick.stockpiler|manipulator/i.test((cpProfile.style || '') + (cpProfile.notes || '')) ? 200 : 0;
+        var truthBonus = cpProfile && /ktc|market|pick.stockpiler|manipulator/i.test((cpProfile.style || '') + (cpProfile.notes || '')) ? legacyToLive(200) : 0;
 
         var myPickAsset = { label: myPick.label, value: myPick.mktVal, year: myPick.yr, round: myPick.rd };
         var theirPickAsset = { label: theirPick.label, value: theirPick.mktVal, year: theirPick.yr, round: theirPick.rd };
 
         // Frame "why they accept" honestly given the market direction
         var whyAccept;
-        if (mktEdgeForCP > 500) {
-          whyAccept = 'KTC shows ' + cpName + ' winning by ~' + fmt(mktEdgeForCP) + ' (' + Math.round(gapPct * 100) + '%) — they read it as a light steal from you'
-            + (truthBonus ? ' and they\'re KTC-aligned, so they\'ll trust that read' : '');
+        if (mktEdgeForCP > legacyToLive(500)) {
+          whyAccept = 'Market values show ' + cpName + ' winning by ~' + fmt(mktEdgeForCP) + ' (' + Math.round(gapPct * 100) + '%) — they read it as a light steal from you'
+            + (truthBonus ? ' and they\'re market-aligned, so they\'ll trust that read' : '');
         } else {
-          whyAccept = 'Fair KTC swap — market values within ' + Math.round(gapPct * 100) + '%, same round'
-            + (truthBonus ? '. ' + cpName + ' reads as KTC-aligned; even swaps sail through' : '');
+          whyAccept = 'Fair market swap — values within ' + Math.round(gapPct * 100) + '%, same round'
+            + (truthBonus ? '. ' + cpName + ' reads as market-aligned; even swaps sail through' : '');
         }
 
         suggestions.push({
@@ -4990,7 +5227,7 @@ function findTrades() {
   var typeRank = { 'pick-for-player': 3, 'pick-arb-swap': 3, 'sweetened': 2, 'age-swap': 1, 'standard': 1 };
   balanced.sort(function(a, b) {
     // capital-in (pick-for-player) leads when scores are within range
-    if (Math.abs(b.score - a.score) < 150) {
+    if (Math.abs(b.score - a.score) < legacyToLive(150)) {
       var tr = (typeRank[b.type] || 0) - (typeRank[a.type] || 0);
       if (tr !== 0) return tr;
     }
@@ -5009,7 +5246,7 @@ function renderLeagueIntel() {
     const teams = Object.values(CONFIG.OWNER_MAP)
       .filter(t => t !== CONFIG.MY_TEAM_NAME)
       .map(t => ({ name: t, ...teamNeeds[t][pos] }))
-      .filter(t => t.needScore > 200)
+      .filter(t => t.needScore > legacyToLive(200))
       .sort((a,b) => b.needScore - a.needScore)
       .slice(0, 4);
     
@@ -5155,10 +5392,11 @@ async function syncAll() {
     // Projections first: fetchKTC uses them to tell starting QBs from backups. Cached after
     // the first load; a failure just leaves the flat QB multiplier in place.
     await attempt('Projections', () => fetchProjections(false));
-    await attempt('KTC values', fetchKTC);
+    await attempt('Values', fetchValues);
     setLoadingProgress(35, 'FETCHING SLEEPER DATA...');
     await Promise.allSettled([
       attempt('Sleeper players', fetchSleeperPlayers),
+      attempt('League taxi settings', fetchLeagueTaxi),
       attempt('Standings', fetchStandings),
       attempt('Draft order', fetchDraftOrder),
       (CONFIG.PICKS_FROM_SHEET && STATE.pickSheetCount > 0) ? Promise.resolve() : attempt('KTC picks', fetchKTCPicks)
@@ -5181,12 +5419,13 @@ async function syncAll() {
     var banner = document.getElementById('staleBanner');
     if (banner) {
       if (STATE.sheetAgeDays != null && STATE.sheetAgeDays > CONFIG.STALE_SHEET_DAYS) {
-        banner.textContent = '\u26A0\uFE0F KTC values are ' + STATE.sheetAgeDays + ' days old \u2014 the source sheet\u2019s own stamp reads \u201C' + (STATE.sheetUpdated || 'unknown') + '\u201D. Player and pick values may lag the market.';
+        banner.textContent = '\u26A0\uFE0F ' + valueSourceName() + ' values are ' + STATE.sheetAgeDays + ' days old \u2014 the source\u2019s own stamp reads \u201C' + (STATE.sheetUpdated || 'unknown') + '\u201D. Player and pick values may lag the market.';
         banner.style.display = 'block';
       } else { banner.style.display = 'none'; }
     }
     var staleNote = (STATE.sheetAgeDays != null && STATE.sheetAgeDays > CONFIG.STALE_SHEET_DAYS)
-      ? ' <span style="color:var(--yellow)">\u00b7 KTC sheet ' + STATE.sheetAgeDays + 'd old</span>' : '';
+      ? ' <span style="color:var(--yellow)">\u00b7 ' + valueSourceName() + ' ' + STATE.sheetAgeDays + 'd old</span>' : '';
+    if (STATE.valuesSource === 'ktc-sheet' && STATE.valuesFallbackReason) staleNote += ' <span style="color:var(--yellow)">\u00b7 Stats Guy unavailable, using KTC sheet</span>';
     if (failed.length) {
       document.getElementById('lastSync').innerHTML = stamp + staleNote +
         ' <span style="color:var(--red)">\u2014 ' + failed.join(', ') + ' failed, showing last-known data</span>';
@@ -5239,9 +5478,9 @@ function calcRookieFitScore(rookie) {
   const hasCountNeed = posNeed.surplus < 0; // fewer players than ideal count
   const hasAnyNeed = hasVorpNeed || hasCountNeed;
 
-  if (posNeed.needScore > 1000) score += 40;
-  else if (posNeed.needScore > 500) score += 25;
-  else if (posNeed.needScore > 200) score += 15;
+  if (posNeed.needScore > legacyToLive(1000)) score += 40;
+  else if (posNeed.needScore > legacyToLive(500)) score += 25;
+  else if (posNeed.needScore > legacyToLive(200)) score += 15;
   else if (hasCountNeed) score += 10; // count-based fallback: under-rostered
 
   // Surplus penalties — deep positions get actively punished
@@ -5258,9 +5497,9 @@ function calcRookieFitScore(rookie) {
     else if (rookie.age && rookie.age > 17 && rookie.age < 23) score += 5;
 
     // Value bonus — higher KTC = more consensus upside (0-15)
-    if (rookie.value > 5000) score += 15;
-    else if (rookie.value > 3500) score += 10;
-    else if (rookie.value > 2000) score += 5;
+    if (rookie.value > legacyToLive(5000)) score += 15;
+    else if (rookie.value > legacyToLive(3500)) score += 10;
+    else if (rookie.value > legacyToLive(2000)) score += 5;
 
     // SF format bonus for QBs — only when QB depth is a real need
     if (rookie.pos === 'QB') score += 10;
@@ -5305,12 +5544,12 @@ function renderRookieBoard() {
   if (fitsEl) fitsEl.innerHTML =
     '<div class="mono muted" style="font-size:12px;padding:12px;line-height:1.6">' +
     '🎓 2026 class is drafted — see <b>Draft Capital Return</b> up top for how those picks cashed out.<br>' +
-    '2027 names populate here after the college season, once KTC prices the incoming class. ' +
+    '2027 names populate here after the college season, once the value feed prices the incoming class. ' +
     'Until then use the <b>2027 Pick Capital</b> card above and the <b>Anatomy Prospect Scorer → 2027 tab</b> for forward scouting.' +
     '</div>';
   const boardEl = document.getElementById('rookieBoardBody');
   if (boardEl) boardEl.innerHTML =
-    '<tr><td colspan="8" class="text-center muted" style="padding:22px">2027 board populates after the college season — KTC has no 2027 names yet.</td></tr>';
+    '<tr><td colspan="8" class="text-center muted" style="padding:22px">2027 board populates after the college season — the value feed has no 2027 names yet.</td></tr>';
 
   renderPickCapital2027();
   renderProspectScorer();
@@ -5486,7 +5725,7 @@ function renderProspectScorer() {
         ${is2026 ? '<span style="font-family:monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
       </div>
       <div style="overflow-x:auto"><table class="data-table" style="font-size:12px"><thead><tr>
-        <th>Player</th><th>KTC</th>
+        <th>Player</th><th>Value</th>
         <th title="Draft Capital R1-3">DC</th>
         <th title="40-yard dash ≤4.59">40T</th>
         <th title="10-yard split ≤1.56">Split</th>
@@ -5549,7 +5788,7 @@ function renderProspectScorer() {
         ${is2026 ? '<span style="font-family:monospace;font-size:9px;color:var(--gold)">⚡ DC pending — scores will rise post-draft</span>' : ''}
       </div>
       <div style="overflow-x:auto"><table class="data-table" style="font-size:12px"><thead><tr>
-        <th>Player</th><th>KTC</th>
+        <th>Player</th><th>Value</th>
         <th title="Draft Capital R1-2">DC</th>
         <th title="Speed Score ≥100">Spd</th>
         <th title="40-yard dash">40T</th>
@@ -5689,7 +5928,7 @@ function filterRookieBoard(filter, btn) {
   if (btn) btn.classList.add('active');
   const boardEl = document.getElementById('rookieBoardBody');
   if (boardEl) boardEl.innerHTML =
-    '<tr><td colspan="8" class="text-center muted" style="padding:22px">2027 board populates after the college season — KTC has no 2027 names yet.</td></tr>';
+    '<tr><td colspan="8" class="text-center muted" style="padding:22px">2027 board populates after the college season — the value feed has no 2027 names yet.</td></tr>';
 }
 
 // Init
@@ -5712,7 +5951,7 @@ function qbArbSignal(edgePct) {
   if (edgePct == null || isNaN(edgePct)) return null;
   if (edgePct >= 18) return { key:'under',  label:'MARKET UNDERPAYS', color:'var(--green)' };
   if (edgePct >= 14) return { key:'under2', label:'MILD UNDERPAY',    color:'var(--blue)' };
-  return { key:'fair', label:'KTC-FAIR', color:'var(--text-dim)' };
+  return { key:'fair', label:'MARKET-FAIR', color:'var(--text-dim)' };
 }
 
 function qbArbAction(sig, isMine) {
@@ -5721,7 +5960,7 @@ function qbArbAction(sig, isMine) {
     return isMine ? '<span style="color:var(--green)"> · HOLD/LEVERAGE</span>'
                   : '<span style="color:var(--green)"> · BUY-FROM</span>';
   if (sig.key === 'fair')
-    return isMine ? '<span style="color:var(--text-dim)"> · sell at KTC market OK</span>' : '';
+    return isMine ? '<span style="color:var(--text-dim)"> · sell at market OK</span>' : '';
   return '';
 }
 
@@ -5763,7 +6002,7 @@ async function renderQBArbitrage() {
 
   const matched = rows.filter(r => r.edgePct != null).length;
   const meta = document.getElementById('qbArbMeta');
-  if (meta) meta.textContent = matched + ' of ' + rows.length + ' QBs have projections · Edge pts = 2 × proj passing TDs (points KTC 4pt ignores) · Edge % = edge ÷ 4pt output';
+  if (meta) meta.textContent = matched + ' of ' + rows.length + ' QBs have projections · Edge pts = 2 × proj passing TDs (points the 4pt market ignores) · Edge % = edge ÷ 4pt output';
 
   host.innerHTML = rows.map(r => {
     const sig = r.signal;
@@ -6451,7 +6690,7 @@ async function renderLedger() {
   var host = document.getElementById('ledgerHost');
   if (!host) return;
   if (!STATE.ktcPlayers || !STATE.sleeperPlayers || !STATE.rosterIdMap) {
-    host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Sync roster + KTC data first (top-right button), then reopen this tab.</div>';
+    host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Sync roster + value data first (top-right button), then reopen this tab.</div>';
     return;
   }
   host.innerHTML = '<div class="mono muted" style="font-size:12px;padding:12px">Loading transactions from Sleeper…</div>';
@@ -6512,10 +6751,10 @@ async function renderLedger() {
   // Continuous shade instead of flat green/red — intensity scales with size
   // of the delta. Aggregates (summed across trades) saturate at a wider
   // scale than a single trade's net.
-  var pct = function(v) { return shadeColor(v, 3000); };
-  var pctAgg = function(v) { return shadeColor(v, 6000); };
-  var chip = function(v) { return shadeBg(v, 3000, 0.16); };
-  var chipAgg = function(v) { return shadeBg(v, 6000, 0.16); };
+  var pct = function(v) { return shadeColor(v, legacyToLive(3000)); };
+  var pctAgg = function(v) { return shadeColor(v, legacyToLive(6000)); };
+  var chip = function(v) { return shadeBg(v, legacyToLive(3000), 0.16); };
+  var chipAgg = function(v) { return shadeBg(v, legacyToLive(6000), 0.16); };
   var sign = function(v) { return (v >= 0 ? '+' : '') + fmt(v); };
 
   var html = '';
@@ -6523,7 +6762,7 @@ async function renderLedger() {
   // Summary strip
   html += '<div class="grid-4" style="margin-bottom:16px">'
     + '<div class="stat-card"><div class="stat-value" style="color:var(--accent)">' + rows.length + '</div><div class="stat-label">Completed Trades</div><div class="stat-sub">every deal on record</div></div>'
-    + '<div class="stat-card"><div class="stat-value" style="color:' + pctAgg(totalNet) + ';background:' + chipAgg(totalNet) + ';border-radius:6px;padding:2px 6px;display:inline-block">' + sign(totalNet) + '</div><div class="stat-label">Net Value Δ</div><div class="stat-sub">at current KTC</div></div>'
+    + '<div class="stat-card"><div class="stat-value" style="color:' + pctAgg(totalNet) + ';background:' + chipAgg(totalNet) + ';border-radius:6px;padding:2px 6px;display:inline-block">' + sign(totalNet) + '</div><div class="stat-label">Net Value Δ</div><div class="stat-sub">at current market value</div></div>'
     + '<div class="stat-card"><div class="stat-value" style="color:' + pctAgg(totalPickCap) + ';background:' + chipAgg(totalPickCap) + ';border-radius:6px;padding:2px 6px;display:inline-block">' + sign(totalPickCap) + '</div><div class="stat-label">2027+ Pick Cap Δ</div><div class="stat-sub">future capital acquired/spent</div></div>'
     + '<div class="stat-card"><div class="stat-value" style="color:var(--text)">' + fmt(rows.filter(function(r) { return r.net > 0; }).length) + '/' + rows.length + '</div><div class="stat-label">Positive at Market</div><div class="stat-sub">deals current market prefers</div></div>'
     + '</div>';
@@ -6560,7 +6799,7 @@ async function renderLedger() {
       +   '</div>'
       + '</div></div>';
   });
-  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:10px;line-height:1.6">All values are current KTC (with app format adjustments), not the values at the moment of trade. So a deal reading positive now doesn\'t mean you got the better of it at the time — it means today\'s market prefers what you received. That\'s the honest question this ledger answers. Skill-in-timing requires a historical snapshot system that doesn\'t exist yet.</div>';
+  html += '<div class="mono" style="font-size:9px;color:var(--text-muted);padding-top:10px;line-height:1.6">All values are current market values (Stats Guy Fantasy, with app format adjustments), not the values at the moment of trade. So a deal reading positive now doesn\'t mean you got the better of it at the time — it means today\'s market prefers what you received. That\'s the honest question this ledger answers. Skill-in-timing requires a historical snapshot system that doesn\'t exist yet.</div>';
   html += '</div>';
 
   host.innerHTML = html;
@@ -7115,8 +7354,8 @@ function vpSetFilter(f, btn) { STATE.vpFilter = f; document.querySelectorAll('#v
      - Injects its own card at the top of the Rookies tab
      - Hides the stale "Your Pick Projections" card
      - Pulls your completed-draft selections live from Sleeper
-     - Joins each pick to current KTC value + VORP + health flag
-     - All values come from loaded KTC / live Sleeper — nothing estimated
+     - Joins each pick to current market value + VORP + health flag
+     - All values come from the loaded value feed / live Sleeper — nothing estimated
      ============================================================ -->
 <script>
 (function () {
@@ -7204,7 +7443,7 @@ function vpSetFilter(f, btn) { STATE.vpFilter = f; document.querySelectorAll('#v
       const ktc       = onRoster || resolvePlayer(pk.name);
       const nowVal    = onRoster ? onRoster.value : (ktc ? ktc.value : null);
       const moved     = !stillMine;              // genuinely traded/dropped
-      const unpriced  = stillMine && !onRoster;   // still mine, KTC just has no value yet
+      const unpriced  = stillMine && !onRoster;   // still mine, the value feed just has no price yet
       const taxi      = STATE.taxiPlayerIds && STATE.taxiPlayerIds.has(pk.playerId);
       const health    = onRoster ? getRosterHealthFlag(onRoster) : null;
 
@@ -7222,7 +7461,7 @@ function vpSetFilter(f, btn) { STATE.vpFilter = f; document.querySelectorAll('#v
       const statusLine = moved
         ? '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">⟲ No longer on roster</div>'
         : unpriced
-        ? '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">🚕 Rostered stash — KTC has no value yet (name unmatched)</div>'
+        ? '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">🚕 Rostered stash — the value feed has no price yet (name unmatched)</div>'
         : (health
             ? `<div style="display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
                  <span style="font-size:11px">${health.icon}</span>
