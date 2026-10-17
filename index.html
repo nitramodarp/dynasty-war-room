@@ -5412,22 +5412,13 @@ async function syncAll() {
     }).catch(function(e) { console.warn('Prospect data failed:', e); });
 
     setLoadingProgress(80, 'PROCESSING DATA...');
-    buildAllRosters(); buildPickMap(); calcPowerRankings();
     setLoadingProgress(95, 'RENDERING...');
-    renderDashboard(); generateGMBrief(); populatePickDropdowns();
+    renderFromState();
 
     var stamp = 'Synced ' + new Date().toLocaleTimeString();
     if (STATE.liveBlendInfo && STATE.liveBlendInfo.active) stamp += ' \u00b7 live blend thru wk ' + STATE.liveBlendInfo.throughWeek;
-    var banner = document.getElementById('staleBanner');
-    if (banner) {
-      if (STATE.sheetAgeDays != null && STATE.sheetAgeDays > CONFIG.STALE_SHEET_DAYS) {
-        banner.textContent = '\u26A0\uFE0F ' + valueSourceName() + ' values are ' + STATE.sheetAgeDays + ' days old \u2014 the source\u2019s own stamp reads \u201C' + (STATE.sheetUpdated || 'unknown') + '\u201D. Player and pick values may lag the market.';
-        banner.style.display = 'block';
-      } else { banner.style.display = 'none'; }
-    }
-    var staleNote = (STATE.sheetAgeDays != null && STATE.sheetAgeDays > CONFIG.STALE_SHEET_DAYS)
-      ? ' <span style="color:var(--yellow)">\u00b7 ' + valueSourceName() + ' ' + STATE.sheetAgeDays + 'd old</span>' : '';
-    if (STATE.valuesSource === 'ktc-sheet' && STATE.valuesFallbackReason) staleNote += ' <span style="color:var(--yellow)">\u00b7 Stats Guy unavailable, using KTC sheet</span>';
+    refreshStaleBanner();
+    var staleNote = valuesStaleNote();
     if (failed.length) {
       document.getElementById('lastSync').innerHTML = stamp + staleNote +
         ' <span style="color:var(--red)">\u2014 ' + failed.join(', ') + ' failed, showing last-known data</span>';
@@ -5437,6 +5428,9 @@ async function syncAll() {
       document.getElementById('lastSync').textContent = stamp;
     }
     setLoadingProgress(100, failed.length ? 'COMPLETE (with errors)' : 'COMPLETE');
+    // Keep this sync for the next page load. Only a CLEAN sync is saved: a partial one must not overwrite
+    // a complete earlier snapshot with missing pieces.
+    if (!failed.length) saveSnapshot();
   } catch(e) {
     // Only reachable for a failure outside the per-source attempts above
     // (e.g. a bug in build/render itself) — individual fetches no longer
@@ -5934,11 +5928,125 @@ function filterRookieBoard(filter, btn) {
 }
 
 // Init
-// Nothing is fetched on page load: the app only pulls data when you tap Sync Data (syncAll also loads the
-// projections). Until then the page is empty, so drop the splash screen and say so.
-window.addEventListener('load', () => {
+// ============================================================
+// SAVED SYNC — shown on page load, no network
+// Every clean Sync Data saves its INPUTS (feed values, Sleeper rosters/players/picks, projections, live
+// stats...) to this browser's IndexedDB. Loading the page restores them and runs the same build/render
+// pipeline the sync uses, so the app opens with your last sync and makes ZERO requests. Only the Sync Data
+// button fetches. The copy lives in each browser separately (phone and laptop each keep their own), and a
+// browser that has none (first visit, cleared site data, private window) just opens blank as before.
+// ============================================================
+const SNAP_DB_NAME = 'dwr_snapshot', SNAP_STORE = 'kv', SNAP_KEY = 'lastSync', SNAP_VERSION = 1;
+const SNAP_STATE_KEYS = ['ktcPlayers','sleeperPlayers','rosters','rosterIdMap','ownedPlayerIds','leagueTaxiIds','taxiPlayerIds',
+  'taxiYears','taxiSlots','tradedPicks','standings','_standingsArePrevSeason','draftSlotMap','projMap','liveStats','scoringSettings',
+  'sheetPicks','pickSheetCount','pickLiveCount','sheetUpdated','sheetAgeDays','valuesSource','valuesAsOf','valuesFallbackReason','prospectLastFetch'];
+const SNAP_CONFIG_KEYS = ['PICK_VALUES','PICK_FALLBACKS','PICK_VALUES_UPDATED','PICK_VALUES_DATE'];
+
+function snapDB() {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === 'undefined') return reject(new Error('IndexedDB unavailable'));
+    const rq = indexedDB.open(SNAP_DB_NAME, 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore(SNAP_STORE);
+    rq.onsuccess = () => resolve(rq.result);
+    rq.onerror = () => reject(rq.error);
+  });
+}
+async function snapPut(obj) {
+  const db = await snapDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SNAP_STORE, 'readwrite');
+    tx.objectStore(SNAP_STORE).put(obj, SNAP_KEY);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = tx.onabort = () => { db.close(); reject(tx.error); };
+  });
+}
+async function snapGet() {
+  const db = await snapDB();
+  return new Promise((resolve, reject) => {
+    const rq = db.transaction(SNAP_STORE, 'readonly').objectStore(SNAP_STORE).get(SNAP_KEY);
+    rq.onsuccess = () => { db.close(); resolve(rq.result || null); };
+    rq.onerror = () => { db.close(); reject(rq.error); };
+  });
+}
+
+async function saveSnapshot() {
+  try {
+    if (!STATE.ktcPlayers || STATE.ktcPlayers.length < 100 || !STATE.rosters || !Object.keys(STATE.rosters).length) return;   // nothing worth keeping
+    const state = {}, config = {};
+    for (const k of SNAP_STATE_KEYS) {
+      if (STATE[k] === undefined) continue;
+      try { structuredClone(STATE[k]); state[k] = STATE[k]; } catch (e) { console.warn('Snapshot: skipped STATE.' + k, e.message); }
+    }
+    for (const k of SNAP_CONFIG_KEYS) { if (CONFIG[k] !== undefined) config[k] = CONFIG[k]; }
+    const prospects = {};
+    for (const k in PROSPECT_PROFILES) { if (/^(WR|RB)_\d{4}$/.test(k)) prospects[k] = PROSPECT_PROFILES[k]; }
+    await snapPut({ v: SNAP_VERSION, savedAt: Date.now(), state, config, prospects });
+  } catch (e) { console.warn('Snapshot save failed (the app works, it just won’t reopen with data):', e && e.message); }
+}
+
+// Pulls the saved sync back into STATE/CONFIG and renders it. Returns { savedAt } or null if there is none.
+async function restoreSnapshot() {
+  let snap;
+  try { snap = await snapGet(); } catch (e) { console.warn('Snapshot unavailable:', e && e.message); return null; }
+  if (!snap || snap.v !== SNAP_VERSION || !snap.state || !snap.state.ktcPlayers || snap.state.ktcPlayers.length < 100) return null;
+  for (const k in snap.state) STATE[k] = snap.state[k];
+  for (const k in (snap.config || {})) CONFIG[k] = snap.config[k];
+  for (const k in (snap.prospects || {})) PROSPECT_PROFILES[k] = snap.prospects[k];
+  STATE._tLadder = undefined;
+  // The saved age was measured at save time; re-measure against the feed's own timestamp as of NOW.
+  STATE.sheetAgeDays = valuesAgeDaysNow();
+  try { applyLiveBlend(); } catch (e) { console.warn('applyLiveBlend failed:', e.message); }
+  renderFromState();
+  return { savedAt: snap.savedAt };
+}
+
+// Same build + render the sync ends with.
+function renderFromState() {
+  buildAllRosters(); buildPickMap(); calcPowerRankings();
+  renderDashboard(); generateGMBrief(); populatePickDropdowns();
+}
+
+function valuesAgeDaysNow() {
+  if (STATE.valuesSource === 'statsguy' && STATE.valuesAsOf) {
+    const ms = Date.parse(STATE.valuesAsOf);
+    return isNaN(ms) ? null : Math.max(0, Math.floor((Date.now() - ms) / 86400000));
+  }
+  const sm = (STATE.sheetUpdated || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if (!sm) return null;
+  const yr = +sm[3] < 100 ? 2000 + +sm[3] : +sm[3];
+  const d = new Date(yr, +sm[1] - 1, +sm[2]);
+  return isNaN(d) ? null : Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+function refreshStaleBanner() {
+  const banner = document.getElementById('staleBanner');
+  if (!banner) return;
+  if (STATE.sheetAgeDays != null && STATE.sheetAgeDays > CONFIG.STALE_SHEET_DAYS) {
+    banner.textContent = '⚠️ ' + valueSourceName() + ' values are ' + STATE.sheetAgeDays + ' days old — the source’s own stamp reads “' + (STATE.sheetUpdated || 'unknown') + '”. Player and pick values may lag the market.';
+    banner.style.display = 'block';
+  } else { banner.style.display = 'none'; }
+}
+function valuesStaleNote() {
+  let note = (STATE.sheetAgeDays != null && STATE.sheetAgeDays > CONFIG.STALE_SHEET_DAYS)
+    ? ' <span style="color:var(--yellow)">· ' + valueSourceName() + ' ' + STATE.sheetAgeDays + 'd old</span>' : '';
+  if (STATE.valuesSource === 'ktc-sheet' && STATE.valuesFallbackReason) note += ' <span style="color:var(--yellow)">· Stats Guy unavailable, using KTC sheet</span>';
+  return note;
+}
+
+// Page load: restore the saved sync (no network). Nothing is fetched until Sync Data is tapped.
+window.addEventListener('load', async () => {
+  const lastSync = document.getElementById('lastSync');
+  let restored = null;
+  try { restored = await restoreSnapshot(); } catch (e) { console.error('Restoring the saved sync failed:', e); }
   document.getElementById('loadingOverlay').style.display = 'none';
-  document.getElementById('lastSync').textContent = 'Not synced \u2014 tap Sync Data';
+  if (!restored) { lastSync.textContent = 'Not synced — tap Sync Data'; return; }
+  const at = new Date(restored.savedAt), now = new Date();
+  const sameDay = at.toDateString() === now.toDateString();
+  const when = sameDay
+    ? 'today ' + at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : at.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ' ' + at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  lastSync.innerHTML = 'Saved sync · ' + when + (sameDay ? '' : ' <span style="color:var(--yellow)">· not today</span>')
+    + valuesStaleNote() + ' · tap Sync Data to refresh';
+  refreshStaleBanner();
 });
 
 // ============================================================
