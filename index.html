@@ -1937,6 +1937,21 @@ function getRosterHealthFlagRaw(player) {
     return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Below 3k and negative VORP' };
   }
   if (age >= 30 && value < 1500) return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Age 30+ — sub-1.5k KTC, no realistic trade market' };
+
+  // Production gate: age alone shouldn't force a sell on someone still producing above
+  // replacement level. KTC-based VORP can be negative while Ciely's projection says the
+  // player is a real starter (e.g. Metcalf: KTC VORP -290, Ciely WR37 / +82). Use the same
+  // replacement rank the VORP baselines use, so there's no separate magic number.
+  if (typeof projFor === 'function' && STATE.projMap && Object.keys(STATE.projMap).length) {
+    const prj = projFor(player.name, pos);
+    const rk = prj ? parseInt(prj.posRank, 10) : NaN;
+    const cutoff = (CONFIG.VORP_RANKS[pos] || 0) - 1;
+    if (Number.isFinite(rk) && cutoff > 0 && rk <= cutoff) {
+      return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️',
+        reason: 'Age ' + age + ' but producing at ' + pos + rk + ' (Ciely) — above replacement level, monitor rather than sell' };
+    }
+  }
+
   if (vorp > 0) return { flag: 'SELL', color: 'var(--orange)', icon: '🔶', reason: 'Age 28+ — still producing but window closing' };
   return { flag: 'SELL', color: 'var(--red)', icon: '🔴', reason: 'Age 28+ — negative VORP, sell urgently' };
 }
