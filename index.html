@@ -1955,7 +1955,18 @@ function getRosterHealthFlagRaw(player) {
     const teThreshold = getTop6TEVorp();
     if (value >= 4000 && vorp >= teThreshold) return { flag: 'HOLD', color: 'var(--green)', icon: '✅', reason: 'Top-6 VORP + 4k+ value' };
     if (value >= 4000 || vorp >= teThreshold) return { flag: 'MONITOR', color: 'var(--yellow)', icon: '⚠️', reason: 'Meets one of two TE thresholds' };
-    if (value >= 3000) return { flag: 'SELL', color: 'var(--orange)', icon: '🔶', reason: 'Veteran TE — tradeable value but below starter threshold' };
+    if (value >= 3000) {
+      // Flag stays value-based (rebuild: sell veterans while they still hold value), but say so honestly
+      // when he's actually producing: that's a sell-high window, not a "below starter" player.
+      const prjTE = (typeof projFor === 'function' && STATE.projMap) ? projFor(player.name, 'TE') : null;
+      const rkTE = prjTE ? parseInt(prjTE.posRank, 10) : NaN;
+      const cutTE = (CONFIG.VORP_RANKS.TE || 0) - 1;
+      if (Number.isFinite(rkTE) && cutTE > 0 && rkTE <= cutTE) {
+        return { flag: 'SELL', color: 'var(--orange)', icon: '🔶',
+          reason: 'Veteran TE (age ' + age + ') producing at TE' + rkTE + (prjTE.liveGp ? ' (projection blended with ' + prjTE.liveGp + ' games of live stats)' : ' (Ciely)') + ' — sell-high window; KTC value is below the 4k starter-tier line' };
+      }
+      return { flag: 'SELL', color: 'var(--orange)', icon: '🔶', reason: 'Veteran TE — tradeable value but below starter threshold' };
+    }
     return { flag: 'CUT', color: 'var(--red)', icon: '✂️', reason: 'Veteran TE — sub-3k, no meaningful trade market' };
   }
 
