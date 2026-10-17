@@ -3531,6 +3531,16 @@ function analyzeTrade() {
   const diff = rawA - rawB;
   const pct = rawA + rawB > 0 ? Math.abs(diff) / ((rawA + rawB) / 2) * 100 : 0;
 
+  // Sell-low context: if most of what you're GIVING is value the app already flags SELL/CUT,
+  // a big value gap is the cost of exiting a depreciating asset, not an "overpay" for
+  // something you'd keep. Same raw numbers, different label.
+  const flaggedOutValue = b.reduce((s, x) => {
+    if (x.pos === 'PICK') return s;
+    const fh = getRosterHealthFlag(x);
+    return s + ((fh && (fh.flag === 'SELL' || fh.flag === 'CUT')) ? x.value : 0);
+  }, 0);
+  const sellLow = rawB > 0 && flaggedOutValue / rawB >= 0.5;
+
   const verdict = document.getElementById('tradeVerdict');
   verdict.style.display = 'block';
 
@@ -3559,10 +3569,12 @@ function analyzeTrade() {
     label.style.color = shade;
     detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">+${fmt(diff)}</span> <span style="color:var(--text-muted);font-size:11px">in your favor (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
   } else {
-    const severity = pct > 40 ? '🛑 VETO: MASSIVE OVERPAY' : pct > 20 ? '⚠️ THEY WIN THIS TRADE' : '⚠️ SLIGHT EDGE TO THEM';
+    const severity = (sellLow && pct > 20) ? '🔻 SELLING LOW — flagged asset'
+      : pct > 40 ? '🛑 VETO: MASSIVE OVERPAY' : pct > 20 ? '⚠️ THEY WIN THIS TRADE' : '⚠️ SLIGHT EDGE TO THEM';
     label.textContent = severity;
     label.style.color = shade;
-    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">-${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">against you (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`;
+    detail.innerHTML = `<span style="font-size:15px;font-weight:700;color:${shade};background:${shadeChip};padding:2px 8px;border-radius:5px">-${fmt(Math.abs(diff))}</span> <span style="color:var(--text-muted);font-size:11px">against you (${pct.toFixed(0)}%)</span><br><span style="font-size:11px">${fmt(rawA)} in · ${fmt(rawB)} out &nbsp;·&nbsp; Stud-adjusted: ${aPct}% vs ${bPct}%</span>`
+      + (sellLow ? `<br><span style="font-size:11px;color:var(--yellow)">${Math.round(flaggedOutValue / rawB * 100)}% of what you're giving is already flagged SELL/CUT — the gap is the cost of exiting, not necessarily an overpay.</span>` : '');
   }
 
   // Health context: flag SELL/CUT assets and warn on giving away HOLDs
