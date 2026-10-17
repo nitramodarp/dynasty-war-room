@@ -3,42 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#161C29">
 <title>Dynasty War Room</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #04060C;
-    --surface: #0A0E1B;
-    --surface2: #101728;
-    --surface3: #172037;
-    --border: #212B46;
-    --accent: #FF7A2E;
+    color-scheme: dark;
+    /* Sleeper-dark: slate-navy surfaces (sampled from Sleeper's own panels) + Sleeper teal */
+    --bg: #161C29;
+    --surface: #202838;
+    --surface2: #283040;
+    --surface3: #303A4D;
+    --border: #374155;
+    --brand: #41D4C8;          /* chrome: logo, active tab, buttons, focus */
+    --on-brand: #0B1220;
+    --accent: #FF7A2E;         /* data highlight (kept orange) */
     --accent2: #22D3EE;
     --accent3: #2ED573;
     --gold: #FFD84D;
-    --text: #ECF2FC;
-    --text-dim: #8592B0;
-    --text-muted: #45526C;
-    --red: #FF4D6D;
+    --text: #F0F4FA;
+    --text-dim: #9AA5B8;
+    --text-muted: #6F7B91;
+    --red: #FF5470;
     --orange: #FF7A2E;
     --yellow: #FFCF33;
     --green: #2ED573;
-    --blue: #22D3EE;
+    --blue: #58A7FF;
     --purple: #B978FF;
+
+    /* Sleeper position colors */
+    --pos-qb: #FF5C9E;
+    --pos-rb: #35D6C0;
+    --pos-wr: #58A7FF;
+    --pos-te: #FFAE58;
 
     /* Archetype colors */
     --young: #22D3EE;
     --peak: #2ED573;
     --aging: #FFCF33;
     --sell: #FF4D6D;
+
+    /* structural */
+    --header-bg: rgba(22,28,41,0.94);
+    --nav-bg: rgba(22,28,41,0.97);
+    --chip-bg: rgba(0,0,0,0.28);
+    --glow1: rgba(65,212,200,0.07);
+    --glow2: rgba(88,167,255,0.06);
+  }
+  /* Light theme: follows the device setting unless the toggle overrides it */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --bg: #EEF1F6;
+      --surface: #FFFFFF;
+      --surface2: #F4F6FA;
+      --surface3: #E8ECF3;
+      --border: #D3DAE6;
+      --brand: #0A8A81;
+      --on-brand: #FFFFFF;
+      --accent: #D9560F;
+      --accent2: #0B8FB0;
+      --accent3: #14914E;
+      --gold: #A87C00;
+      --text: #18202E;
+      --text-dim: #566178;
+      --text-muted: #7A859A;
+      --red: #D62D50;
+      --orange: #D9560F;
+      --yellow: #A97C00;
+      --green: #14914E;
+      --blue: #1B69C9;
+      --purple: #7F3FD0;
+
+      --pos-qb: #D6336F;
+      --pos-rb: #0A8A81;
+      --pos-wr: #1B69C9;
+      --pos-te: #C2650A;
+
+      --young: #0B8FB0;
+      --peak: #14914E;
+      --aging: #A97C00;
+      --sell: #D62D50;
+
+      --header-bg: rgba(255,255,255,0.94);
+      --nav-bg: rgba(255,255,255,0.97);
+      --chip-bg: rgba(20,30,50,0.06);
+      --glow1: rgba(10,138,129,0.07);
+      --glow2: rgba(27,105,201,0.05);
+    }
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #EEF1F6;
+    --surface: #FFFFFF;
+    --surface2: #F4F6FA;
+    --surface3: #E8ECF3;
+    --border: #D3DAE6;
+    --brand: #0A8A81;
+    --on-brand: #FFFFFF;
+    --accent: #D9560F;
+    --accent2: #0B8FB0;
+    --accent3: #14914E;
+    --gold: #A87C00;
+    --text: #18202E;
+    --text-dim: #566178;
+    --text-muted: #7A859A;
+    --red: #D62D50;
+    --orange: #D9560F;
+    --yellow: #A97C00;
+    --green: #14914E;
+    --blue: #1B69C9;
+    --purple: #7F3FD0;
+
+    --pos-qb: #D6336F;
+    --pos-rb: #0A8A81;
+    --pos-wr: #1B69C9;
+    --pos-te: #C2650A;
+
+    --young: #0B8FB0;
+    --peak: #14914E;
+    --aging: #A97C00;
+    --sell: #D62D50;
+
+    --header-bg: rgba(255,255,255,0.94);
+    --nav-bg: rgba(255,255,255,0.97);
+    --chip-bg: rgba(20,30,50,0.06);
+    --glow1: rgba(10,138,129,0.07);
+    --glow2: rgba(27,105,201,0.05);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
     background: var(--bg);
-    background-image: radial-gradient(ellipse 90% 50% at 15% 0%, #101130 0%, transparent 70%),
-                      radial-gradient(ellipse 60% 40% at 85% 100%, #061424 0%, transparent 60%);
+    background-image: radial-gradient(ellipse 90% 50% at 15% 0%, var(--glow1) 0%, transparent 70%),
+                      radial-gradient(ellipse 60% 40% at 85% 100%, var(--glow2) 0%, transparent 60%);
     color: var(--text);
     font-family: 'Barlow', sans-serif;
     min-height: 100vh;
@@ -59,7 +158,7 @@
 
   /* HEADER */
   .header {
-    background: rgba(5,8,15,0.95);
+    background: var(--header-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
@@ -85,7 +184,7 @@
   }
 
   .header-logo em {
-    color: var(--accent);
+    color: var(--brand);
     font-style: normal;
   }
 
@@ -96,10 +195,10 @@
   }
 
   .sync-btn {
-    background: var(--accent);
+    background: var(--brand);
     border: none;
     border-radius: 3px;
-    color: #000;
+    color: var(--on-brand);
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700;
     font-size: 13px;
@@ -111,6 +210,32 @@
     min-height: 36px;
   }
 
+  .stale-banner {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--yellow);
+    background: color-mix(in srgb, var(--yellow) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--yellow) 35%, transparent);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+
+  .theme-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .theme-btn:hover { border-color: var(--brand); }
+
   .sync-btn:hover { opacity: 0.85; }
   .sync-btn:active { transform: scale(0.96); }
   .sync-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -121,6 +246,18 @@
     color: var(--text-muted);
   }
 
+  /* Phones: keep the logo on one line; let the sync status shrink/clip instead of pushing it */
+  .header-logo { white-space: nowrap; }
+  .header-right { min-width: 0; }
+  @media (max-width: 600px) {
+    .header { padding: 0 10px; }
+    .header-logo { font-size: 18px; letter-spacing: 1px; }
+    .header-right { gap: 8px; }
+    .last-sync { min-width: 0; max-width: 38vw; font-size: 8px; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+    .theme-btn { width: 32px; height: 32px; font-size: 14px; flex: none; }
+    .sync-btn { padding: 7px 10px; flex: none; }
+  }
+
   /* BOTTOM NAV */
   .nav { display: none; } /* Hidden on mobile, replaced by bottom nav */
 
@@ -129,7 +266,7 @@
     display: none; /* shown via media query above */
     gap: 0;
     padding: 0 16px;
-    background: rgba(12,17,32,0.97);
+    background: var(--nav-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
@@ -163,7 +300,7 @@
   }
 
   .desktop-nav-tab:hover { color: var(--text); }
-  .desktop-nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .desktop-nav-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
 
   @media (min-width: 768px) {
     body { padding-top: 108px; } /* header(56) + desktop nav(~44) */
@@ -175,7 +312,7 @@
     left: 0;
     right: 0;
     height: 60px;
-    background: rgba(12,17,32,0.97);
+    background: var(--nav-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-top: 1px solid var(--border);
@@ -202,12 +339,12 @@
   }
 
   .bottom-nav-btn.active {
-    color: var(--accent);
-    border-top-color: var(--accent);
+    color: var(--brand);
+    border-top-color: var(--brand);
   }
 
   .bottom-nav-btn:active {
-    background: rgba(255,107,26,0.06);
+    background: color-mix(in srgb, var(--brand) 6%, transparent);
   }
 
   .bottom-nav-icon {
@@ -284,10 +421,10 @@
 
   .drawer-item:active, .drawer-item:hover {
     background: var(--surface3);
-    border-color: var(--accent);
+    border-color: var(--brand);
   }
 
-  .drawer-item.active { border-color: var(--accent); background: rgba(255,107,26,0.08); }
+  .drawer-item.active { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 8%, transparent); }
 
   .drawer-icon { font-size: 18px; }
 
@@ -322,7 +459,7 @@
   .loading-overlay {
     position: fixed;
     inset: 0;
-    background: #020407;
+    background: var(--bg);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -335,7 +472,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,107,26,0.013) 3px, rgba(255,107,26,0.013) 4px);
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, color-mix(in srgb, var(--brand) 1%, transparent) 3px, color-mix(in srgb, var(--brand) 1%, transparent) 4px);
     pointer-events: none;
   }
 
@@ -361,10 +498,10 @@
 
   .loading-bar {
     height: 100%;
-    background: var(--accent);
+    background: var(--brand);
     width: 0%;
     transition: width 0.3s ease;
-    box-shadow: 0 0 10px var(--accent);
+    box-shadow: 0 0 10px var(--brand);
   }
 
   .loading-status {
@@ -459,15 +596,15 @@
     user-select: none;
   }
 
-  .data-table th:hover { color: var(--accent); }
+  .data-table th:hover { color: var(--brand); }
 
   .data-table td {
     padding: 9px 10px;
-    border-bottom: 1px solid rgba(36,48,72,0.5);
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
     vertical-align: middle;
   }
 
-  .data-table tr:hover td { background: rgba(255,107,26,0.04); }
+  .data-table tr:hover td { background: color-mix(in srgb, var(--brand) 4%, transparent); }
   .data-table tr:last-child td { border-bottom: none; }
 
   /* ARCHETYPE BADGES */
@@ -502,10 +639,10 @@
     line-height: 20px;
   }
 
-  .pos-QB { background: rgba(255,107,53,0.2); color: var(--accent2); }
-  .pos-RB { background: rgba(76,255,145,0.2); color: var(--green); }
-  .pos-WR { background: rgba(76,169,255,0.2); color: var(--blue); }
-  .pos-TE { background: rgba(255,215,0,0.2); color: var(--gold); }
+  .pos-QB { background: color-mix(in srgb, var(--pos-qb) 20%, transparent); color: var(--pos-qb); }
+  .pos-RB { background: color-mix(in srgb, var(--pos-rb) 20%, transparent); color: var(--pos-rb); }
+  .pos-WR { background: color-mix(in srgb, var(--pos-wr) 20%, transparent); color: var(--pos-wr); }
+  .pos-TE { background: color-mix(in srgb, var(--pos-te) 20%, transparent); color: var(--pos-te); }
 
   /* POWER RANKINGS */
   .team-rank-card {
@@ -521,8 +658,8 @@
     cursor: pointer;
   }
 
-  .team-rank-card:hover { border-color: var(--accent); }
-  .team-rank-card.my-team { border-color: var(--accent); background: rgba(255,107,26,0.06); }
+  .team-rank-card:hover { border-color: var(--brand); }
+  .team-rank-card.my-team { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 6%, transparent); }
 
   .rank-num {
     font-family: 'Barlow Condensed', sans-serif;
@@ -585,7 +722,7 @@
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 900;
     font-size: 28px;
-    color: var(--accent);
+    color: var(--brand);
   }
 
   .trade-input-row {
@@ -608,7 +745,7 @@
     min-height: 42px;
   }
 
-  .trade-search:focus { border-color: var(--accent); }
+  .trade-search:focus { border-color: var(--brand); }
 
   .trade-search::placeholder { color: var(--text-muted); }
 
@@ -616,7 +753,7 @@
     background: var(--surface3);
     border: 1px solid var(--border);
     border-radius: 4px;
-    color: var(--accent);
+    color: var(--brand);
     cursor: pointer;
     font-size: 20px;
     width: 42px;
@@ -627,7 +764,7 @@
     transition: all 0.15s;
   }
 
-  .add-btn:hover { background: rgba(255,107,26,0.1); border-color: var(--accent); }
+  .add-btn:hover { background: color-mix(in srgb, var(--brand) 10%, transparent); border-color: var(--brand); }
 
   .autocomplete-list {
     position: absolute;
@@ -727,7 +864,7 @@
     right: 0;
     top: 0;
     height: 100%;
-    background: var(--accent);
+    background: var(--brand);
     border-radius: 0 4px 4px 0;
     transition: width 0.5s ease;
   }
@@ -747,7 +884,7 @@
     min-height: 42px;
   }
 
-  .pick-select:focus { border-color: var(--accent); }
+  .pick-select:focus { border-color: var(--brand); }
 
   /* DRAFT PICKS TABLE */
   .pick-year-section { margin-bottom: 24px; }
@@ -758,7 +895,7 @@
     font-size: 28px;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--brand);
     margin-bottom: 10px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border);
@@ -831,7 +968,7 @@
   }
 
   .filter-btn:hover { color: var(--text); border-color: var(--text-muted); }
-  .filter-btn.active { background: rgba(0,212,255,0.1); border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: color-mix(in srgb, var(--brand) 10%, transparent); border-color: var(--brand); color: var(--brand); }
 
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -951,6 +1088,7 @@
   <div class="header-logo">⚔ <em>WAR</em> ROOM</div>
   <div class="header-right">
     <div class="last-sync" id="lastSync">Never synced</div>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Switch light/dark theme" title="Switch light/dark theme"></button>
     <button class="sync-btn" id="syncBtn" onclick="syncAll()">⟳ Sync Data</button>
   </div>
 </div>
@@ -1012,6 +1150,8 @@
 
 <!-- MAIN CONTENT -->
 <div class="main">
+
+  <div id="staleBanner" class="stale-banner" style="display:none" role="status"></div>
 
   <!-- DASHBOARD TAB -->
   <div class="tab-content active" id="tab-dashboard">
@@ -1167,7 +1307,7 @@
       <details id="liveBlendDetails" ontoggle="renderLiveBlendPanel()">
         <summary class="card-title" style="cursor:pointer">🔬 Live Blend Check</summary>
         <div id="liveBlendStatus" style="font-size:10px;color:var(--text-dim);margin:6px 0 8px;line-height:1.45;font-family:'DM Mono',monospace"></div>
-        <input id="liveBlendSearch" type="search" placeholder="Search a player (blank = biggest movers)" oninput="renderLiveBlendPanel()" style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:8px;background:var(--bg-card,#161616);color:var(--text);border:1px solid var(--border,#333);border-radius:6px;font-size:13px">
+        <input id="liveBlendSearch" type="search" placeholder="Search a player (blank = biggest movers)" oninput="renderLiveBlendPanel()" style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:13px">
         <div style="overflow-x:auto">
           <table class="data-table">
             <thead><tr><th>Player</th><th class="text-right">GP</th><th class="text-right">Ciely</th><th class="text-right">Pace</th><th class="text-right">Wt</th><th class="text-right">Blend</th><th class="text-right">Rank</th></tr></thead>
@@ -3277,7 +3417,7 @@ function renderPowerRankings() {
             <div class="team-name">${isMe ? '⚔ ' : ''}${team.name}${isMe ? ' (You)' : ''} <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:4px">tap to expand</span></div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="team-archetype" style="color:${arch.color}">${arch.label}</div>
-              <span style="font-family:DM Mono,monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,0.3);border:1px solid ${window.color};color:${window.color}">🏆 ${window.label}</span>
+              <span style="font-family:DM Mono,monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--chip-bg);border:1px solid ${window.color};color:${window.color}">🏆 ${window.label}</span>
             </div>
             <div style="margin-top:4px">${qbAnchor}</div>
           </div>
@@ -5038,6 +5178,13 @@ async function syncAll() {
 
     var stamp = 'Synced ' + new Date().toLocaleTimeString();
     if (STATE.liveBlendInfo && STATE.liveBlendInfo.active) stamp += ' \u00b7 live blend thru wk ' + STATE.liveBlendInfo.throughWeek;
+    var banner = document.getElementById('staleBanner');
+    if (banner) {
+      if (STATE.sheetAgeDays != null && STATE.sheetAgeDays > CONFIG.STALE_SHEET_DAYS) {
+        banner.textContent = '\u26A0\uFE0F KTC values are ' + STATE.sheetAgeDays + ' days old \u2014 the source sheet\u2019s own stamp reads \u201C' + (STATE.sheetUpdated || 'unknown') + '\u201D. Player and pick values may lag the market.';
+        banner.style.display = 'block';
+      } else { banner.style.display = 'none'; }
+    }
     var staleNote = (STATE.sheetAgeDays != null && STATE.sheetAgeDays > CONFIG.STALE_SHEET_DAYS)
       ? ' <span style="color:var(--yellow)">\u00b7 KTC sheet ' + STATE.sheetAgeDays + 'd old</span>' : '';
     if (failed.length) {
@@ -5310,7 +5457,7 @@ function renderProspectScorer() {
   }
 
   function tierDivider(tier, color, count) {
-    return `<tr><td colspan="10" style="padding:4px 8px 2px;background:rgba(0,0,0,0.3);border-top:1px solid ${color}40;border-bottom:none">
+    return `<tr><td colspan="10" style="padding:4px 8px 2px;background:var(--chip-bg);border-top:1px solid ${color}40;border-bottom:none">
       <span style="font-family:DM Mono,monospace;font-size:9px;font-weight:700;color:${color};letter-spacing:2px">${tier}</span>
       <span style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-muted);margin-left:8px">${count} prospect${count!==1?'s':''}</span>
     </td></tr>`;
@@ -5630,7 +5777,7 @@ async function renderQBArbitrage() {
       + '<td class="text-right mono dim" style="font-size:11px">' + (r.passTD==null?'—':r.passTD.toFixed(1)) + '</td>'
       + '<td class="text-right mono" style="font-size:12px;color:' + eCol + '">' + (r.edge==null?'—':'+'+r.edge.toFixed(0)) + '</td>'
       + '<td class="text-right mono" style="font-size:12px;color:' + eCol + ';font-weight:600">' + (r.edgePct==null?'—':r.edgePct.toFixed(0)+'%') + '</td>'
-      + '<td>' + (sig ? '<span class="badge" style="background:rgba(0,0,0,0.25);border:1px solid ' + sig.color + ';color:' + sig.color + '">' + sig.label + '</span>' + qbArbAction(sig, r.isMine) : '—') + '</td>'
+      + '<td>' + (sig ? '<span class="badge" style="background:var(--chip-bg);border:1px solid ' + sig.color + ';color:' + sig.color + '">' + sig.label + '</span>' + qbArbAction(sig, r.isMine) : '—') + '</td>'
       + '</tr>';
   }).join('');
 }
@@ -5869,6 +6016,28 @@ function renderPickCheckPanel() {
   if (n) rows.push('<tr><td><b>Average difference</b></td><td></td><td></td><td class="text-right"><b>' + (sum / n > 0 ? '+' : '') + (sum / n).toFixed(1) + '%</b></td></tr>');
   body.innerHTML = rows.join('');
 }
+
+
+// ---- Theme: follows the device (light/dark) until the toggle overrides it for this session.
+// Deliberately NOT persisted (no localStorage) — reload returns to the device setting.
+function currentTheme() {
+  var t = document.documentElement.getAttribute('data-theme');
+  if (t) return t;
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+}
+function applyThemeChrome() {
+  var light = currentTheme() === 'light';
+  var btn = document.getElementById('themeBtn');
+  if (btn) { btn.textContent = light ? '\uD83C\uDF19' : '\u2600\uFE0F'; btn.title = light ? 'Switch to dark' : 'Switch to light'; }
+  var m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', light ? '#EEF1F6' : '#161C29');
+}
+function toggleTheme() {
+  document.documentElement.setAttribute('data-theme', currentTheme() === 'light' ? 'dark' : 'light');
+  applyThemeChrome();
+}
+applyThemeChrome();
+try { window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', applyThemeChrome); } catch (e) {}
 
 function projFor(name, pos) {
   if (!STATE.projMap) return null;
@@ -6930,7 +7099,7 @@ async function renderValueProd() {
       + '<td class="text-right mono dim" style="font-size:11px">' + (r.vorp == null ? '—' : r.vorp.toFixed(0)) + '</td>'
       + '<td class="text-right mono dim" style="font-size:11px">' + (r.prodPct == null ? '—' : r.prodPct) + '</td>'
       + '<td class="text-right mono" style="font-size:12px;color:' + divCol + ';font-weight:600">' + divTxt + '</td>'
-      + '<td>' + (sig ? '<span class="badge" style="background:rgba(0,0,0,0.25);border:1px solid ' + sig.color + ';color:' + sig.color + '">' + sig.label + '</span>' + (sig.note ? ' <span class="dim" style="font-size:9px">' + sig.note + '</span>' : '') : '—') + '</td>'
+      + '<td>' + (sig ? '<span class="badge" style="background:var(--chip-bg);border:1px solid ' + sig.color + ';color:' + sig.color + '">' + sig.label + '</span>' + (sig.note ? ' <span class="dim" style="font-size:9px">' + sig.note + '</span>' : '') : '—') + '</td>'
       + '</tr>';
   }).join('');
 }
