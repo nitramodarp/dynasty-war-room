@@ -1555,6 +1555,13 @@ const CONFIG = {
   // 6pt and hoards QBs hard. Calibrated to 1.6 from two clean non-QB Burrow comps
   // (Achane+Kraft ~1.55 TEP-adj, Burden+picks ~1.65). Tunable — QB only.
   QB_PASSTD_MULT: 1.6,
+  // Deliberate roster decisions the value/VORP/age logic can't know about. A name here
+  // overrides a CUT or SELL flag with a HOLD carrying the reason. Applies to YOUR roster
+  // only. Delete the entry when the plan changes.
+  MANUAL_HOLDS: {
+    'Justin Fields': 'Keeper: Chiefs QB2 with rushing upside (deliberate hold)',
+    'Joe Flacco': 'Keeper: 6pt format edge; holding until a QB-needy buyer appears'
+  },
   // Name corrections: Sleeper name -> KTC name (only where cleanName() can't resolve)
   NAME_CORRECTIONS: {
     'Marvin Harrison': 'Marvin Harrison Jr.',
@@ -1850,6 +1857,17 @@ function hasNoProjection(player) {
 
 function getRosterHealthFlag(player) {
   const h = getRosterHealthFlagRaw(player);
+
+  // Manual holds win over the automatic CUT/SELL ladder. The ladder judges assets by
+  // age/value/VORP; it can't know you are keeping someone on purpose. Every consumer
+  // (roster table, action items, trade checks) goes through this function, so one
+  // override here keeps them all consistent.
+  const mh = CONFIG.MANUAL_HOLDS && CONFIG.MANUAL_HOLDS[player.name];
+  if (mh && h && (h.flag === 'CUT' || h.flag === 'SELL') &&
+      (STATE.myRoster || []).some(p => p.name === player.name)) {
+    return { flag: 'HOLD', color: 'var(--blue)', icon: '📌', reason: mh };
+  }
+
   if (!h || h.flag !== 'CUT') return h;
 
   // A rookie sitting on TAXI in year one has had no chance to prove anything, costs no
@@ -2857,6 +2875,9 @@ function renderDashboard() {
     for (const p of STATE.myRoster) {
       if (p.pos !== 'QB') continue;
       if (isMyQBHandcuff(p)) continue;  // handcuffs never play → format edge is unrealizable, don't advertise it as a trade angle
+      // One verdict per player: if the resolved flag says SELL/CUT, don't also advertise a HOLD.
+      const rf = getRosterHealthFlag(p);
+      if (rf && (rf.flag === 'SELL' || rf.flag === 'CUT')) continue;
       const pr = projFor(p.name, 'QB'); if (!pr || !pr.passTD) continue;
       const edge = pr.passTD * 2, fps4 = pr.fps - edge, edgePct = fps4 > 0 ? edge / fps4 * 100 : 0;
       if (edgePct >= 18) actions.push({ tier: 2, _name: p.name, color: 'var(--green)',
