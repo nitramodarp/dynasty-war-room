@@ -3428,7 +3428,21 @@ function generateGMBrief() {
   var narrative, priority;
   if (rbVorp < -legacyToLive(2000)) {
     narrative = 'RB room is the roster fault line — VORP deficit of ' + fmt(Math.abs(rbVorp)) + ' demands attention before the window opens.';
-    priority = 'Target RB depth; convert WR surplus into backfield capital.';
+    // Build the plan from what is actually on the roster: the picks you hold, and WR depth only if
+    // you really have surplus there (this line used to be a fixed string that ignored both).
+    var fundSrc = [];
+    var topPicks = (STATE.myPicks || []).filter(function(p) { return p.value > 0; })
+      .sort(function(a, b) { return b.value - a.value; }).slice(0, 3);
+    if (topPicks.length) {
+      fundSrc.push('picks (' + topPicks.map(function(p) {
+        var l = String(p.label); return (l.indexOf(String(p.year)) === -1 ? p.year + ' ' : '') + l;
+      }).join(', ') + ')');
+    }
+    var needsNow = calcPositionalNeeds()[CONFIG.MY_TEAM_NAME];
+    if (needsNow && needsNow.WR && needsNow.WR.surplus > 0) fundSrc.push('WR surplus');
+    priority = fundSrc.length
+      ? 'Target RB depth; fund it with ' + fundSrc.join(' and ') + '.'
+      : 'Target RB depth; no surplus or pick capital to spend — look for it in a trade.';
   } else if (sellList.length >= 3) {
     var names = sellList.slice(0,2).map(function(p){return p.name;}).join(' and ');
     narrative = sellList.length + ' aging assets are burning value — the sell clock is running on ' + names + '.';
@@ -3440,14 +3454,14 @@ function generateGMBrief() {
     narrative = 'Pick capital of ' + fmtK(myPickVal) + ' is ahead of the roster — window is still ' + win.label.toLowerCase() + '. Hold and convert via the rookie draft rather than buying now.';
     priority = 'Stockpile through the 2027 rookie draft; shift to buying once the window hits PRIME.';
   } else if (teVorp < -legacyToLive(1500)) {
-    narrative = 'TE room is a liability in TEP format — Kittle recovery is the single biggest value unlock on the roster.';
-    priority = 'Hold Kittle through recovery; once healthy, sell to a proven-vet buyer (wazimo or NateDawg726) for future capital.';
+    narrative = 'TE room is a liability in TEP format — VORP deficit of ' + fmt(Math.abs(teVorp)) + ' across your tight ends.';
+    priority = 'Upgrade TE via trade; TEP scoring makes the position worth paying for.';
   } else if (myRank <= 3) {
     narrative = 'Ranked #' + myRank + ' with ' + win.label.toLowerCase() + ' — patience is the correct posture right now.';
     priority = 'Stay the course; avoid panic trades that dilute peak-window capital.';
   } else {
     narrative = 'Roster at ' + win.label.toLowerCase() + ' with balanced positional value — maintain asset quality into the draft.';
-    priority = 'Monitor 2026 rookie draft for RB value at pick 1.11.';
+    priority = 'Hold quality assets and watch the market for RB value.';
   }
   var html = '<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">'
     + '<div style="font-family:Barlow Condensed,sans-serif;font-size:22px;letter-spacing:2px;color:' + ac + ';line-height:1">' + stateLabel + '</div>'
