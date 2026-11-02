@@ -1,10 +1,296 @@
 {
-  "_comment": "Persistent narrative state for the dynasty newsletter. Written by the pipeline each week — Python owns the counters, the model only writes narrative fields. Starts empty.",
-  "last_week_updated": 0,
+  "_comment": "Persistent narrative state for the dynasty newsletter. Written by the pipeline each week \u2014 Python owns the counters, the model only writes narrative fields. Starts empty.",
+  "last_week_updated": 7,
   "running_jokes": [],
   "streaks": {},
   "notable_quotes": [],
-  "transaction_tracking": [],
-  "last_known_waiver_priority": {},
-  "bench_mistake_streaks": {}
+  "transaction_tracking": [
+    {
+      "week_added": 7,
+      "roster_id": 5,
+      "team_name": "Playing for 2027",
+      "player_added": "Treylon Burks",
+      "player_added_id": "8135",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 0.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    },
+    {
+      "week_added": 7,
+      "roster_id": 1,
+      "team_name": "Ja'Marr Ja'Merrier",
+      "player_added": "Roschon Johnson",
+      "player_added_id": "10235",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 1.3,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    },
+    {
+      "week_added": 7,
+      "roster_id": 3,
+      "team_name": "Theme From The Bottom",
+      "player_added": "Corey Kiner",
+      "player_added_id": "12491",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 1.3,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    },
+    {
+      "week_added": 7,
+      "roster_id": 11,
+      "team_name": "mikelanta",
+      "player_added": "Jordan Whittington",
+      "player_added_id": "11623",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 0.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    },
+    {
+      "week_added": 7,
+      "roster_id": 11,
+      "team_name": "mikelanta",
+      "player_added": "Tutu Atwell",
+      "player_added_id": "7562",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 0.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    },
+    {
+      "week_added": 7,
+      "roster_id": 5,
+      "team_name": "Playing for 2027",
+      "player_added": "Andrew Armstrong",
+      "player_added_id": "12863",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 0.8,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    },
+    {
+      "week_added": 7,
+      "roster_id": 11,
+      "team_name": "mikelanta",
+      "player_added": "Sean Tucker",
+      "player_added_id": "9506",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 11.2,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    },
+    {
+      "week_added": 7,
+      "roster_id": 3,
+      "team_name": "Theme From The Bottom",
+      "player_added": "John Metchie III",
+      "player_added_id": "8147",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 3.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    },
+    {
+      "week_added": 7,
+      "roster_id": 1,
+      "team_name": "Ja'Marr Ja'Merrier",
+      "player_added": "Tyler Huntley",
+      "player_added_id": "7083",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 18.12,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    },
+    {
+      "week_added": 7,
+      "roster_id": 9,
+      "team_name": "demon44",
+      "player_added": "Greg Dulcich",
+      "player_added_id": "8172",
+      "used_waiver_priority": true,
+      "waiver_priority_at_add": null,
+      "priority_cost_description": "used a waiver claim, but this team's priority position before the move isn't available",
+      "cumulative_points_since_add": 0.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        7
+      ]
+    }
+  ],
+  "last_known_waiver_priority": {
+    "1": 2,
+    "2": 8,
+    "3": 3,
+    "4": 5,
+    "5": 11,
+    "6": 1,
+    "7": 7,
+    "8": 9,
+    "9": 12,
+    "10": 4,
+    "11": 10,
+    "12": 6
+  },
+  "bench_mistake_streaks": {
+    "Brent Looking 4 His Keys": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Tre Tucker",
+        "benched_points": 18.8,
+        "started_instead": "Aaron Jones Sr.",
+        "started_points": 3.1,
+        "margin": 15.7
+      }
+    },
+    "Theme From The Bottom": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "John Metchie III",
+        "benched_points": 3.0,
+        "started_instead": "Kyle Williams",
+        "started_points": 0,
+        "margin": 3.0
+      }
+    },
+    "The Josh Allens \ud83d\udc10": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Omar Cooper Jr.",
+        "benched_points": 20.0,
+        "started_instead": "Nico Collins",
+        "started_points": 1.6,
+        "margin": 18.4
+      }
+    },
+    "Playing for 2027": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Colby Parkinson",
+        "benched_points": 9.8,
+        "started_instead": "Jalon Daniels",
+        "started_points": -0.3,
+        "margin": 10.1
+      }
+    },
+    "Kirkumcised Penix": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Devaughn Vele",
+        "benched_points": 13.9,
+        "started_instead": "Rashid Shaheed",
+        "started_points": 1.1,
+        "margin": 12.8
+      }
+    },
+    "Silverbacks (100 vs 1)": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Quinshon Judkins",
+        "benched_points": 22.9,
+        "started_instead": "J.K. Dobbins",
+        "started_points": 8.3,
+        "margin": 14.6
+      }
+    },
+    "NateDawg726": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Blake Corum",
+        "benched_points": 16.6,
+        "started_instead": "Pat Freiermuth",
+        "started_points": 4.0,
+        "margin": 12.6
+      }
+    },
+    "demon44": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Dylan Sampson",
+        "benched_points": 9.2,
+        "started_instead": "TreVeyon Henderson",
+        "started_points": 3.3,
+        "margin": 5.9
+      }
+    },
+    "LaHorrible": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Makai Lemon",
+        "benched_points": 16.2,
+        "started_instead": "Cam Ward",
+        "started_points": 6.74,
+        "margin": 9.46
+      }
+    },
+    "mikelanta": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Sean Tucker",
+        "benched_points": 11.2,
+        "started_instead": "Jalen Coker",
+        "started_points": 1.4,
+        "margin": 9.8
+      }
+    },
+    "Full Chuba": {
+      "consecutive_weeks": 1,
+      "last_week_counted": 7,
+      "last_mistake": {
+        "benched_player": "Mike Gesicki",
+        "benched_points": 7.6,
+        "started_instead": "Xavier Worthy",
+        "started_points": 2.6,
+        "margin": 5.0
+      }
+    }
+  }
 }
