@@ -18,6 +18,11 @@ from config import LEAGUE_ID, OWNER_MAP, PATHS, COMMISSIONER_OWNER_USERNAMES, OW
 BASE = "https://api.sleeper.app/v1"
 PLAYERS_CACHE_PATH = "newsletter/state/players_cache.json"
 PLAYERS_CACHE_MAX_AGE_DAYS = 7
+# A benched player only counts as a lineup mistake if he beat the starter he
+# could have replaced by at least this many points. With Superflex and
+# multiple flex slots, almost every team has some small swap available;
+# below this it's noise, not a story.
+BENCH_MISTAKE_MIN_MARGIN = 10.0
 TRANSACTION_TRACKING_WINDOW_WEEKS = 4  # how many weeks to keep tallying an add's output
 
 
@@ -234,7 +239,7 @@ def enrich_matchup_players(matchups, players_db, roster_positions, rosters_by_id
     points}, no names at all), then precompute the facts the newsletter
     needs names for: each roster's single top scorer, and the single
     biggest real lineup mistake (a bench player who outscored the starter
-    in a slot he was eligible for).
+    in a slot he was eligible for, by at least BENCH_MISTAKE_MIN_MARGIN points).
 
     The bench-mistake check is exact, not an approximation: Sleeper's
     `starters` array lines up one-to-one with the league's non-bench
@@ -277,7 +282,7 @@ def enrich_matchup_players(matchups, players_db, roster_positions, rosters_by_id
                 if not eligible or not starter:
                     continue  # unknown slot type or empty slot — make no claim
                 for b in bench_entries:
-                    if b["position"] in eligible and b["points"] > starter["points"]:
+                    if b["position"] in eligible and b["points"] - starter["points"] >= BENCH_MISTAKE_MIN_MARGIN:
                         gap = b["points"] - starter["points"]
                         if not bench_mistake or gap > bench_mistake["margin"]:
                             bench_mistake = {
