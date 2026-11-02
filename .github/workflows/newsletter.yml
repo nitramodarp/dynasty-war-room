@@ -1,0 +1,58 @@
+name: Dynasty Weekly Newsletter
+
+on:
+  schedule:
+    # 12:30 UTC Tuesday = 7:30am EST / 8:30am EDT. Cron is always UTC, so
+    # this drifts an hour across daylight saving; offset from the redraft
+    # newsletter's 12:00 run so the two never overlap.
+    - cron: '30 12 * * 2'
+  workflow_dispatch: {}  # run it manually from the Actions tab
+
+permissions:
+  contents: write  # commits the generated page + state back to the repo
+
+concurrency:
+  group: dynasty-newsletter
+  cancel-in-progress: false
+
+jobs:
+  build-newsletter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch Sleeper data
+        run: python newsletter/scripts/fetch_sleeper.py
+
+      - name: Generate newsletter content
+        run: python newsletter/scripts/generate_newsletter.py
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Generate meme
+        run: python newsletter/scripts/generate_meme.py
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          IMGFLIP_USERNAME: ${{ secrets.IMGFLIP_USERNAME }}
+          IMGFLIP_PASSWORD: ${{ secrets.IMGFLIP_PASSWORD }}
+
+      - name: Render final page
+        run: python newsletter/scripts/render.py
+
+      - name: Commit output + updated state
+        run: |
+          git config user.name "dynasty-newsletter-bot"
+          git config user.email "actions@github.com"
+          git add newsletter/output newsletter/state
+          git diff --staged --quiet && echo "No changes to commit" || git commit -m "Dynasty newsletter: $(date +'%Y-%m-%d')"
+          git pull --rebase origin main
+          git push

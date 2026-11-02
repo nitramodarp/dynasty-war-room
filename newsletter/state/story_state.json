@@ -1,0 +1,10 @@
+{
+  "_comment": "Persistent narrative state for the dynasty newsletter. Written by the pipeline each week — Python owns the counters, the model only writes narrative fields. Starts empty.",
+  "last_week_updated": 0,
+  "running_jokes": [],
+  "streaks": {},
+  "notable_quotes": [],
+  "transaction_tracking": [],
+  "last_known_waiver_priority": {},
+  "bench_mistake_streaks": {}
+}
