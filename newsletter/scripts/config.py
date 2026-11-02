@@ -27,10 +27,10 @@ OWNER_MAP = {
 
 MY_OWNER_ID = "634248191616888832"
 
-# Not confirmed for this league. Left unset on purpose so the newsletter
-# never labels anyone commissioner by guess; set to the commissioner's
-# username (a value from OWNER_MAP above) once known.
-COMMISSIONER_OWNER_USERNAME = None
+# Co-commissioners of this league (usernames from OWNER_MAP). Flagged into
+# the fetched data as is_commissioner: true rather than hardcoded into any
+# prompt text.
+COMMISSIONER_OWNER_USERNAMES = {"bnesmithhicks", "Saturn75"}
 
 # Confirmed owner-psychology notes to feed the newsletter's voice.
 # "homer_team" (optional) is an NFL team abbreviation — if set, any add or

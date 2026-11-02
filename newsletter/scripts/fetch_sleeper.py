@@ -13,7 +13,7 @@ import json
 import os
 import time
 import requests
-from config import LEAGUE_ID, OWNER_MAP, PATHS, COMMISSIONER_OWNER_USERNAME, OWNER_NOTES, resolve_player_name, NFL_TEAM_NAMES
+from config import LEAGUE_ID, OWNER_MAP, PATHS, COMMISSIONER_OWNER_USERNAMES, OWNER_NOTES, resolve_player_name, NFL_TEAM_NAMES
 
 BASE = "https://api.sleeper.app/v1"
 PLAYERS_CACHE_PATH = "newsletter/state/players_cache.json"
@@ -85,7 +85,7 @@ def roster_id_to_team_info(rosters, users):
             "owner_id": owner_id,
             "owner_username": owner_username,
             "team_name": team_name,
-            "is_commissioner": owner_username == COMMISSIONER_OWNER_USERNAME,
+            "is_commissioner": owner_username in COMMISSIONER_OWNER_USERNAMES,
         }
     return out
 
