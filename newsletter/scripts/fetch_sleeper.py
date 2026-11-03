@@ -233,6 +233,48 @@ def compute_matchup_results(matchups):
     return matchups
 
 
+CLOSE_GAME_MAX_MARGIN = 10.0  # a finish decided by this many points or fewer counts as "close"
+
+
+def compute_game_highlights(matchups):
+    """The week's closest game and biggest blowout, worked out here from the
+    already-computed results so the model never has to scan 12 entries and
+    compare margins itself. A close finish outranks a blowout as news, so
+    has_close_game tells the writer which one leads."""
+    games = {}
+    for m in matchups:
+        if m.get("result") is None or m.get("opponent_team_name") is None:
+            continue
+        key = frozenset([m["team_name"], m["opponent_team_name"]])
+        if key in games:
+            continue
+        win_entry = m if m["result"] in ("W", "T") else None
+        if m["result"] == "L":
+            # describe the game from the winner's side
+            win = next((x for x in matchups if x["team_name"] == m["opponent_team_name"]), None)
+            win_entry = win
+        if not win_entry:
+            continue
+        games[key] = {
+            "winner": win_entry["team_name"],
+            "loser": win_entry["opponent_team_name"],
+            "winner_points": win_entry["points"],
+            "loser_points": win_entry["opponent_points"],
+            "margin": abs(round(win_entry["margin"], 2)),
+            "is_tie": win_entry["result"] == "T",
+        }
+    if not games:
+        return {"closest_game": None, "biggest_blowout": None, "has_close_game": False,
+                "close_game_max_margin": CLOSE_GAME_MAX_MARGIN}
+    ordered = sorted(games.values(), key=lambda g: g["margin"])
+    return {
+        "closest_game": ordered[0],
+        "biggest_blowout": ordered[-1],
+        "has_close_game": ordered[0]["margin"] <= CLOSE_GAME_MAX_MARGIN,
+        "close_game_max_margin": CLOSE_GAME_MAX_MARGIN,
+    }
+
+
 def enrich_matchup_players(matchups, players_db, roster_positions, rosters_by_id):
     """Resolve raw player_id -> name/position for every rostered player in
     each matchup entry (Sleeper's players_points is only {player_id:
@@ -732,6 +774,7 @@ def main():
     enrich_matchup_players(matchups_recap, players_db, roster_positions, rosters_by_id)  # adds named players_resolved/top_scorer_on_roster/bench_mistake
     bench_mistake_streaks = update_bench_mistake_streaks(story_state, matchups_recap, week_to_recap)  # needs bench_mistake — must run AFTER enrich_matchup_players
     league_top_scorer = compute_league_top_scorer(matchups_recap)
+    game_highlights = compute_game_highlights(matchups_recap)
     strip_raw_ids(matchups_recap)  # drop id-only fields now that everything that reads them has run
     strip_raw_ids(matchups_preview)
     annotate(matchups_preview)  # preview has no scores yet — names not useful there, skip enrichment
@@ -754,6 +797,7 @@ def main():
         "matchups_recap": matchups_recap,
         "matchups_preview": matchups_preview,
         "league_top_scorer": league_top_scorer,
+        "game_highlights": game_highlights,
         "bench_mistake_streaks": bench_mistake_streaks,
         "transactions_this_week": enriched_tx,
         "trades_this_week": trades_this_week,

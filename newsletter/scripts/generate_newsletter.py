@@ -128,6 +128,18 @@ do not write something plausible-sounding. If you don't have an explicit
 signal backing a historical or season-wide claim, don't make the claim at
 all — describe only what THIS week's data actually shows.
 
+CRITICAL — NEWS PRIORITY: a close finish is bigger news than a blowout.
+The data has a precomputed "game_highlights" with the week's closest game
+and biggest blowout (winner, loser, both scores, exact margin) and a flag,
+"has_close_game", that is true only when the closest game was decided by
+10 points or fewer. When has_close_game is true: the HEADLINE is about that
+closest game (names, and the exact margin), the RECAP opens with it, and
+the meme_brief is built on it. The biggest blowout still gets covered, but
+after the close game. When has_close_game is false there was no close game
+this week — do not call any game close, tight, a nail-biter or a thriller —
+and lead with whatever the biggest story actually is. Never describe a
+game decided by more than 10 points as close.
+
 CRITICAL — NEXT WEEK'S MATCHUPS. Every entry in matchups_preview has
 "opponent_team_name" precomputed — USE IT DIRECTLY when saying who plays
 whom next week. Do not pair teams up yourself by scanning for matching
@@ -238,12 +250,14 @@ through, do it silently and output only the single final JSON object.
 Return ONLY valid JSON (no markdown fences, no preamble) matching this shape:
 {
   "headline": "one factual, newspaper-style headline — no clickbait, no
-    exclamation points, lead with the actual news",
+    exclamation points, lead with the actual news (a close finish outranks a
+    blowout — see NEWS PRIORITY)",
   "meme_brief": "1-2 sentence description of the week's single funniest/most
     dramatic storyline, written for someone picking a meme template — no
     fantasy jargon, just the human story",
-  "recap": "2-4 paragraphs covering scores, closest game, biggest blowout,
-    top scorer, worst bench decision",
+  "recap": "2-4 paragraphs. Open with the closest game when has_close_game
+    is true (see NEWS PRIORITY), then the biggest blowout, the other scores,
+    top scorer, and worst bench decision",
   "transaction_desk": "1-3 paragraphs grading the week's waiver and
     free-agent adds against real scoring logic, calling out good and bad
     process. Trades are NOT covered here — they get their own section.",

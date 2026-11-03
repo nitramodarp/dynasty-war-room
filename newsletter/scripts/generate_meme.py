@@ -25,34 +25,23 @@ IMGFLIP_PASSWORD = os.environ["IMGFLIP_PASSWORD"]
 # of drifting into templates that don't fit a recap. Extend this list freely;
 # names must match Imgflip's own template names exactly for the lookup below.
 CANDIDATE_TEMPLATES = [
-    "Drake Hotline Bling",
-    "Distracted Boyfriend",
-    "Two Buttons",
-    "Change My Mind",
+    # Only formats that work with ONE idea: a single-subject image, or a
+    # setup-then-punchline about the same event. Contrast formats (Drake,
+    # Evil Kermit, Tuxedo Winnie the Pooh, Futurama Fry, Batman Slapping
+    # Robin, Mocking Spongebob (it repeats its own caption), Two Buttons, Expanding Brain...) were removed on purpose: they
+    # need two DIFFERENT things to compare, and the model kept inventing a
+    # made-up second scenario to fill the second panel. Names confirmed
+    # available (<= 2 boxes) in real Imgflip runs.
     "This Is Fine",
-    "Expanding Brain",
-    "Woman Yelling at Cat",
-    "Surprised Pikachu",
     "Disaster Girl",
-    "Is This A Pigeon",
-    "Gru's Plan",
-    "Bernie I Am Once Again Asking For Your Support",
-    # Added for variety. Names that don't match Imgflip exactly are skipped
-    # by get_templates(), and anything with box_count > 2 is filtered out.
-    "Batman Slapping Robin",
-    "Mocking Spongebob",
-    "Evil Kermit",
-    "Tuxedo Winnie The Pooh",
-    "Roll Safe Think About It",
+    "Change My Mind",
     "One Does Not Simply",
-    "Futurama Fry",
+    "Roll Safe Think About It",
     "Waiting Skeleton",
     "Monkey Puppet",
-    "Unsettled Tom",
     "Hide the Pain Harold",
-    "Leonardo Dicaprio Cheers",
-    "Success Kid",
     "Third World Skeptical Kid",
+    "Bernie I Am Once Again Asking For Your Support",
 ]
 
 # Templates used in the last N newsletters are withheld from the model so
@@ -104,7 +93,10 @@ def get_templates():
     # exact count required. Determined from Imgflip's own live metadata,
     # not a hardcoded guess about which named templates have how many boxes.
     filtered = [t for t in candidates if t.get("box_count", 99) <= 2]
-    return filtered if filtered else candidates[:1]  # never return an empty list
+    pool = filtered if filtered else candidates[:1]
+    if not pool:
+        raise RuntimeError("None of CANDIDATE_TEMPLATES matched an Imgflip template name — check the names in generate_meme.py.")
+    return pool
 
 
 def parse_best_json(text, required_keys):
@@ -214,7 +206,12 @@ def pick_template_and_captions(meme_brief, templates):
                       "[\"...\", \"...\"]} where captions has EXACTLY box_count "
                       "entries for the template you chose. Keep captions short "
                       "and punchy — longtime friends who talk real trash, not "
-                      "corporate-safe humor. Choose the template whose format "
+                      "corporate-safe humor. Every template offered is either a "
+                      "single-subject image or a setup-then-punchline format: "
+                      "caption 1 states what happened in the story, and any "
+                      "later caption is the punchline about that SAME event. "
+                      "Never introduce a different scenario, analogy or "
+                      "invented situation, and never repeat a caption. Choose the template whose format "
                       "genuinely fits the joke; do not default to a generic "
                       "disaster or panic template unless the story really is one.")
     last_error = None
