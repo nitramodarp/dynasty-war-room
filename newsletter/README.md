@@ -1,6 +1,6 @@
 # Dynasty weekly newsletter ("Only Offensive Matters")
 
-Runs every Tuesday via GitHub Actions (`.github/workflows/newsletter.yml`), or on demand from the Actions tab (Run workflow).
+Run it by hand every Tuesday morning: Actions tab → "Dynasty Weekly Newsletter" → Run workflow (no schedule — GitHub delayed scheduled runs by hours).
 
 Pipeline: `fetch_sleeper.py` → `generate_newsletter.py` → `generate_meme.py` → `render.py`.
 

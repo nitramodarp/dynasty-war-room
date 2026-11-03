@@ -1,11 +1,8 @@
 name: Dynasty Weekly Newsletter
 
 on:
-  schedule:
-    # 12:30 UTC Tuesday = 7:30am EST / 8:30am EDT. Cron is always UTC, so
-    # this drifts an hour across daylight saving; offset from the redraft
-    # newsletter's 12:00 run so the two never overlap.
-    - cron: '30 12 * * 2'
+  # Manual only: run it from the Actions tab (Run workflow) on Tuesday mornings.
+  # The cron schedule was removed because GitHub delayed scheduled runs by hours.
   workflow_dispatch: {}  # run it manually from the Actions tab
 
 permissions:
