@@ -1,0 +1,36 @@
+name: Re-caption Meme
+
+on:
+  workflow_dispatch:
+    inputs:
+      captions:
+        description: 'JSON list of captions, e.g. ["top", "bottom"]'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  recaption:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Re-caption meme
+        run: python newsletter/scripts/recaption_meme.py
+        env:
+          MEME_CAPTIONS: ${{ github.event.inputs.captions }}
+          IMGFLIP_USERNAME: ${{ secrets.IMGFLIP_USERNAME }}
+          IMGFLIP_PASSWORD: ${{ secrets.IMGFLIP_PASSWORD }}
+      - name: Render final page
+        run: python newsletter/scripts/render.py
+      - name: Commit
+        run: |
+          git config user.name "ffl-newsletter-bot"
+          git config user.email "actions@github.com"
+          git add newsletter/output newsletter/state
+          git diff --staged --quiet && echo "No changes" || git commit -m "Re-caption meme"
+          git push
