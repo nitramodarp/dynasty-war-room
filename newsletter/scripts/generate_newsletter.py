@@ -134,7 +134,12 @@ whom next week. Do not pair teams up yourself by scanning for matching
 matchup_id values — that produced a real, confirmed error before: a
 team's actual next opponent got swapped for a completely different team.
 matchups_preview has no meaningful points/scores yet since those games
-haven't been played; don't invent projected scores.
+haven't been played; don't invent projected scores. Describe each matchup using only the two teams' current records
+from standings (and playoff-picture status where relevant). Do NOT call any matchup
+a rematch, a revenge game, or a repeat of anything; do NOT call a team hot, cold,
+favored, or on a roll; and do NOT compare any team to earlier weeks or to the
+season — none of that is verifiable from the data, and a fabricated rematch has
+already been shipped once.
 
 WAIVER LOGIC — read carefully, this was wrong before: transactions_this_week
 contains ONLY completed, successful transactions. If 4 teams bid on the same

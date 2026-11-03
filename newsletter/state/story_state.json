@@ -279,7 +279,7 @@
       }
     },
     "Theme From The Bottom": {
-      "consecutive_weeks": 2,
+      "consecutive_weeks": 1,
       "last_week_counted": 8,
       "last_mistake": {
         "benched_player": "Jaylen Waddle",
@@ -321,7 +321,7 @@
       }
     },
     "demon44": {
-      "consecutive_weeks": 2,
+      "consecutive_weeks": 1,
       "last_week_counted": 8,
       "last_mistake": {
         "benched_player": "Drake Maye",
@@ -337,7 +337,7 @@
       "last_mistake": null
     },
     "mikelanta": {
-      "consecutive_weeks": 2,
+      "consecutive_weeks": 1,
       "last_week_counted": 8,
       "last_mistake": {
         "benched_player": "Tyler Allgeier",
@@ -348,7 +348,7 @@
       }
     },
     "Full Chuba": {
-      "consecutive_weeks": 2,
+      "consecutive_weeks": 1,
       "last_week_counted": 8,
       "last_mistake": {
         "benched_player": "Bo Nix",
