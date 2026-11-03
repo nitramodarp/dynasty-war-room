@@ -342,6 +342,13 @@ def update_bench_mistake_streaks(story_state, matchups_recap, week):
         team = m.get("team_name")
         mistake = m.get("bench_mistake")
         existing = streaks.get(team)
+        if existing and existing.get("last_week_counted") == week:
+            # Re-run of a week already counted: never change the count, only
+            # refresh the mistake details (re-running a week must be harmless).
+            if mistake:
+                existing["last_mistake"] = mistake
+                existing["consecutive_weeks"] = max(existing.get("consecutive_weeks", 0), 1)
+            continue
         if mistake:
             if existing and existing.get("last_week_counted") == week - 1:
                 consecutive = existing["consecutive_weeks"] + 1
