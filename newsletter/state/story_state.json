@@ -343,15 +343,9 @@
       "last_mistake": null
     },
     "mikelanta": {
-      "consecutive_weeks": 1,
+      "consecutive_weeks": 0,
       "last_week_counted": 8,
-      "last_mistake": {
-        "benched_player": "Tyler Allgeier",
-        "benched_points": 33.6,
-        "started_instead": "Jeremiyah Love",
-        "started_points": 2.3,
-        "margin": 31.3
-      }
+      "last_mistake": null
     },
     "Full Chuba": {
       "consecutive_weeks": 1,
