@@ -12,6 +12,26 @@ import html as _html
 import re as _re
 
 
+PAPER_NAME = "The Offensive Record"
+PAPER_TAGLINE = "All the News That Isn't Defense"
+TRADE_DEADLINE_WEEK = 14  # trades are not allowed after this week
+
+
+def trade_deadline_notice(week_recapped):
+    """Deterministic (not model-written): countdown from the week number."""
+    next_week = week_recapped + 1
+    dl = TRADE_DEADLINE_WEEK
+    if next_week > dl:
+        return f'<div class="deadline"><b>The trade deadline has passed.</b> Trades were not allowed after Week {dl}.</div>'
+    base = f"<b>Trade Deadline: Week {dl}.</b> Trades are not allowed after Week {dl}."
+    if next_week == dl:
+        extra = " Next week is the last week to make a trade."
+    else:
+        n = dl - next_week
+        extra = f" {n} week{'s' if n != 1 else ''} left after Week {next_week}."
+    return f'<div class="deadline">{base}{extra}</div>'
+
+
 def to_paragraphs(text):
     """Turn model text into one <p> per paragraph. The model separates
     paragraphs with blank lines, which HTML collapses if the whole string
@@ -54,6 +74,9 @@ def main():
     trade_section = f"<h2>Trade Desk</h2>\n  {to_paragraphs(trade_text)}" if trade_text and raw.get("trades_this_week") else ""
 
     html = (template
+        .replace("{{PAPER_NAME}}", PAPER_NAME)
+        .replace("{{PAPER_TAGLINE}}", PAPER_TAGLINE)
+        .replace("{{TRADE_DEADLINE_NOTICE}}", trade_deadline_notice(int(raw["week_recapped"])))
         .replace("{{HEADLINE}}", draft["headline"])
         .replace("{{WEEK}}", str(raw["week_recapped"]))
         .replace("{{SEASON}}", str(raw["season"]))

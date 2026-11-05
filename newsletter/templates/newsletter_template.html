@@ -17,12 +17,20 @@
   .waiver-priority li { margin-bottom: 6px; break-inside: avoid; }
   footer { margin-top: 40px; font-size: 0.8em; color: #667; text-align: center; }
   p { margin: 0 0 1em; }
+  .masthead { text-align: center; border-top: 3px double #667; border-bottom: 3px double #667; padding: 10px 0 8px; margin-bottom: 18px; }
+  .masthead .paper { font-family: Georgia, 'Times New Roman', serif; font-size: 2.1em; font-weight: bold; letter-spacing: 1px; color: #f4a259; line-height: 1.15; }
+  .masthead .tagline { font-style: italic; color: #9aa; font-size: 0.9em; margin-top: 2px; }
+  .deadline { border-left: 4px solid #f4a259; background: #1a2133; padding: 10px 14px; margin: 0 0 20px; border-radius: 0 6px 6px 0; font-size: 0.95em; }
+  .deadline b { color: #f4a259; }
 </style>
 </head>
 <body>
+  <div class="masthead"><div class="paper">{{PAPER_NAME}}</div><div class="tagline">{{PAPER_TAGLINE}}</div></div>
   <img class="meme" src="{{MEME_URL}}" alt="Week {{WEEK}} meme">
   <h1>{{HEADLINE}}</h1>
   <div class="subhead">Only Offensive Matters — Week {{WEEK}} Recap</div>
+
+  {{TRADE_DEADLINE_NOTICE}}
 
   <h2>The Recap</h2>
   {{RECAP}}
