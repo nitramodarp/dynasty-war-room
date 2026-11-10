@@ -1,127 +1,127 @@
 {
   "season": "2026",
-  "week_recapped": 8,
-  "week_upcoming": 9,
+  "week_recapped": 9,
+  "week_upcoming": 10,
   "standings": [
     {
       "roster_id": 1,
       "team_name": "Ja'Marr Ja'Merrier",
       "is_commissioner": true,
       "wins": 7,
-      "losses": 1,
+      "losses": 2,
       "ties": 0,
-      "fpts": 1187.34,
-      "fpts_against": 829.72
+      "fpts": 1317.5,
+      "fpts_against": 963.14
     },
     {
       "roster_id": 7,
       "team_name": "Silverbacks (100 vs 1)",
       "is_commissioner": false,
       "wins": 6,
-      "losses": 2,
+      "losses": 3,
       "ties": 0,
-      "fpts": 1171.3,
-      "fpts_against": 928.04
+      "fpts": 1275.98,
+      "fpts_against": 1051.99
     },
     {
       "roster_id": 8,
       "team_name": "NateDawg726",
       "is_commissioner": false,
-      "wins": 5,
+      "wins": 6,
       "losses": 3,
       "ties": 0,
-      "fpts": 1036.86,
-      "fpts_against": 995.58
+      "fpts": 1148.2,
+      "fpts_against": 1042.48
     },
     {
       "roster_id": 10,
       "team_name": "LaHorrible",
       "is_commissioner": false,
-      "wins": 5,
+      "wins": 6,
       "losses": 3,
       "ties": 0,
-      "fpts": 990.2,
-      "fpts_against": 953.52
+      "fpts": 1114.16,
+      "fpts_against": 1058.2
+    },
+    {
+      "roster_id": 4,
+      "team_name": "The Josh Allens \ud83d\udc10",
+      "is_commissioner": false,
+      "wins": 5,
+      "losses": 4,
+      "ties": 0,
+      "fpts": 1110.22,
+      "fpts_against": 1085.64
     },
     {
       "roster_id": 12,
       "team_name": "Full Chuba",
       "is_commissioner": false,
       "wins": 4,
-      "losses": 4,
+      "losses": 5,
       "ties": 0,
-      "fpts": 1076.12,
-      "fpts_against": 1009.74
+      "fpts": 1175.48,
+      "fpts_against": 1146.28
     },
     {
-      "roster_id": 4,
-      "team_name": "The Josh Allens \ud83d\udc10",
+      "roster_id": 9,
+      "team_name": "demon44",
       "is_commissioner": false,
       "wins": 4,
-      "losses": 4,
+      "losses": 5,
       "ties": 0,
-      "fpts": 996.06,
-      "fpts_against": 992.42
+      "fpts": 1069.28,
+      "fpts_against": 1063.26
     },
     {
       "roster_id": 2,
       "team_name": "Brent Looking 4 His Keys",
       "is_commissioner": true,
       "wins": 4,
-      "losses": 4,
-      "ties": 0,
-      "fpts": 922.62,
-      "fpts_against": 1013.38
-    },
-    {
-      "roster_id": 9,
-      "team_name": "demon44",
-      "is_commissioner": false,
-      "wins": 3,
       "losses": 5,
       "ties": 0,
-      "fpts": 932.74,
-      "fpts_against": 963.9
+      "fpts": 1015.84,
+      "fpts_against": 1127.54
+    },
+    {
+      "roster_id": 6,
+      "team_name": "Kirkumcised Penix",
+      "is_commissioner": false,
+      "wins": 4,
+      "losses": 5,
+      "ties": 0,
+      "fpts": 983.54,
+      "fpts_against": 1194.26
+    },
+    {
+      "roster_id": 5,
+      "team_name": "Playing for 2027",
+      "is_commissioner": false,
+      "wins": 4,
+      "losses": 5,
+      "ties": 0,
+      "fpts": 952.72,
+      "fpts_against": 1060.14
     },
     {
       "roster_id": 11,
       "team_name": "mikelanta",
       "is_commissioner": false,
       "wins": 3,
-      "losses": 5,
+      "losses": 6,
       "ties": 0,
-      "fpts": 870.7,
-      "fpts_against": 992.02
-    },
-    {
-      "roster_id": 6,
-      "team_name": "Kirkumcised Penix",
-      "is_commissioner": false,
-      "wins": 3,
-      "losses": 5,
-      "ties": 0,
-      "fpts": 850.12,
-      "fpts_against": 1064.1
-    },
-    {
-      "roster_id": 5,
-      "team_name": "Playing for 2027",
-      "is_commissioner": false,
-      "wins": 3,
-      "losses": 5,
-      "ties": 0,
-      "fpts": 838.98,
-      "fpts_against": 949.64
+      "fpts": 981.2,
+      "fpts_against": 1105.76
     },
     {
       "roster_id": 3,
       "team_name": "Theme From The Bottom",
       "is_commissioner": false,
       "wins": 1,
-      "losses": 7,
+      "losses": 8,
       "ties": 0,
-      "fpts": 634.1,
-      "fpts_against": 815.08
+      "fpts": 681.0,
+      "fpts_against": 926.42
     }
   ],
   "playoff_picture": {
@@ -132,10 +132,10 @@
         "team_name": "Ja'Marr Ja'Merrier",
         "is_commissioner": true,
         "wins": 7,
-        "losses": 1,
+        "losses": 2,
         "ties": 0,
-        "fpts": 1187.34,
-        "fpts_against": 829.72,
+        "fpts": 1317.5,
+        "fpts_against": 963.14,
         "seed": 1
       },
       {
@@ -143,68 +143,68 @@
         "team_name": "Silverbacks (100 vs 1)",
         "is_commissioner": false,
         "wins": 6,
-        "losses": 2,
+        "losses": 3,
         "ties": 0,
-        "fpts": 1171.3,
-        "fpts_against": 928.04,
+        "fpts": 1275.98,
+        "fpts_against": 1051.99,
         "seed": 2
       },
       {
         "roster_id": 8,
         "team_name": "NateDawg726",
         "is_commissioner": false,
-        "wins": 5,
+        "wins": 6,
         "losses": 3,
         "ties": 0,
-        "fpts": 1036.86,
-        "fpts_against": 995.58,
+        "fpts": 1148.2,
+        "fpts_against": 1042.48,
         "seed": 3
       },
       {
         "roster_id": 10,
         "team_name": "LaHorrible",
         "is_commissioner": false,
-        "wins": 5,
+        "wins": 6,
         "losses": 3,
         "ties": 0,
-        "fpts": 990.2,
-        "fpts_against": 953.52,
+        "fpts": 1114.16,
+        "fpts_against": 1058.2,
         "seed": 4
       },
       {
-        "roster_id": 12,
-        "team_name": "Full Chuba",
+        "roster_id": 4,
+        "team_name": "The Josh Allens \ud83d\udc10",
         "is_commissioner": false,
-        "wins": 4,
+        "wins": 5,
         "losses": 4,
         "ties": 0,
-        "fpts": 1076.12,
-        "fpts_against": 1009.74,
+        "fpts": 1110.22,
+        "fpts_against": 1085.64,
         "seed": 5
       }
     ],
     "sixth_seed_by_points": {
-      "roster_id": 4,
-      "team_name": "The Josh Allens \ud83d\udc10",
+      "roster_id": 12,
+      "team_name": "Full Chuba",
       "is_commissioner": false,
       "wins": 4,
-      "losses": 4,
+      "losses": 5,
       "ties": 0,
-      "fpts": 996.06,
-      "fpts_against": 992.42,
-      "games_behind_fifth_seed": 0.0,
+      "fpts": 1175.48,
+      "fpts_against": 1146.28,
+      "games_behind_fifth_seed": 1.0,
       "seed": 6,
-      "points_lead_over_next_team_in_line": 63.32
+      "points_lead_over_next_team_in_line": 106.2
     },
     "on_the_bubble_by_points": {
       "roster_id": 9,
       "team_name": "demon44",
       "is_commissioner": false,
-      "wins": 3,
+      "wins": 4,
       "losses": 5,
       "ties": 0,
-      "fpts": 932.74,
-      "fpts_against": 963.9,
+      "fpts": 1069.28,
+      "fpts_against": 1063.26,
       "games_behind_fifth_seed": 1.0
     },
     "teams_outside_playoff_picture": [
@@ -213,43 +213,43 @@
         "team_name": "Brent Looking 4 His Keys",
         "is_commissioner": true,
         "wins": 4,
-        "losses": 4,
-        "ties": 0,
-        "fpts": 922.62,
-        "fpts_against": 1013.38,
-        "games_behind_fifth_seed": 0.0
-      },
-      {
-        "roster_id": 11,
-        "team_name": "mikelanta",
-        "is_commissioner": false,
-        "wins": 3,
         "losses": 5,
         "ties": 0,
-        "fpts": 870.7,
-        "fpts_against": 992.02,
+        "fpts": 1015.84,
+        "fpts_against": 1127.54,
         "games_behind_fifth_seed": 1.0
       },
       {
         "roster_id": 6,
         "team_name": "Kirkumcised Penix",
         "is_commissioner": false,
-        "wins": 3,
+        "wins": 4,
         "losses": 5,
         "ties": 0,
-        "fpts": 850.12,
-        "fpts_against": 1064.1,
+        "fpts": 983.54,
+        "fpts_against": 1194.26,
         "games_behind_fifth_seed": 1.0
+      },
+      {
+        "roster_id": 11,
+        "team_name": "mikelanta",
+        "is_commissioner": false,
+        "wins": 3,
+        "losses": 6,
+        "ties": 0,
+        "fpts": 981.2,
+        "fpts_against": 1105.76,
+        "games_behind_fifth_seed": 2.0
       },
       {
         "roster_id": 5,
         "team_name": "Playing for 2027",
         "is_commissioner": false,
-        "wins": 3,
+        "wins": 4,
         "losses": 5,
         "ties": 0,
-        "fpts": 838.98,
-        "fpts_against": 949.64,
+        "fpts": 952.72,
+        "fpts_against": 1060.14,
         "games_behind_fifth_seed": 1.0
       },
       {
@@ -257,11 +257,11 @@
         "team_name": "Theme From The Bottom",
         "is_commissioner": false,
         "wins": 1,
-        "losses": 7,
+        "losses": 8,
         "ties": 0,
-        "fpts": 634.1,
-        "fpts_against": 815.08,
-        "games_behind_fifth_seed": 3.0
+        "fpts": 681.0,
+        "fpts_against": 926.42,
+        "games_behind_fifth_seed": 4.0
       }
     ]
   },
@@ -292,268 +292,296 @@
     },
     {
       "priority": 7,
-      "team_name": "Silverbacks (100 vs 1)"
-    },
-    {
-      "priority": 8,
       "team_name": "Brent Looking 4 His Keys"
     },
     {
-      "priority": 9,
+      "priority": 8,
       "team_name": "NateDawg726"
     },
     {
-      "priority": 10,
-      "team_name": "mikelanta"
-    },
-    {
-      "priority": 11,
+      "priority": 9,
       "team_name": "Playing for 2027"
     },
     {
-      "priority": 12,
+      "priority": 10,
       "team_name": "demon44"
+    },
+    {
+      "priority": 11,
+      "team_name": "mikelanta"
+    },
+    {
+      "priority": 12,
+      "team_name": "Silverbacks (100 vs 1)"
     }
   ],
   "matchups_recap": [
     {
-      "points": 118.6,
+      "points": 130.16,
       "roster_id": 1,
-      "matchup_id": 4,
+      "matchup_id": 3,
       "team_name": "Ja'Marr Ja'Merrier",
-      "opponent_team_name": "mikelanta",
-      "opponent_points": 64.84,
-      "margin": 53.76,
-      "result": "W",
+      "opponent_team_name": "Kirkumcised Penix",
+      "opponent_points": 133.42,
+      "margin": -3.26,
+      "result": "L",
       "players_resolved": [
         {
           "player_id": "10219",
           "name": "Chris Rodriguez Jr.",
           "position": "RB",
-          "points": 12.3,
-          "started": false
-        },
-        {
-          "player_id": "10235",
-          "name": "Roschon Johnson",
-          "position": "RB",
-          "points": 3.3,
+          "points": 10.2,
           "started": false
         },
         {
           "player_id": "11559",
           "name": "Michael Penix Jr.",
           "position": "QB",
-          "points": 2.1,
-          "started": true
+          "points": 16.48,
+          "started": false
         },
         {
-          "player_id": "13311",
-          "name": "Chris Bell",
+          "player_id": "11579",
+          "name": "Audric Estime",
+          "position": "RB",
+          "points": 14.2,
+          "started": false
+        },
+        {
+          "player_id": "13297",
+          "name": "Reggie Virgil",
           "position": "WR",
-          "points": 4.9,
+          "points": 3.0,
+          "started": false
+        },
+        {
+          "player_id": "13324",
+          "name": "Matt Hibner",
+          "position": "TE",
+          "points": 1.5,
           "started": false
         },
         {
           "player_id": "13330",
           "name": "Kenyon Sadiq",
           "position": "TE",
-          "points": 3.2,
+          "points": 8.9,
           "started": false
         },
         {
           "player_id": "13346",
           "name": "Denzel Boston",
           "position": "WR",
-          "points": 6.7,
+          "points": 12.8,
           "started": false
         },
         {
           "player_id": "13411",
           "name": "Zavion Thomas",
           "position": "WR",
-          "points": 0.9,
+          "points": 1.8,
           "started": false
         },
         {
           "player_id": "2449",
           "name": "Stefon Diggs",
           "position": "WR",
-          "points": 11.3,
+          "points": 6.6,
           "started": true
         },
         {
           "player_id": "3163",
           "name": "Jared Goff",
           "position": "QB",
-          "points": 12.04,
-          "started": false
+          "points": 6.3,
+          "started": true
         },
         {
           "player_id": "3198",
           "name": "Derrick Henry",
           "position": "RB",
-          "points": 13.0,
+          "points": 5.58,
           "started": true
         },
         {
-          "player_id": "7083",
-          "name": "Tyler Huntley",
+          "player_id": "4217",
+          "name": "George Kittle",
+          "position": "TE",
+          "points": 9.8,
+          "started": true
+        },
+        {
+          "player_id": "5854",
+          "name": "Drew Lock",
           "position": "QB",
-          "points": -2.0,
+          "points": 14.6,
           "started": false
         },
         {
           "player_id": "7523",
           "name": "Trevor Lawrence",
           "position": "QB",
-          "points": 25.4,
+          "points": 15.58,
           "started": true
         },
         {
           "player_id": "7564",
           "name": "Ja'Marr Chase",
           "position": "WR",
-          "points": 25.6,
+          "points": 26.5,
           "started": true
         },
         {
           "player_id": "8130",
           "name": "Trey McBride",
           "position": "TE",
-          "points": 20.2,
+          "points": 12.4,
           "started": true
         },
         {
           "player_id": "8151",
           "name": "Kenneth Walker III",
           "position": "RB",
-          "points": 10.4,
+          "points": 34.3,
           "started": true
-        },
-        {
-          "player_id": "9229",
-          "name": "Anthony Richardson Sr.",
-          "position": "QB",
-          "points": 0.72,
-          "started": false
         },
         {
           "player_id": "9480",
           "name": "Brenton Strange",
           "position": "TE",
-          "points": 7.5,
-          "started": true
+          "points": 4.2,
+          "started": false
         },
         {
           "player_id": "9487",
           "name": "Parker Washington",
           "position": "WR",
-          "points": 3.1,
+          "points": 13.1,
           "started": true
         },
         {
           "player_id": "9511",
           "name": "Keaton Mitchell",
           "position": "RB",
-          "points": 3.8,
+          "points": 6.2,
           "started": false
         },
         {
           "player_id": "9754",
           "name": "Quentin Johnston",
           "position": "WR",
-          "points": 5.7,
+          "points": 12.8,
           "started": false
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "7564",
-        "name": "Ja'Marr Chase",
-        "position": "WR",
-        "points": 25.6,
+        "player_id": "8151",
+        "name": "Kenneth Walker III",
+        "position": "RB",
+        "points": 34.3,
         "started": true
       },
       "bench_mistake": {
-        "benched_player": "Chris Rodriguez Jr.",
-        "benched_points": 12.3,
-        "started_instead": "Michael Penix Jr.",
-        "started_points": 2.1,
-        "margin": 10.2
+        "benched_player": "Michael Penix Jr.",
+        "benched_points": 16.48,
+        "started_instead": "Jared Goff",
+        "started_points": 6.3,
+        "margin": 10.18
       }
     },
     {
-      "points": 109.46,
+      "points": 93.22,
       "roster_id": 2,
       "matchup_id": 1,
       "team_name": "Brent Looking 4 His Keys",
-      "opponent_team_name": "LaHorrible",
-      "opponent_points": 166.36,
-      "margin": -56.9,
+      "opponent_team_name": "The Josh Allens \ud83d\udc10",
+      "opponent_points": 114.16,
+      "margin": -20.94,
       "result": "L",
       "players_resolved": [
         {
           "player_id": "10213",
           "name": "Tre Tucker",
           "position": "WR",
-          "points": 0,
+          "points": 7.5,
           "started": true
         },
         {
           "player_id": "11584",
           "name": "Bucky Irving",
           "position": "RB",
-          "points": 21.0,
+          "points": 26.5,
           "started": true
         },
         {
-          "player_id": "12471",
-          "name": "DJ Giddens",
+          "player_id": "12474",
+          "name": "Woody Marks",
           "position": "RB",
-          "points": 4.3,
-          "started": false
+          "points": 7.9,
+          "started": true
         },
         {
           "player_id": "12482",
           "name": "Savion Williams",
           "position": "WR",
-          "points": 2.8,
+          "points": 11.3,
+          "started": false
+        },
+        {
+          "player_id": "12483",
+          "name": "Jack Bech",
+          "position": "WR",
+          "points": 1.4,
           "started": false
         },
         {
           "player_id": "12501",
           "name": "Matthew Golden",
           "position": "WR",
-          "points": 17.4,
+          "points": 27.4,
           "started": true
         },
         {
           "player_id": "12506",
           "name": "Harold Fannin Jr.",
           "position": "TE",
-          "points": 23.4,
+          "points": 12.2,
           "started": true
         },
         {
           "player_id": "12530",
           "name": "Travis Hunter",
           "position": "DB",
-          "points": 0.5,
+          "points": -1.6,
           "started": false
         },
         {
-          "player_id": "3257",
-          "name": "Jacoby Brissett",
+          "player_id": "13350",
+          "name": "Joe Fagnano",
           "position": "QB",
-          "points": 4.46,
+          "points": 1.7,
+          "started": false
+        },
+        {
+          "player_id": "13414",
+          "name": "Kaelon Black",
+          "position": "RB",
+          "points": 7.0,
+          "started": false
+        },
+        {
+          "player_id": "4037",
+          "name": "Chris Godwin Jr.",
+          "position": "WR",
+          "points": 3.8,
           "started": true
         },
         {
           "player_id": "4199",
           "name": "Aaron Jones Sr.",
           "position": "RB",
-          "points": 5.0,
-          "started": true
+          "points": 2.6,
+          "started": false
         },
         {
           "player_id": "4881",
@@ -566,594 +594,629 @@
           "player_id": "5012",
           "name": "Mark Andrews",
           "position": "TE",
-          "points": 4.4,
+          "points": 3.9,
           "started": false
         },
         {
           "player_id": "5947",
           "name": "Jakobi Meyers",
           "position": "WR",
-          "points": 3.4,
+          "points": 8.5,
           "started": false
         },
         {
           "player_id": "6790",
           "name": "D'Andre Swift",
           "position": "RB",
-          "points": 26.9,
+          "points": 3.1,
           "started": true
         },
         {
           "player_id": "6797",
           "name": "Justin Herbert",
           "position": "QB",
-          "points": 9.78,
+          "points": 13.42,
           "started": false
         },
         {
-          "player_id": "8146",
-          "name": "Garrett Wilson",
-          "position": "WR",
-          "points": 11.3,
-          "started": true
+          "player_id": "7527",
+          "name": "Mac Jones",
+          "position": "QB",
+          "points": -0.3,
+          "started": false
+        },
+        {
+          "player_id": "8110",
+          "name": "Jake Ferguson",
+          "position": "TE",
+          "points": 10.1,
+          "started": false
         },
         {
           "player_id": "8161",
           "name": "Malik Willis",
           "position": "QB",
-          "points": 19.64,
-          "started": false
+          "points": 4.82,
+          "started": true
         },
         {
           "player_id": "8210",
           "name": "Chig Okonkwo",
           "position": "TE",
-          "points": 3.2,
+          "points": 11.7,
           "started": false
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "6790",
-        "name": "D'Andre Swift",
-        "position": "RB",
-        "points": 26.9,
+        "player_id": "12501",
+        "name": "Matthew Golden",
+        "position": "WR",
+        "points": 27.4,
         "started": true
       },
       "bench_mistake": {
-        "benched_player": "Malik Willis",
-        "benched_points": 19.64,
+        "benched_player": "Justin Herbert",
+        "benched_points": 13.42,
         "started_instead": "Lamar Jackson",
         "started_points": 0,
-        "margin": 19.64
+        "margin": 13.42
       }
     },
     {
-      "points": 46.38,
+      "points": 46.9,
       "roster_id": 3,
-      "matchup_id": 6,
+      "matchup_id": 5,
       "team_name": "Theme From The Bottom",
-      "opponent_team_name": "demon44",
-      "opponent_points": 86.06,
-      "margin": -39.68,
+      "opponent_team_name": "NateDawg726",
+      "opponent_points": 111.34,
+      "margin": -64.44,
       "result": "L",
       "players_resolved": [
         {
           "player_id": "11603",
           "name": "AJ Barner",
           "position": "TE",
-          "points": 4.3,
-          "started": false
+          "points": 15.0,
+          "started": true
         },
         {
           "player_id": "12491",
           "name": "Corey Kiner",
           "position": "RB",
-          "points": 3.8,
-          "started": true
+          "points": 11.5,
+          "started": false
         },
         {
           "player_id": "12531",
           "name": "Trevor Etienne",
           "position": "RB",
-          "points": 0.1,
+          "points": 0.7,
           "started": false
-        },
-        {
-          "player_id": "12544",
-          "name": "LeQuint Allen Jr.",
-          "position": "RB",
-          "points": 0,
-          "started": true
         },
         {
           "player_id": "12547",
           "name": "Kyle Williams",
           "position": "WR",
-          "points": 10.8,
-          "started": false
+          "points": 0,
+          "started": true
         },
         {
-          "player_id": "13079",
-          "name": "Jahdae Walker",
-          "position": "WR",
+          "player_id": "13269",
+          "name": "Fernando Mendoza",
+          "position": "QB",
           "points": 0,
+          "started": true
+        },
+        {
+          "player_id": "13281",
+          "name": "Jordyn Tyson",
+          "position": "WR",
+          "points": 3.0,
           "started": true
         },
         {
           "player_id": "13338",
           "name": "Kevin Coleman Jr.",
           "position": "WR",
-          "points": 12.1,
-          "started": true
-        },
-        {
-          "player_id": "13349",
-          "name": "Eli Stowers",
-          "position": "TE",
-          "points": 8.3,
-          "started": true
+          "points": 1.6,
+          "started": false
         },
         {
           "player_id": "13424",
           "name": "Seth McGowan",
           "position": "RB",
-          "points": 2.9,
+          "points": 10.7,
+          "started": true
+        },
+        {
+          "player_id": "4035",
+          "name": "Alvin Kamara",
+          "position": "RB",
+          "points": 6.4,
           "started": true
         },
         {
           "player_id": "4039",
           "name": "Cooper Kupp",
           "position": "WR",
-          "points": 7.2,
-          "started": false
+          "points": 4.7,
+          "started": true
         },
         {
           "player_id": "4147",
           "name": "Samaje Perine",
           "position": "RB",
-          "points": 2.4,
+          "points": 4.3,
           "started": false
         },
         {
           "player_id": "4663",
           "name": "Austin Ekeler",
           "position": "RB",
-          "points": 5.6,
+          "points": 4.4,
           "started": true
-        },
-        {
-          "player_id": "5846",
-          "name": "DK Metcalf",
-          "position": "WR",
-          "points": 0.9,
-          "started": false
         },
         {
           "player_id": "7526",
           "name": "Jaylen Waddle",
           "position": "WR",
-          "points": 13.4,
-          "started": false
+          "points": 2.7,
+          "started": true
         },
         {
           "player_id": "7561",
           "name": "Elijah Mitchell",
           "position": "RB",
-          "points": 5.7,
-          "started": true
+          "points": 4.1,
+          "started": false
+        },
+        {
+          "player_id": "7591",
+          "name": "Justin Fields",
+          "position": "QB",
+          "points": -2.1,
+          "started": false
         },
         {
           "player_id": "8147",
           "name": "John Metchie III",
           "position": "WR",
-          "points": 2.9,
+          "points": 5.0,
           "started": false
         },
         {
           "player_id": "8207",
           "name": "Tyler Goodson",
           "position": "RB",
-          "points": 4.3,
+          "points": 7.7,
           "started": false
-        },
-        {
-          "player_id": "9230",
-          "name": "Tanner McKee",
-          "position": "QB",
-          "points": 7.98,
-          "started": true
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "7526",
-        "name": "Jaylen Waddle",
-        "position": "WR",
-        "points": 13.4,
-        "started": false
+        "player_id": "11603",
+        "name": "AJ Barner",
+        "position": "TE",
+        "points": 15.0,
+        "started": true
       },
       "bench_mistake": {
-        "benched_player": "Jaylen Waddle",
-        "benched_points": 13.4,
-        "started_instead": "Jahdae Walker",
+        "benched_player": "Corey Kiner",
+        "benched_points": 11.5,
+        "started_instead": "Kyle Williams",
         "started_points": 0,
-        "margin": 13.4
+        "margin": 11.5
       }
     },
     {
-      "points": 106.56,
+      "points": 114.16,
       "roster_id": 4,
-      "matchup_id": 2,
+      "matchup_id": 1,
       "team_name": "The Josh Allens \ud83d\udc10",
-      "opponent_team_name": "Silverbacks (100 vs 1)",
-      "opponent_points": 146.94,
-      "margin": -40.38,
-      "result": "L",
+      "opponent_team_name": "Brent Looking 4 His Keys",
+      "opponent_points": 93.22,
+      "margin": 20.94,
+      "result": "W",
       "players_resolved": [
+        {
+          "player_id": "11565",
+          "name": "J.J. McCarthy",
+          "position": "QB",
+          "points": 7.28,
+          "started": false
+        },
         {
           "player_id": "11575",
           "name": "Ray Davis",
           "position": "RB",
-          "points": 3.0,
+          "points": 0.2,
           "started": false
         },
         {
           "player_id": "11637",
           "name": "Keon Coleman",
           "position": "WR",
-          "points": 0.9,
-          "started": false
-        },
-        {
-          "player_id": "11643",
-          "name": "Jaylen Wright",
-          "position": "RB",
-          "points": 0.5,
+          "points": 3.2,
           "started": false
         },
         {
           "player_id": "11647",
           "name": "Kimani Vidal",
           "position": "RB",
-          "points": 4.0,
+          "points": 4.1,
           "started": false
         },
         {
-          "player_id": "12499",
-          "name": "Elic Ayomanor",
-          "position": "WR",
-          "points": 4.9,
-          "started": false
-        },
-        {
-          "player_id": "12500",
-          "name": "Quinn Ewers",
-          "position": "QB",
-          "points": 0.32,
+          "player_id": "12504",
+          "name": "Kaleb Johnson",
+          "position": "RB",
+          "points": 12.8,
           "started": false
         },
         {
           "player_id": "12518",
           "name": "Tyler Warren",
           "position": "TE",
-          "points": 5.8,
-          "started": true
-        },
-        {
-          "player_id": "12540",
-          "name": "Chimere Dike",
-          "position": "WR",
-          "points": 15.6,
-          "started": false
-        },
-        {
-          "player_id": "13274",
-          "name": "Germie Bernard",
-          "position": "WR",
-          "points": 5.5,
+          "points": 8.4,
           "started": true
         },
         {
           "player_id": "13276",
           "name": "Omar Cooper Jr.",
           "position": "WR",
-          "points": 0,
+          "points": 9.8,
           "started": true
         },
         {
           "player_id": "1373",
           "name": "Geno Smith",
           "position": "QB",
-          "points": 23.0,
+          "points": 7.4,
           "started": true
+        },
+        {
+          "player_id": "3161",
+          "name": "Carson Wentz",
+          "position": "QB",
+          "points": -0.76,
+          "started": false
         },
         {
           "player_id": "3271",
           "name": "Tyler Higbee",
           "position": "TE",
-          "points": 2.4,
+          "points": 2.3,
           "started": false
         },
         {
           "player_id": "4984",
           "name": "Josh Allen",
           "position": "QB",
-          "points": 31.56,
+          "points": 15.86,
           "started": true
         },
         {
           "player_id": "6813",
           "name": "Jonathan Taylor",
           "position": "RB",
-          "points": 4.7,
+          "points": 6.9,
           "started": true
         },
         {
           "player_id": "7567",
           "name": "Kenny Gainwell",
           "position": "RB",
-          "points": 14.0,
+          "points": 9.1,
           "started": false
+        },
+        {
+          "player_id": "7569",
+          "name": "Nico Collins",
+          "position": "WR",
+          "points": 13.5,
+          "started": true
         },
         {
           "player_id": "7588",
           "name": "Javonte Williams",
           "position": "RB",
-          "points": 6.2,
+          "points": 20.4,
           "started": true
+        },
+        {
+          "player_id": "8111",
+          "name": "Cade Otton",
+          "position": "TE",
+          "points": 6.5,
+          "started": false
         },
         {
           "player_id": "9493",
           "name": "Puka Nacua",
           "position": "WR",
-          "points": 19.5,
+          "points": 28.0,
           "started": true
         },
         {
           "player_id": "9500",
           "name": "Josh Downs",
           "position": "WR",
-          "points": 10.3,
+          "points": 3.9,
           "started": true
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "4984",
-        "name": "Josh Allen",
-        "position": "QB",
-        "points": 31.56,
+        "player_id": "9493",
+        "name": "Puka Nacua",
+        "position": "WR",
+        "points": 28.0,
         "started": true
       },
       "bench_mistake": null
     },
     {
-      "points": 173.12,
+      "points": 113.74,
       "roster_id": 5,
-      "matchup_id": 3,
+      "matchup_id": 4,
       "team_name": "Playing for 2027",
-      "opponent_team_name": "Kirkumcised Penix",
-      "opponent_points": 48.46,
-      "margin": 124.66,
+      "opponent_team_name": "mikelanta",
+      "opponent_points": 110.5,
+      "margin": 3.24,
       "result": "W",
       "players_resolved": [
         {
           "player_id": "10229",
           "name": "Rashee Rice",
           "position": "WR",
-          "points": 14.8,
+          "points": 7.4,
           "started": true
         },
         {
           "player_id": "11566",
           "name": "Jayden Daniels",
           "position": "QB",
-          "points": 16.98,
+          "points": 16.56,
           "started": true
         },
         {
           "player_id": "11576",
           "name": "Braelon Allen",
           "position": "RB",
-          "points": 22.3,
+          "points": 4.4,
           "started": true
+        },
+        {
+          "player_id": "11628",
+          "name": "Marvin Harrison Jr.",
+          "position": "WR",
+          "points": 3.0,
+          "started": false
         },
         {
           "player_id": "12497",
           "name": "Tory Horton",
           "position": "WR",
-          "points": 6.1,
+          "points": 3.2,
           "started": false
         },
         {
           "player_id": "12505",
           "name": "Jalen Royals",
           "position": "WR",
-          "points": 0.9,
+          "points": 2.8,
           "started": false
         },
         {
           "player_id": "12509",
           "name": "Tre' Harris",
           "position": "WR",
-          "points": 4.6,
+          "points": 2.1,
           "started": false
         },
         {
           "player_id": "12517",
           "name": "Colston Loveland",
           "position": "TE",
-          "points": 11.5,
+          "points": 9.4,
           "started": true
         },
         {
           "player_id": "12519",
           "name": "Luther Burden III",
           "position": "WR",
-          "points": 15.1,
+          "points": 17.2,
           "started": true
         },
         {
           "player_id": "12524",
           "name": "Shedeur Sanders",
           "position": "QB",
-          "points": 0.08,
+          "points": 26.68,
+          "started": false
+        },
+        {
+          "player_id": "12535",
+          "name": "Isaac TeSlaa",
+          "position": "WR",
+          "points": 1.4,
           "started": false
         },
         {
           "player_id": "13337",
           "name": "Emmett Johnson",
           "position": "RB",
-          "points": 22.8,
+          "points": 9.4,
           "started": false
         },
         {
           "player_id": "13345",
           "name": "Jonah Coleman",
           "position": "RB",
-          "points": 18.4,
+          "points": 16.8,
           "started": true
         },
         {
-          "player_id": "13413",
-          "name": "Cyrus Allen",
-          "position": "WR",
-          "points": 3.0,
+          "player_id": "13603",
+          "name": "Gregory Desrosiers",
+          "position": "RB",
+          "points": 2.0,
           "started": false
         },
         {
           "player_id": "4046",
           "name": "Patrick Mahomes",
           "position": "QB",
-          "points": 31.44,
+          "points": 20.48,
           "started": true
+        },
+        {
+          "player_id": "5857",
+          "name": "Noah Fant",
+          "position": "TE",
+          "points": 2.2,
+          "started": false
         },
         {
           "player_id": "6801",
           "name": "Tee Higgins",
           "position": "WR",
-          "points": 32.5,
+          "points": 17.7,
           "started": true
         },
         {
-          "player_id": "8122",
-          "name": "Zonovan Knight",
-          "position": "RB",
-          "points": 0.3,
+          "player_id": "6865",
+          "name": "Colby Parkinson",
+          "position": "TE",
+          "points": 5.3,
           "started": false
         },
         {
-          "player_id": "8135",
-          "name": "Treylon Burks",
-          "position": "WR",
-          "points": 9.6,
+          "player_id": "8155",
+          "name": "Breece Hall",
+          "position": "RB",
+          "points": 10.2,
           "started": false
         },
         {
           "player_id": "9482",
           "name": "Michael Mayer",
           "position": "TE",
-          "points": 10.3,
+          "points": 4.7,
           "started": false
         },
         {
           "player_id": "9756",
           "name": "Jordan Addison",
           "position": "WR",
-          "points": 10.1,
+          "points": 3.8,
           "started": true
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "6801",
-        "name": "Tee Higgins",
-        "position": "WR",
-        "points": 32.5,
-        "started": true
+        "player_id": "12524",
+        "name": "Shedeur Sanders",
+        "position": "QB",
+        "points": 26.68,
+        "started": false
       },
       "bench_mistake": null
     },
     {
-      "points": 48.46,
+      "points": 133.42,
       "roster_id": 6,
       "matchup_id": 3,
       "team_name": "Kirkumcised Penix",
-      "opponent_team_name": "Playing for 2027",
-      "opponent_points": 173.12,
-      "margin": -124.66,
-      "result": "L",
+      "opponent_team_name": "Ja'Marr Ja'Merrier",
+      "opponent_points": 130.16,
+      "margin": 3.26,
+      "result": "W",
       "players_resolved": [
+        {
+          "player_id": "11834",
+          "name": "Devaughn Vele",
+          "position": "WR",
+          "points": 2.7,
+          "started": true
+        },
         {
           "player_id": "12514",
           "name": "Emeka Egbuka",
           "position": "WR",
-          "points": 0,
+          "points": 5.4,
+          "started": true
+        },
+        {
+          "player_id": "12545",
+          "name": "Tyler Shough",
+          "position": "QB",
+          "points": 21.7,
           "started": true
         },
         {
           "player_id": "13282",
           "name": "Jack Endries",
           "position": "TE",
-          "points": 7.1,
+          "points": 1.4,
+          "started": false
+        },
+        {
+          "player_id": "13322",
+          "name": "Sam Roush",
+          "position": "TE",
+          "points": 4.3,
+          "started": false
+        },
+        {
+          "player_id": "13394",
+          "name": "Josh Cameron",
+          "position": "WR",
+          "points": 1.1,
           "started": false
         },
         {
           "player_id": "13408",
           "name": "Tanner Koziol",
           "position": "TE",
-          "points": 1.8,
+          "points": 3.5,
           "started": false
         },
         {
           "player_id": "1466",
           "name": "Travis Kelce",
           "position": "TE",
-          "points": 11.7,
+          "points": 17.3,
           "started": true
         },
         {
           "player_id": "2505",
           "name": "Darren Waller",
           "position": "TE",
-          "points": 2.1,
+          "points": 23.0,
           "started": true
         },
         {
-          "player_id": "4017",
-          "name": "Deshaun Watson",
-          "position": "QB",
-          "points": 11.16,
+          "player_id": "4034",
+          "name": "Christian McCaffrey",
+          "position": "RB",
+          "points": 21.7,
           "started": true
         },
         {
           "player_id": "4866",
           "name": "Saquon Barkley",
           "position": "RB",
-          "points": 11.9,
+          "points": 8.2,
           "started": true
         },
         {
           "player_id": "4892",
           "name": "Baker Mayfield",
           "position": "QB",
-          "points": 1.4,
+          "points": 9.72,
           "started": true
         },
         {
           "player_id": "5848",
           "name": "Marquise Brown",
-          "position": "WR",
-          "points": 2.7,
-          "started": false
-        },
-        {
-          "player_id": "5859",
-          "name": "A.J. Brown",
-          "position": "WR",
-          "points": 0,
-          "started": true
-        },
-        {
-          "player_id": "7049",
-          "name": "Jauan Jennings",
           "position": "WR",
           "points": 2.1,
           "started": false
@@ -1162,146 +1225,195 @@
           "player_id": "7553",
           "name": "Kyle Pitts Sr.",
           "position": "TE",
-          "points": 2.6,
-          "started": true
+          "points": 5.3,
+          "started": false
         },
         {
           "player_id": "9509",
           "name": "Bijan Robinson",
           "position": "RB",
-          "points": 7.6,
+          "points": 23.7,
           "started": true
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "4866",
-        "name": "Saquon Barkley",
+        "player_id": "9509",
+        "name": "Bijan Robinson",
         "position": "RB",
-        "points": 11.9,
+        "points": 23.7,
         "started": true
       },
       "bench_mistake": null
     },
     {
-      "points": 146.94,
+      "points": 104.68,
       "roster_id": 7,
       "matchup_id": 2,
       "team_name": "Silverbacks (100 vs 1)",
-      "opponent_team_name": "The Josh Allens \ud83d\udc10",
-      "opponent_points": 106.56,
-      "margin": 40.38,
-      "result": "W",
+      "opponent_team_name": "LaHorrible",
+      "opponent_points": 123.96,
+      "margin": -19.28,
+      "result": "L",
       "players_resolved": [
         {
           "player_id": "11729",
           "name": "Sione Vaki",
           "position": "RB",
-          "points": 7.5,
+          "points": 3.1,
+          "started": false
+        },
+        {
+          "player_id": "12485",
+          "name": "Tez Johnson",
+          "position": "WR",
+          "points": 8.6,
+          "started": false
+        },
+        {
+          "player_id": "12492",
+          "name": "Pat Bryant",
+          "position": "WR",
+          "points": 13.6,
           "started": false
         },
         {
           "player_id": "12512",
           "name": "Quinshon Judkins",
           "position": "RB",
-          "points": 5.9,
+          "points": 5.0,
           "started": true
         },
         {
           "player_id": "12527",
           "name": "Ashton Jeanty",
           "position": "RB",
-          "points": 8.8,
-          "started": true
+          "points": 4.5,
+          "started": false
         },
         {
           "player_id": "13264",
           "name": "Dohnte Meyers",
           "position": "WR",
-          "points": 4.9,
+          "points": 7.3,
+          "started": false
+        },
+        {
+          "player_id": "13285",
+          "name": "Malachi Fields",
+          "position": "WR",
+          "points": 5.5,
           "started": false
         },
         {
           "player_id": "13298",
           "name": "KC Concepcion Jr.",
           "position": "WR",
-          "points": 5.2,
-          "started": false
+          "points": 16.8,
+          "started": true
         },
         {
           "player_id": "13333",
           "name": "Deion Burks",
           "position": "WR",
-          "points": 0.7,
+          "points": 0.5,
           "started": false
         },
         {
-          "player_id": "4454",
-          "name": "Kendrick Bourne",
+          "player_id": "13405",
+          "name": "Kaytron Allen",
+          "position": "RB",
+          "points": 5.0,
+          "started": false
+        },
+        {
+          "player_id": "13434",
+          "name": "Will Kacmarek",
+          "position": "TE",
+          "points": 1.6,
+          "started": false
+        },
+        {
+          "player_id": "3286",
+          "name": "Demarcus Robinson",
           "position": "WR",
-          "points": 3.4,
+          "points": 3.7,
           "started": false
         },
         {
-          "player_id": "4943",
-          "name": "Sam Darnold",
-          "position": "QB",
-          "points": 22.52,
-          "started": true
+          "player_id": "4177",
+          "name": "Mack Hollins",
+          "position": "WR",
+          "points": 11.1,
+          "started": false
+        },
+        {
+          "player_id": "5001",
+          "name": "Dalton Schultz",
+          "position": "TE",
+          "points": 6.2,
+          "started": false
         },
         {
           "player_id": "5844",
           "name": "T.J. Hockenson",
           "position": "TE",
-          "points": 15.8,
+          "points": 7.3,
           "started": true
         },
         {
           "player_id": "5995",
           "name": "Justice Hill",
           "position": "RB",
-          "points": 5.5,
+          "points": 16.7,
           "started": false
+        },
+        {
+          "player_id": "6130",
+          "name": "Devin Singletary",
+          "position": "RB",
+          "points": 4.9,
+          "started": true
         },
         {
           "player_id": "6804",
           "name": "Jordan Love",
           "position": "QB",
-          "points": 28.52,
+          "points": 42.18,
           "started": true
         },
         {
           "player_id": "6806",
           "name": "J.K. Dobbins",
           "position": "RB",
-          "points": 1.3,
-          "started": false
+          "points": 2.7,
+          "started": true
         },
         {
-          "player_id": "8228",
-          "name": "Jaylen Warren",
-          "position": "RB",
-          "points": 20.8,
-          "started": true
+          "player_id": "7002",
+          "name": "Juwan Johnson",
+          "position": "TE",
+          "points": 11.4,
+          "started": false
         },
         {
           "player_id": "9221",
           "name": "Jahmyr Gibbs",
           "position": "RB",
-          "points": 23.8,
+          "points": 13.4,
           "started": true
         },
         {
           "player_id": "9488",
           "name": "Jaxon Smith-Njigba",
           "position": "WR",
-          "points": 20.8,
+          "points": 8.6,
           "started": true
         },
         {
           "player_id": "9997",
           "name": "Zay Flowers",
           "position": "WR",
-          "points": 0,
+          "points": 3.8,
           "started": true
         }
       ],
@@ -1309,68 +1421,67 @@
         "player_id": "6804",
         "name": "Jordan Love",
         "position": "QB",
-        "points": 28.52,
+        "points": 42.18,
         "started": true
       },
-      "bench_mistake": null
+      "bench_mistake": {
+        "benched_player": "Justice Hill",
+        "benched_points": 16.7,
+        "started_instead": "J.K. Dobbins",
+        "started_points": 2.7,
+        "margin": 14.0
+      }
     },
     {
-      "points": 145.2,
+      "points": 111.34,
       "roster_id": 8,
       "matchup_id": 5,
       "team_name": "NateDawg726",
-      "opponent_team_name": "Full Chuba",
-      "opponent_points": 166.66,
-      "margin": -21.46,
-      "result": "L",
+      "opponent_team_name": "Theme From The Bottom",
+      "opponent_points": 46.9,
+      "margin": 64.44,
+      "result": "W",
       "players_resolved": [
         {
-          "player_id": "11581",
-          "name": "MarShawn Lloyd",
-          "position": "RB",
-          "points": 2.1,
+          "player_id": "11557",
+          "name": "Joe Milton",
+          "position": "QB",
+          "points": 13.16,
           "started": false
         },
         {
           "player_id": "11586",
           "name": "Blake Corum",
           "position": "RB",
-          "points": 13.3,
+          "points": 11.8,
           "started": false
         },
         {
           "player_id": "11610",
           "name": "Malik Washington",
           "position": "WR",
-          "points": 12.5,
-          "started": false
-        },
-        {
-          "player_id": "11631",
-          "name": "Brian Thomas Jr.",
-          "position": "WR",
-          "points": 7.7,
+          "points": 3.1,
           "started": false
         },
         {
           "player_id": "11635",
           "name": "Ladd McConkey",
           "position": "WR",
-          "points": 10.6,
-          "started": false
+          "points": 0,
+          "started": true
         },
         {
           "player_id": "1166",
           "name": "Kirk Cousins",
           "position": "QB",
-          "points": 34.18,
-          "started": false
+          "points": 17.64,
+          "started": true
         },
         {
           "player_id": "12490",
           "name": "Bhayshul Tuten",
           "position": "RB",
-          "points": 28.9,
+          "points": 8.9,
           "started": true
         },
         {
@@ -1384,637 +1495,597 @@
           "player_id": "12498",
           "name": "Mason Taylor",
           "position": "TE",
-          "points": 4.9,
+          "points": 2.1,
+          "started": false
+        },
+        {
+          "player_id": "12718",
+          "name": "Konata Mumpfield",
+          "position": "WR",
+          "points": 3.0,
           "started": false
         },
         {
           "player_id": "13150",
           "name": "Darius Cooper",
           "position": "WR",
-          "points": 2.9,
-          "started": false
-        },
-        {
-          "player_id": "13293",
-          "name": "Ja'Kobi Lane",
-          "position": "WR",
-          "points": 1.8,
+          "points": 3.5,
           "started": false
         },
         {
           "player_id": "3294",
           "name": "Dak Prescott",
           "position": "QB",
-          "points": 21.8,
+          "points": 23.5,
           "started": true
         },
         {
           "player_id": "5022",
           "name": "Dallas Goedert",
           "position": "TE",
-          "points": 7.2,
-          "started": true
-        },
-        {
-          "player_id": "5849",
-          "name": "Kyler Murray",
-          "position": "QB",
-          "points": 24.9,
-          "started": true
+          "points": 10.0,
+          "started": false
         },
         {
           "player_id": "6786",
           "name": "CeeDee Lamb",
           "position": "WR",
-          "points": 9.3,
+          "points": 28.5,
           "started": true
         },
         {
           "player_id": "6794",
           "name": "Justin Jefferson",
           "position": "WR",
-          "points": 11.8,
+          "points": 7.3,
           "started": true
-        },
-        {
-          "player_id": "7021",
-          "name": "Rico Dowdle",
-          "position": "RB",
-          "points": 11.6,
-          "started": false
-        },
-        {
-          "player_id": "7600",
-          "name": "Pat Freiermuth",
-          "position": "TE",
-          "points": 11.6,
-          "started": false
-        },
-        {
-          "player_id": "8126",
-          "name": "Wan'Dale Robinson",
-          "position": "WR",
-          "points": 12.7,
-          "started": false
         },
         {
           "player_id": "8138",
           "name": "James Cook III",
           "position": "RB",
-          "points": 17.1,
+          "points": 16.7,
           "started": true
         },
         {
           "player_id": "8408",
           "name": "Jordan Mason",
           "position": "RB",
-          "points": 2.0,
+          "points": 5.2,
           "started": false
         },
         {
           "player_id": "9484",
           "name": "Tucker Kraft",
           "position": "TE",
-          "points": 17.3,
+          "points": 1.9,
           "started": true
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "1166",
-        "name": "Kirk Cousins",
-        "position": "QB",
-        "points": 34.18,
-        "started": false
+        "player_id": "6786",
+        "name": "CeeDee Lamb",
+        "position": "WR",
+        "points": 28.5,
+        "started": true
       },
       "bench_mistake": {
-        "benched_player": "Kirk Cousins",
-        "benched_points": 34.18,
-        "started_instead": "Dak Prescott",
-        "started_points": 21.8,
-        "margin": 12.38
+        "benched_player": "Blake Corum",
+        "benched_points": 11.8,
+        "started_instead": "Ladd McConkey",
+        "started_points": 0,
+        "margin": 11.8
       }
     },
     {
-      "points": 86.06,
+      "points": 136.54,
       "roster_id": 9,
       "matchup_id": 6,
       "team_name": "demon44",
-      "opponent_team_name": "Theme From The Bottom",
-      "opponent_points": 46.38,
-      "margin": 39.68,
+      "opponent_team_name": "Full Chuba",
+      "opponent_points": 99.36,
+      "margin": 37.18,
       "result": "W",
       "players_resolved": [
         {
           "player_id": "11564",
           "name": "Drake Maye",
           "position": "QB",
-          "points": 26.46,
-          "started": false
-        },
-        {
-          "player_id": "11625",
-          "name": "Adonai Mitchell",
-          "position": "WR",
-          "points": 23.7,
+          "points": 27.26,
           "started": true
         },
         {
           "player_id": "11783",
           "name": "Ryan Flournoy",
           "position": "WR",
-          "points": 11.6,
-          "started": true
+          "points": 6.3,
+          "started": false
         },
         {
           "player_id": "12469",
           "name": "Dylan Sampson",
           "position": "RB",
-          "points": 9.9,
+          "points": 6.3,
           "started": true
-        },
-        {
-          "player_id": "12489",
-          "name": "RJ Harvey",
-          "position": "RB",
-          "points": 0,
-          "started": true
-        },
-        {
-          "player_id": "12502",
-          "name": "Gunnar Helm",
-          "position": "TE",
-          "points": 14.6,
-          "started": false
         },
         {
           "player_id": "12526",
           "name": "Tetairoa McMillan",
           "position": "WR",
-          "points": 8.8,
-          "started": true
-        },
-        {
-          "player_id": "12529",
-          "name": "TreVeyon Henderson",
-          "position": "RB",
-          "points": 0,
+          "points": 13.6,
           "started": true
         },
         {
           "player_id": "13286",
           "name": "Jadarian Price",
           "position": "RB",
-          "points": 4.7,
-          "started": false
+          "points": 9.8,
+          "started": true
         },
         {
           "player_id": "13296",
           "name": "Caleb Douglas",
           "position": "WR",
-          "points": 6.3,
-          "started": false
+          "points": 10.0,
+          "started": true
         },
         {
           "player_id": "13301",
           "name": "Antonio Williams",
           "position": "WR",
-          "points": 7.9,
+          "points": 4.0,
           "started": false
         },
         {
           "player_id": "13421",
           "name": "Eli Raridon",
           "position": "TE",
-          "points": 1.5,
+          "points": 8.2,
           "started": false
         },
         {
           "player_id": "1479",
           "name": "Keenan Allen",
           "position": "WR",
-          "points": 10.2,
+          "points": 4.6,
           "started": false
         },
         {
           "player_id": "3214",
           "name": "Hunter Henry",
           "position": "TE",
-          "points": 6.0,
+          "points": 6.5,
           "started": false
         },
         {
           "player_id": "5870",
           "name": "Daniel Jones",
           "position": "QB",
-          "points": 10.46,
-          "started": true
+          "points": 13.3,
+          "started": false
         },
         {
           "player_id": "8112",
           "name": "Drake London",
           "position": "WR",
-          "points": 1.3,
-          "started": false
+          "points": 9.3,
+          "started": true
         },
         {
           "player_id": "8167",
           "name": "Christian Watson",
           "position": "WR",
-          "points": 13.3,
+          "points": 26.6,
           "started": true
         },
         {
           "player_id": "8172",
           "name": "Greg Dulcich",
           "position": "TE",
-          "points": 8.3,
+          "points": 3.4,
+          "started": true
+        },
+        {
+          "player_id": "8183",
+          "name": "Brock Purdy",
+          "position": "QB",
+          "points": 30.28,
           "started": true
         },
         {
           "player_id": "9501",
           "name": "DeMario Douglas",
           "position": "WR",
-          "points": 15.1,
-          "started": false
-        },
-        {
-          "player_id": "96",
-          "name": "Aaron Rodgers",
-          "position": "QB",
-          "points": 5.88,
+          "points": 12.7,
           "started": false
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "11564",
-        "name": "Drake Maye",
+        "player_id": "8183",
+        "name": "Brock Purdy",
         "position": "QB",
-        "points": 26.46,
-        "started": false
+        "points": 30.28,
+        "started": true
       },
-      "bench_mistake": {
-        "benched_player": "Drake Maye",
-        "benched_points": 26.46,
-        "started_instead": "Dylan Sampson",
-        "started_points": 9.9,
-        "margin": 16.56
-      }
+      "bench_mistake": null
     },
     {
-      "points": 166.36,
+      "points": 123.96,
       "roster_id": 10,
-      "matchup_id": 1,
+      "matchup_id": 2,
       "team_name": "LaHorrible",
-      "opponent_team_name": "Brent Looking 4 His Keys",
-      "opponent_points": 109.46,
-      "margin": 56.9,
+      "opponent_team_name": "Silverbacks (100 vs 1)",
+      "opponent_points": 104.68,
+      "margin": 19.28,
       "result": "W",
       "players_resolved": [
         {
           "player_id": "10232",
           "name": "Michael Wilson",
           "position": "WR",
-          "points": 22.8,
+          "points": 9.0,
           "started": true
         },
         {
           "player_id": "10236",
           "name": "Dalton Kincaid",
           "position": "TE",
-          "points": 18.6,
+          "points": 5.8,
           "started": true
         },
         {
           "player_id": "11604",
           "name": "Brock Bowers",
           "position": "TE",
-          "points": 28.2,
+          "points": 22.3,
           "started": true
-        },
-        {
-          "player_id": "12457",
-          "name": "Jaydon Blue",
-          "position": "RB",
-          "points": 1.4,
-          "started": false
         },
         {
           "player_id": "12473",
           "name": "Mitchell Evans",
           "position": "TE",
-          "points": 4.2,
+          "points": 4.0,
           "started": false
         },
         {
-          "player_id": "12522",
-          "name": "Cam Ward",
-          "position": "QB",
-          "points": 30.26,
-          "started": true
+          "player_id": "12634",
+          "name": "Jordan Watkins",
+          "position": "WR",
+          "points": 16.6,
+          "started": false
         },
         {
           "player_id": "13294",
           "name": "Makai Lemon",
           "position": "WR",
-          "points": 8.7,
+          "points": 9.1,
           "started": false
         },
         {
           "player_id": "13305",
           "name": "Mike Washington Jr.",
           "position": "RB",
-          "points": 8.3,
+          "points": -0.3,
           "started": false
         },
         {
           "player_id": "4983",
           "name": "DJ Moore",
           "position": "WR",
-          "points": 14.6,
+          "points": 5.1,
           "started": true
         },
         {
           "player_id": "5850",
           "name": "Josh Jacobs",
           "position": "RB",
-          "points": 20.2,
+          "points": 0.5,
           "started": true
         },
         {
           "player_id": "5906",
           "name": "Dawson Knox",
           "position": "TE",
-          "points": 1.6,
+          "points": 7.7,
+          "started": false
+        },
+        {
+          "player_id": "6783",
+          "name": "Jerry Jeudy",
+          "position": "WR",
+          "points": 4.7,
+          "started": false
+        },
+        {
+          "player_id": "7090",
+          "name": "Darnell Mooney",
+          "position": "WR",
+          "points": 6.5,
           "started": false
         },
         {
           "player_id": "7547",
           "name": "Amon-Ra St. Brown",
           "position": "WR",
-          "points": 9.1,
+          "points": 12.6,
           "started": true
         },
         {
           "player_id": "7611",
           "name": "Rhamondre Stevenson",
           "position": "RB",
-          "points": 10.5,
+          "points": 13.3,
           "started": true
         },
         {
           "player_id": "8136",
           "name": "Rachaad White",
           "position": "RB",
-          "points": 13.0,
+          "points": 5.9,
+          "started": false
+        },
+        {
+          "player_id": "8144",
+          "name": "Chris Olave",
+          "position": "WR",
+          "points": 13.3,
           "started": false
         },
         {
           "player_id": "9224",
           "name": "Chase Brown",
           "position": "RB",
-          "points": 12.1,
+          "points": 9.0,
+          "started": true
+        },
+        {
+          "player_id": "9758",
+          "name": "C.J. Stroud",
+          "position": "QB",
+          "points": 46.36,
           "started": true
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "12522",
-        "name": "Cam Ward",
+        "player_id": "9758",
+        "name": "C.J. Stroud",
         "position": "QB",
-        "points": 30.26,
+        "points": 46.36,
         "started": true
       },
       "bench_mistake": null
     },
     {
-      "points": 64.84,
+      "points": 110.5,
       "roster_id": 11,
       "matchup_id": 4,
       "team_name": "mikelanta",
-      "opponent_team_name": "Ja'Marr Ja'Merrier",
-      "opponent_points": 118.6,
-      "margin": -53.76,
+      "opponent_team_name": "Playing for 2027",
+      "opponent_points": 113.74,
+      "margin": -3.24,
       "result": "L",
       "players_resolved": [
         {
           "player_id": "11560",
           "name": "Caleb Williams",
           "position": "QB",
-          "points": 15.98,
+          "points": 20.76,
           "started": true
         },
         {
           "player_id": "11620",
           "name": "Rome Odunze",
           "position": "WR",
-          "points": 10.7,
+          "points": 14.0,
+          "started": true
+        },
+        {
+          "player_id": "11632",
+          "name": "Malik Nabers",
+          "position": "WR",
+          "points": 6.8,
           "started": true
         },
         {
           "player_id": "11646",
           "name": "Jalen Coker",
           "position": "WR",
-          "points": 8.6,
+          "points": 4.6,
           "started": true
         },
         {
           "player_id": "12493",
           "name": "Oronde Gadsden",
           "position": "TE",
-          "points": 10.2,
+          "points": 3.7,
           "started": false
         },
         {
           "player_id": "12507",
           "name": "Omarion Hampton",
           "position": "RB",
-          "points": 3.7,
+          "points": 6.0,
           "started": true
         },
         {
           "player_id": "12542",
           "name": "Efton Chism III",
           "position": "WR",
-          "points": 4.2,
+          "points": 13.4,
           "started": false
         },
         {
-          "player_id": "13287",
-          "name": "Jeremiyah Love",
-          "position": "RB",
-          "points": 2.3,
-          "started": true
+          "player_id": "2306",
+          "name": "Jameis Winston",
+          "position": "QB",
+          "points": 9.94,
+          "started": false
         },
         {
-          "player_id": "4066",
-          "name": "Evan Engram",
-          "position": "TE",
-          "points": 0,
-          "started": true
+          "player_id": "6011",
+          "name": "Gardner Minshew II",
+          "position": "QB",
+          "points": 7.04,
+          "started": false
         },
         {
           "player_id": "7562",
           "name": "Tutu Atwell",
           "position": "WR",
-          "points": 6.2,
+          "points": 2.6,
           "started": false
         },
         {
           "player_id": "8119",
           "name": "Jahan Dotson",
           "position": "WR",
-          "points": 10.5,
+          "points": 2.6,
           "started": false
+        },
+        {
+          "player_id": "8131",
+          "name": "Isaiah Likely",
+          "position": "TE",
+          "points": 16.3,
+          "started": true
         },
         {
           "player_id": "8132",
           "name": "Tyler Allgeier",
           "position": "RB",
-          "points": 33.6,
-          "started": false
-        },
-        {
-          "player_id": "8137",
-          "name": "George Pickens",
-          "position": "WR",
-          "points": 5.8,
+          "points": 5.6,
           "started": true
         },
         {
           "player_id": "9228",
           "name": "Bryce Young",
           "position": "QB",
-          "points": 13.36,
+          "points": 27.34,
           "started": true
         },
         {
           "player_id": "9753",
           "name": "Zach Charbonnet",
           "position": "RB",
-          "points": 4.4,
+          "points": 9.1,
           "started": true
         }
       ],
       "top_scorer_on_roster": {
-        "player_id": "8132",
-        "name": "Tyler Allgeier",
-        "position": "RB",
-        "points": 33.6,
-        "started": false
+        "player_id": "9228",
+        "name": "Bryce Young",
+        "position": "QB",
+        "points": 27.34,
+        "started": true
       },
-      "bench_mistake": {
-        "benched_player": "Tyler Allgeier",
-        "benched_points": 33.6,
-        "started_instead": "Jeremiyah Love",
-        "started_points": 2.3,
-        "margin": 31.3
-      }
+      "bench_mistake": null
     },
     {
-      "points": 166.66,
+      "points": 99.36,
       "roster_id": 12,
-      "matchup_id": 5,
+      "matchup_id": 6,
       "team_name": "Full Chuba",
-      "opponent_team_name": "NateDawg726",
-      "opponent_points": 145.2,
-      "margin": 21.46,
-      "result": "W",
+      "opponent_team_name": "demon44",
+      "opponent_points": 136.54,
+      "margin": -37.18,
+      "result": "L",
       "players_resolved": [
         {
           "player_id": "10859",
           "name": "Sam LaPorta",
           "position": "TE",
-          "points": 6.5,
+          "points": 7.2,
           "started": true
         },
         {
           "player_id": "11563",
           "name": "Bo Nix",
           "position": "QB",
-          "points": 23.28,
+          "points": 20.68,
           "started": false
         },
         {
           "player_id": "11624",
           "name": "Xavier Worthy",
           "position": "WR",
-          "points": 2.8,
+          "points": 7.8,
           "started": true
+        },
+        {
+          "player_id": "13533",
+          "name": "Barion Brown",
+          "position": "WR",
+          "points": 3.7,
+          "started": false
         },
         {
           "player_id": "421",
           "name": "Matthew Stafford",
           "position": "QB",
-          "points": 11.28,
+          "points": 14.22,
           "started": true
         },
         {
           "player_id": "4993",
           "name": "Mike Gesicki",
           "position": "TE",
-          "points": 17.6,
+          "points": 3.1,
           "started": true
         },
         {
           "player_id": "5045",
           "name": "Courtland Sutton",
           "position": "WR",
-          "points": 7.3,
+          "points": 13.0,
           "started": false
-        },
-        {
-          "player_id": "5967",
-          "name": "Tony Pollard",
-          "position": "RB",
-          "points": 27.2,
-          "started": true
         },
         {
           "player_id": "6770",
           "name": "Joe Burrow",
           "position": "QB",
-          "points": 52.48,
+          "points": 35.54,
           "started": true
         },
         {
           "player_id": "7571",
           "name": "Rashod Bateman",
           "position": "WR",
-          "points": 2.7,
+          "points": 1.1,
           "started": false
         },
         {
           "player_id": "7594",
           "name": "Chuba Hubbard",
           "position": "RB",
-          "points": 21.4,
+          "points": 11.6,
           "started": true
         },
         {
           "player_id": "8134",
           "name": "Khalil Shakir",
           "position": "WR",
-          "points": 8.9,
-          "started": false
+          "points": 7.8,
+          "started": true
         },
         {
           "player_id": "8148",
           "name": "Jameson Williams",
           "position": "WR",
-          "points": 15.0,
+          "points": 4.5,
           "started": true
         },
         {
           "player_id": "8150",
           "name": "Kyren Williams",
           "position": "RB",
-          "points": 12.4,
+          "points": 7.6,
           "started": true
         },
         {
-          "player_id": "9479",
-          "name": "Darnell Washington",
-          "position": "TE",
-          "points": 12.4,
+          "player_id": "9502",
+          "name": "Tank Dell",
+          "position": "WR",
+          "points": 18.5,
           "started": false
         }
       ],
@@ -2022,15 +2093,15 @@
         "player_id": "6770",
         "name": "Joe Burrow",
         "position": "QB",
-        "points": 52.48,
+        "points": 35.54,
         "started": true
       },
       "bench_mistake": {
-        "benched_player": "Bo Nix",
-        "benched_points": 23.28,
-        "started_instead": "Matthew Stafford",
-        "started_points": 11.28,
-        "margin": 12.0
+        "benched_player": "Tank Dell",
+        "benched_points": 18.5,
+        "started_instead": "Mike Gesicki",
+        "started_points": 3.1,
+        "margin": 15.4
       }
     }
   ],
@@ -2038,309 +2109,339 @@
     {
       "points": 0.0,
       "roster_id": 1,
-      "matchup_id": 3,
+      "matchup_id": 6,
       "team_name": "Ja'Marr Ja'Merrier",
-      "opponent_team_name": "Kirkumcised Penix"
+      "opponent_team_name": "The Josh Allens \ud83d\udc10"
     },
     {
       "points": 0.0,
       "roster_id": 2,
       "matchup_id": 1,
       "team_name": "Brent Looking 4 His Keys",
-      "opponent_team_name": "The Josh Allens \ud83d\udc10"
+      "opponent_team_name": "Full Chuba"
     },
     {
       "points": 0.0,
       "roster_id": 3,
-      "matchup_id": 5,
+      "matchup_id": 2,
       "team_name": "Theme From The Bottom",
-      "opponent_team_name": "NateDawg726"
+      "opponent_team_name": "Silverbacks (100 vs 1)"
     },
     {
       "points": 0.0,
       "roster_id": 4,
-      "matchup_id": 1,
+      "matchup_id": 6,
       "team_name": "The Josh Allens \ud83d\udc10",
-      "opponent_team_name": "Brent Looking 4 His Keys"
+      "opponent_team_name": "Ja'Marr Ja'Merrier"
     },
     {
       "points": 0.0,
       "roster_id": 5,
-      "matchup_id": 4,
+      "matchup_id": 5,
       "team_name": "Playing for 2027",
-      "opponent_team_name": "mikelanta"
+      "opponent_team_name": "LaHorrible"
     },
     {
       "points": 0.0,
       "roster_id": 6,
       "matchup_id": 3,
       "team_name": "Kirkumcised Penix",
-      "opponent_team_name": "Ja'Marr Ja'Merrier"
+      "opponent_team_name": "NateDawg726"
     },
     {
       "points": 0.0,
       "roster_id": 7,
       "matchup_id": 2,
       "team_name": "Silverbacks (100 vs 1)",
-      "opponent_team_name": "LaHorrible"
-    },
-    {
-      "points": 0.0,
-      "roster_id": 8,
-      "matchup_id": 5,
-      "team_name": "NateDawg726",
       "opponent_team_name": "Theme From The Bottom"
     },
     {
       "points": 0.0,
+      "roster_id": 8,
+      "matchup_id": 3,
+      "team_name": "NateDawg726",
+      "opponent_team_name": "Kirkumcised Penix"
+    },
+    {
+      "points": 0.0,
       "roster_id": 9,
-      "matchup_id": 6,
+      "matchup_id": 4,
       "team_name": "demon44",
-      "opponent_team_name": "Full Chuba"
+      "opponent_team_name": "mikelanta"
     },
     {
       "points": 0.0,
       "roster_id": 10,
-      "matchup_id": 2,
+      "matchup_id": 5,
       "team_name": "LaHorrible",
-      "opponent_team_name": "Silverbacks (100 vs 1)"
+      "opponent_team_name": "Playing for 2027"
     },
     {
       "points": 0.0,
       "roster_id": 11,
       "matchup_id": 4,
       "team_name": "mikelanta",
-      "opponent_team_name": "Playing for 2027"
+      "opponent_team_name": "demon44"
     },
     {
       "points": 0.0,
       "roster_id": 12,
-      "matchup_id": 6,
+      "matchup_id": 1,
       "team_name": "Full Chuba",
-      "opponent_team_name": "demon44"
+      "opponent_team_name": "Brent Looking 4 His Keys"
     }
   ],
   "league_top_scorer": {
-    "player_id": "6770",
-    "name": "Joe Burrow",
+    "player_id": "9758",
+    "name": "C.J. Stroud",
     "position": "QB",
-    "points": 52.48,
+    "points": 46.36,
     "started": true,
-    "team_name": "Full Chuba"
+    "team_name": "LaHorrible"
   },
   "game_highlights": {
     "closest_game": {
-      "winner": "Full Chuba",
-      "loser": "NateDawg726",
-      "winner_points": 166.66,
-      "loser_points": 145.2,
-      "margin": 21.46,
+      "winner": "Playing for 2027",
+      "loser": "mikelanta",
+      "winner_points": 113.74,
+      "loser_points": 110.5,
+      "margin": 3.24,
       "is_tie": false
     },
     "biggest_blowout": {
-      "winner": "Playing for 2027",
-      "loser": "Kirkumcised Penix",
-      "winner_points": 173.12,
-      "loser_points": 48.46,
-      "margin": 124.66,
+      "winner": "NateDawg726",
+      "loser": "Theme From The Bottom",
+      "winner_points": 111.34,
+      "loser_points": 46.9,
+      "margin": 64.44,
       "is_tie": false
     },
-    "has_close_game": false,
+    "has_close_game": true,
     "close_game_max_margin": 10.0
   },
   "bench_mistake_streaks": {
     "Brent Looking 4 His Keys": {
-      "consecutive_weeks": 2,
-      "last_week_counted": 8,
+      "consecutive_weeks": 3,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Malik Willis",
-        "benched_points": 19.64,
+        "benched_player": "Justin Herbert",
+        "benched_points": 13.42,
         "started_instead": "Lamar Jackson",
         "started_points": 0,
-        "margin": 19.64
+        "margin": 13.42
       }
     },
     "Theme From The Bottom": {
-      "consecutive_weeks": 1,
-      "last_week_counted": 8,
+      "consecutive_weeks": 2,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Jaylen Waddle",
-        "benched_points": 13.4,
-        "started_instead": "Jahdae Walker",
+        "benched_player": "Corey Kiner",
+        "benched_points": 11.5,
+        "started_instead": "Kyle Williams",
         "started_points": 0,
-        "margin": 13.4
+        "margin": 11.5
       }
     },
     "The Josh Allens \ud83d\udc10": {
       "consecutive_weeks": 0,
-      "last_week_counted": 8,
+      "last_week_counted": 9,
       "last_mistake": null
     },
     "Playing for 2027": {
       "consecutive_weeks": 0,
-      "last_week_counted": 8,
+      "last_week_counted": 9,
       "last_mistake": null
     },
     "Kirkumcised Penix": {
       "consecutive_weeks": 0,
-      "last_week_counted": 8,
+      "last_week_counted": 9,
       "last_mistake": null
     },
     "Silverbacks (100 vs 1)": {
-      "consecutive_weeks": 0,
-      "last_week_counted": 8,
-      "last_mistake": null
+      "consecutive_weeks": 1,
+      "last_week_counted": 9,
+      "last_mistake": {
+        "benched_player": "Justice Hill",
+        "benched_points": 16.7,
+        "started_instead": "J.K. Dobbins",
+        "started_points": 2.7,
+        "margin": 14.0
+      }
     },
     "NateDawg726": {
-      "consecutive_weeks": 2,
-      "last_week_counted": 8,
+      "consecutive_weeks": 3,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Kirk Cousins",
-        "benched_points": 34.18,
-        "started_instead": "Dak Prescott",
-        "started_points": 21.8,
-        "margin": 12.38
+        "benched_player": "Blake Corum",
+        "benched_points": 11.8,
+        "started_instead": "Ladd McConkey",
+        "started_points": 0,
+        "margin": 11.8
       }
     },
     "demon44": {
-      "consecutive_weeks": 1,
-      "last_week_counted": 8,
-      "last_mistake": {
-        "benched_player": "Drake Maye",
-        "benched_points": 26.46,
-        "started_instead": "Dylan Sampson",
-        "started_points": 9.9,
-        "margin": 16.56
-      }
+      "consecutive_weeks": 0,
+      "last_week_counted": 9,
+      "last_mistake": null
     },
     "LaHorrible": {
       "consecutive_weeks": 0,
-      "last_week_counted": 8,
+      "last_week_counted": 9,
       "last_mistake": null
     },
     "mikelanta": {
-      "consecutive_weeks": 1,
-      "last_week_counted": 8,
-      "last_mistake": {
-        "benched_player": "Tyler Allgeier",
-        "benched_points": 33.6,
-        "started_instead": "Jeremiyah Love",
-        "started_points": 2.3,
-        "margin": 31.3
-      }
+      "consecutive_weeks": 0,
+      "last_week_counted": 9,
+      "last_mistake": null
     },
     "Full Chuba": {
-      "consecutive_weeks": 1,
-      "last_week_counted": 8,
+      "consecutive_weeks": 2,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Bo Nix",
-        "benched_points": 23.28,
-        "started_instead": "Matthew Stafford",
-        "started_points": 11.28,
-        "margin": 12.0
+        "benched_player": "Tank Dell",
+        "benched_points": 18.5,
+        "started_instead": "Mike Gesicki",
+        "started_points": 3.1,
+        "margin": 15.4
       }
     },
     "Ja'Marr Ja'Merrier": {
-      "consecutive_weeks": 1,
-      "last_week_counted": 8,
+      "consecutive_weeks": 2,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Chris Rodriguez Jr.",
-        "benched_points": 12.3,
-        "started_instead": "Michael Penix Jr.",
-        "started_points": 2.1,
-        "margin": 10.2
+        "benched_player": "Michael Penix Jr.",
+        "benched_points": 16.48,
+        "started_instead": "Jared Goff",
+        "started_points": 6.3,
+        "margin": 10.18
       }
     }
   },
   "transactions_this_week": [
     {
       "type": "free_agent",
-      "team_name": "Theme From The Bottom",
-      "roster_id": 3,
-      "player_added": "Elijah Mitchell",
-      "player_added_id": "7561",
-      "position": "RB",
+      "team_name": "Brent Looking 4 His Keys",
+      "roster_id": 2,
+      "player_added": "Joe Fagnano",
+      "player_added_id": "13350",
+      "position": "QB",
       "player_dropped": null,
       "used_waiver_priority": false,
-      "waiver_priority_before_move": 3,
+      "waiver_priority_before_move": 8,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "possible_handcuff_of": "Jacoby Brissett",
+      "confirmed_homer_transaction": false,
+      "move_number_for_team": 1,
+      "team_total_moves": 1,
+      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Joe Fagnano (QB).",
+      "dropped_player_was_added_earlier_this_week": false
+    },
+    {
+      "type": "free_agent",
+      "team_name": "Ja'Marr Ja'Merrier",
+      "roster_id": 1,
+      "player_added": "Drew Lock",
+      "player_added_id": "5854",
+      "position": "QB",
+      "player_dropped": "Tyler Huntley",
+      "used_waiver_priority": false,
+      "waiver_priority_before_move": 2,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "possible_handcuff_of": null,
       "confirmed_homer_transaction": false,
       "move_number_for_team": 1,
-      "team_total_moves": 4,
-      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Elijah Mitchell (RB); 2) added Austin Ekeler (RB); 3) added Tyler Goodson (RB); 4) added Cooper Kupp (WR).",
+      "team_total_moves": 3,
+      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Drew Lock (QB), dropped Tyler Huntley; 2) added Reggie Virgil (WR), dropped Roschon Johnson; 3) added Audric Estime (RB).",
+      "dropped_player_was_added_earlier_this_week": false
+    },
+    {
+      "type": "waiver",
+      "team_name": "Silverbacks (100 vs 1)",
+      "roster_id": 7,
+      "player_added": "Devin Singletary",
+      "player_added_id": "6130",
+      "position": "RB",
+      "player_dropped": null,
+      "used_waiver_priority": true,
+      "waiver_priority_before_move": 7,
+      "priority_cost_description": "spent a mid-tier priority slot (#7 of 12)",
+      "possible_handcuff_of": null,
+      "confirmed_homer_transaction": false,
+      "move_number_for_team": 1,
+      "team_total_moves": 1,
+      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Devin Singletary (RB).",
       "dropped_player_was_added_earlier_this_week": false
     },
     {
       "type": "free_agent",
       "team_name": "Theme From The Bottom",
       "roster_id": 3,
-      "player_added": "Austin Ekeler",
-      "player_added_id": "4663",
-      "position": "RB",
+      "player_added": "Stetson Bennett IV",
+      "player_added_id": "10857",
+      "position": "QB",
       "player_dropped": null,
       "used_waiver_priority": false,
       "waiver_priority_before_move": 3,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "possible_handcuff_of": null,
-      "confirmed_homer_transaction": false,
-      "move_number_for_team": 2,
-      "team_total_moves": 4,
-      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Elijah Mitchell (RB); 2) added Austin Ekeler (RB); 3) added Tyler Goodson (RB); 4) added Cooper Kupp (WR).",
-      "dropped_player_was_added_earlier_this_week": false
-    },
-    {
-      "type": "free_agent",
-      "team_name": "Theme From The Bottom",
-      "roster_id": 3,
-      "player_added": "Tyler Goodson",
-      "player_added_id": "8207",
-      "position": "RB",
-      "player_dropped": null,
-      "used_waiver_priority": false,
-      "waiver_priority_before_move": 3,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "possible_handcuff_of": null,
-      "confirmed_homer_transaction": false,
-      "move_number_for_team": 3,
-      "team_total_moves": 4,
-      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Elijah Mitchell (RB); 2) added Austin Ekeler (RB); 3) added Tyler Goodson (RB); 4) added Cooper Kupp (WR).",
-      "dropped_player_was_added_earlier_this_week": false
-    },
-    {
-      "type": "free_agent",
-      "team_name": "Theme From The Bottom",
-      "roster_id": 3,
-      "player_added": "Cooper Kupp",
-      "player_added_id": "4039",
-      "position": "WR",
-      "player_dropped": null,
-      "used_waiver_priority": false,
-      "waiver_priority_before_move": 3,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "possible_handcuff_of": null,
-      "confirmed_homer_transaction": false,
-      "move_number_for_team": 4,
-      "team_total_moves": 4,
-      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Elijah Mitchell (RB); 2) added Austin Ekeler (RB); 3) added Tyler Goodson (RB); 4) added Cooper Kupp (WR).",
-      "dropped_player_was_added_earlier_this_week": false
-    },
-    {
-      "type": "free_agent",
-      "team_name": "NateDawg726",
-      "roster_id": 8,
-      "player_added": "MarShawn Lloyd",
-      "player_added_id": "11581",
-      "position": "RB",
-      "player_dropped": null,
-      "used_waiver_priority": false,
-      "waiver_priority_before_move": 9,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "possible_handcuff_of": null,
       "confirmed_homer_transaction": false,
       "move_number_for_team": 1,
       "team_total_moves": 1,
-      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added MarShawn Lloyd (RB).",
+      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Stetson Bennett IV (QB).",
+      "dropped_player_was_added_earlier_this_week": false
+    },
+    {
+      "type": "free_agent",
+      "team_name": "Ja'Marr Ja'Merrier",
+      "roster_id": 1,
+      "player_added": "Reggie Virgil",
+      "player_added_id": "13297",
+      "position": "WR",
+      "player_dropped": "Roschon Johnson",
+      "used_waiver_priority": false,
+      "waiver_priority_before_move": 2,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "possible_handcuff_of": null,
+      "confirmed_homer_transaction": false,
+      "move_number_for_team": 2,
+      "team_total_moves": 3,
+      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Drew Lock (QB), dropped Tyler Huntley; 2) added Reggie Virgil (WR), dropped Roschon Johnson; 3) added Audric Estime (RB).",
+      "dropped_player_was_added_earlier_this_week": false
+    },
+    {
+      "type": "free_agent",
+      "team_name": "Ja'Marr Ja'Merrier",
+      "roster_id": 1,
+      "player_added": "Audric Estime",
+      "player_added_id": "11579",
+      "position": "RB",
+      "player_dropped": null,
+      "used_waiver_priority": false,
+      "waiver_priority_before_move": 2,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "possible_handcuff_of": null,
+      "confirmed_homer_transaction": false,
+      "move_number_for_team": 3,
+      "team_total_moves": 3,
+      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Drew Lock (QB), dropped Tyler Huntley; 2) added Reggie Virgil (WR), dropped Roschon Johnson; 3) added Audric Estime (RB).",
+      "dropped_player_was_added_earlier_this_week": false
+    },
+    {
+      "type": "free_agent",
+      "team_name": "Playing for 2027",
+      "roster_id": 5,
+      "player_added": "Gregory Desrosiers",
+      "player_added_id": "13603",
+      "position": "RB",
+      "player_dropped": "Zonovan Knight",
+      "used_waiver_priority": false,
+      "waiver_priority_before_move": 11,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "possible_handcuff_of": null,
+      "confirmed_homer_transaction": false,
+      "move_number_for_team": 1,
+      "team_total_moves": 1,
+      "team_move_sequence": "In chronological order (oldest first), this team's moves this week were: 1) added Gregory Desrosiers (RB), dropped Zonovan Knight.",
       "dropped_player_was_added_earlier_this_week": false
     }
   ],
@@ -2356,10 +2457,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 9.6,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2372,10 +2474,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 4.6,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2387,11 +2490,12 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 5.1,
-      "weeks_tracked": 2,
+      "cumulative_points_since_add": 16.6,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2404,10 +2508,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 0.0,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2419,11 +2524,12 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 6.2,
-      "weeks_tracked": 2,
+      "cumulative_points_since_add": 8.8,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2436,10 +2542,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 0.8,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2452,10 +2559,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 11.2,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2467,11 +2575,12 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 5.9,
-      "weeks_tracked": 2,
+      "cumulative_points_since_add": 10.9,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2484,10 +2593,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 16.12,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2499,11 +2609,12 @@
       "used_waiver_priority": true,
       "waiver_priority_at_add": null,
       "priority_cost_description": "used a waiver claim, but this team's priority position before the move isn't available",
-      "cumulative_points_since_add": 8.3,
-      "weeks_tracked": 2,
+      "cumulative_points_since_add": 11.700000000000001,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -2515,10 +2626,11 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 5.7,
-      "weeks_tracked": 1,
+      "cumulative_points_since_add": 9.8,
+      "weeks_tracked": 2,
       "weeks_counted": [
-        8
+        8,
+        9
       ]
     },
     {
@@ -2530,10 +2642,11 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 5.6,
-      "weeks_tracked": 1,
+      "cumulative_points_since_add": 10.0,
+      "weeks_tracked": 2,
       "weeks_counted": [
-        8
+        8,
+        9
       ]
     },
     {
@@ -2545,10 +2658,11 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 4.3,
-      "weeks_tracked": 1,
+      "cumulative_points_since_add": 12.0,
+      "weeks_tracked": 2,
       "weeks_counted": [
-        8
+        8,
+        9
       ]
     },
     {
@@ -2560,10 +2674,11 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 7.2,
-      "weeks_tracked": 1,
+      "cumulative_points_since_add": 11.9,
+      "weeks_tracked": 2,
       "weeks_counted": [
-        8
+        8,
+        9
       ]
     },
     {
@@ -2576,9 +2691,115 @@
       "waiver_priority_at_add": 9,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 2.1,
+      "weeks_tracked": 2,
+      "weeks_counted": [
+        8,
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 2,
+      "team_name": "Brent Looking 4 His Keys",
+      "player_added": "Joe Fagnano",
+      "player_added_id": "13350",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 8,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 1.7,
       "weeks_tracked": 1,
       "weeks_counted": [
-        8
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 1,
+      "team_name": "Ja'Marr Ja'Merrier",
+      "player_added": "Drew Lock",
+      "player_added_id": "5854",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 2,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 14.6,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 7,
+      "team_name": "Silverbacks (100 vs 1)",
+      "player_added": "Devin Singletary",
+      "player_added_id": "6130",
+      "used_waiver_priority": true,
+      "waiver_priority_at_add": 7,
+      "priority_cost_description": "spent a mid-tier priority slot (#7 of 12)",
+      "cumulative_points_since_add": 4.9,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 3,
+      "team_name": "Theme From The Bottom",
+      "player_added": "Stetson Bennett IV",
+      "player_added_id": "10857",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 3,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 0.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 1,
+      "team_name": "Ja'Marr Ja'Merrier",
+      "player_added": "Reggie Virgil",
+      "player_added_id": "13297",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 2,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 3.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 1,
+      "team_name": "Ja'Marr Ja'Merrier",
+      "player_added": "Audric Estime",
+      "player_added_id": "11579",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 2,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 14.2,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 5,
+      "team_name": "Playing for 2027",
+      "player_added": "Gregory Desrosiers",
+      "player_added_id": "13603",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 11,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 2.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
       ]
     }
   ]

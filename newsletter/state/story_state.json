@@ -1,24 +1,26 @@
 {
   "_comment": "Persistent narrative state for the dynasty newsletter. Written by the pipeline each week \u2014 Python owns the counters, the model only writes narrative fields. Starts empty.",
-  "last_week_updated": 8,
+  "last_week_updated": 9,
   "running_jokes": [
-    "Theme From The Bottom added four free agents in one week while sitting at 1-7 \u2014 quantity over quality remains the strategy.",
-    "Brent Looking 4 His Keys has now made the same bench mistake (starting Lamar Jackson over a better option) in back-to-back weeks.",
-    "mikelanta's bench outscored its starting lineup by 31.3 points this week behind Tyler Allgeier \u2014 the single worst lineup call in the league.",
     "Theme From The Bottom added four free agents again this week while sitting at 1-7, continuing the volume-over-quality approach.",
     "Brent Looking 4 His Keys has now made the same costly bench mistake in back-to-back weeks.",
     "NateDawg726 has also posted a real, costly bench mistake in back-to-back weeks, this time benching Kirk Cousins' 34.18 for Dak Prescott's 21.8.",
     "Theme From The Bottom added four more free agents this week while sitting at 1-7, continuing the volume-over-quality approach with modest early returns.",
     "Brent Looking 4 His Keys has now made a real, costly bench mistake in back-to-back weeks, both times involving Lamar Jackson.",
-    "NateDawg726 has also posted a costly bench mistake in back-to-back weeks, benching Kirk Cousins for Dak Prescott both times in question."
+    "NateDawg726 has also posted a costly bench mistake in back-to-back weeks, benching Kirk Cousins for Dak Prescott both times in question.",
+    "Brent Looking 4 His Keys has now made a real, costly bench mistake in three straight weeks, every time involving Lamar Jackson in the lineup over a better option.",
+    "NateDawg726 has also posted a costly bench mistake in three straight weeks now, this time benching Blake Corum's 11.8 for a scoreless Ladd McConkey.",
+    "Theme From The Bottom keeps adding free agents in bulk (a fourth straight week) while sitting at the bottom of the league, with little to show for it yet.",
+    "Full Chuba has a bench mistake in back-to-back weeks now, this time losing 15.4 points by sitting Tank Dell for Mike Gesicki."
   ],
   "streaks": {
-    "Brent Looking 4 His Keys": "Two straight weeks with a real, costly bench mistake involving Lamar Jackson.",
-    "Theme From The Bottom": "1-7 with a bench mistake again this week, and four more free-agent adds on top of it.",
-    "NateDawg726": "Two straight weeks with a real, costly bench mistake involving Kirk Cousins.",
+    "Brent Looking 4 His Keys": "Three straight weeks with a real, costly bench mistake, each time involving Lamar Jackson.",
+    "Theme From The Bottom": "Two straight weeks with a real bench mistake, on top of a last-place record and continued heavy free-agent churn.",
+    "NateDawg726": "Three straight weeks with a real, costly bench mistake.",
     "demon44": "A bench mistake this week despite a win, benching Drake Maye's 26.46 points.",
     "mikelanta": "The week's largest bench mistake, a 31.3-point gap on Tyler Allgeier left on the bench.",
-    "Full Chuba": "A bench mistake this week despite Joe Burrow's league-best scoring day."
+    "Full Chuba": "Two straight weeks with a real, costly bench mistake.",
+    "Ja'Marr Ja'Merrier": "Two straight weeks with a real bench mistake despite sitting atop the standings."
   },
   "notable_quotes": [],
   "transaction_tracking": [
@@ -32,10 +34,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 9.6,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -48,10 +51,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 4.6,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -63,11 +67,12 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 5.1,
-      "weeks_tracked": 2,
+      "cumulative_points_since_add": 16.6,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -80,10 +85,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 0.0,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -95,11 +101,12 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 6.2,
-      "weeks_tracked": 2,
+      "cumulative_points_since_add": 8.8,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -112,10 +119,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 0.8,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -128,10 +136,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 11.2,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -143,11 +152,12 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 5.9,
-      "weeks_tracked": 2,
+      "cumulative_points_since_add": 10.9,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -160,10 +170,11 @@
       "waiver_priority_at_add": null,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 16.12,
-      "weeks_tracked": 2,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -175,11 +186,12 @@
       "used_waiver_priority": true,
       "waiver_priority_at_add": null,
       "priority_cost_description": "used a waiver claim, but this team's priority position before the move isn't available",
-      "cumulative_points_since_add": 8.3,
-      "weeks_tracked": 2,
+      "cumulative_points_since_add": 11.700000000000001,
+      "weeks_tracked": 3,
       "weeks_counted": [
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -191,10 +203,11 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 5.7,
-      "weeks_tracked": 1,
+      "cumulative_points_since_add": 9.8,
+      "weeks_tracked": 2,
       "weeks_counted": [
-        8
+        8,
+        9
       ]
     },
     {
@@ -206,10 +219,11 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 5.6,
-      "weeks_tracked": 1,
+      "cumulative_points_since_add": 10.0,
+      "weeks_tracked": 2,
       "weeks_counted": [
-        8
+        8,
+        9
       ]
     },
     {
@@ -221,10 +235,11 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 4.3,
-      "weeks_tracked": 1,
+      "cumulative_points_since_add": 12.0,
+      "weeks_tracked": 2,
       "weeks_counted": [
-        8
+        8,
+        9
       ]
     },
     {
@@ -236,10 +251,11 @@
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
-      "cumulative_points_since_add": 7.2,
-      "weeks_tracked": 1,
+      "cumulative_points_since_add": 11.9,
+      "weeks_tracked": 2,
       "weeks_counted": [
-        8
+        8,
+        9
       ]
     },
     {
@@ -252,121 +268,227 @@
       "waiver_priority_at_add": 9,
       "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 2.1,
+      "weeks_tracked": 2,
+      "weeks_counted": [
+        8,
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 2,
+      "team_name": "Brent Looking 4 His Keys",
+      "player_added": "Joe Fagnano",
+      "player_added_id": "13350",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 8,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 1.7,
       "weeks_tracked": 1,
       "weeks_counted": [
-        8
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 1,
+      "team_name": "Ja'Marr Ja'Merrier",
+      "player_added": "Drew Lock",
+      "player_added_id": "5854",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 2,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 14.6,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 7,
+      "team_name": "Silverbacks (100 vs 1)",
+      "player_added": "Devin Singletary",
+      "player_added_id": "6130",
+      "used_waiver_priority": true,
+      "waiver_priority_at_add": 7,
+      "priority_cost_description": "spent a mid-tier priority slot (#7 of 12)",
+      "cumulative_points_since_add": 4.9,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 3,
+      "team_name": "Theme From The Bottom",
+      "player_added": "Stetson Bennett IV",
+      "player_added_id": "10857",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 3,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 0.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 1,
+      "team_name": "Ja'Marr Ja'Merrier",
+      "player_added": "Reggie Virgil",
+      "player_added_id": "13297",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 2,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 3.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 1,
+      "team_name": "Ja'Marr Ja'Merrier",
+      "player_added": "Audric Estime",
+      "player_added_id": "11579",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 2,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 14.2,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
+      ]
+    },
+    {
+      "week_added": 9,
+      "roster_id": 5,
+      "team_name": "Playing for 2027",
+      "player_added": "Gregory Desrosiers",
+      "player_added_id": "13603",
+      "used_waiver_priority": false,
+      "waiver_priority_at_add": 11,
+      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "cumulative_points_since_add": 2.0,
+      "weeks_tracked": 1,
+      "weeks_counted": [
+        9
       ]
     }
   ],
   "last_known_waiver_priority": {
     "1": 2,
-    "2": 8,
+    "2": 7,
     "3": 3,
     "4": 5,
-    "5": 11,
+    "5": 9,
     "6": 1,
-    "7": 7,
-    "8": 9,
-    "9": 12,
+    "7": 12,
+    "8": 8,
+    "9": 10,
     "10": 4,
-    "11": 10,
+    "11": 11,
     "12": 6
   },
   "bench_mistake_streaks": {
     "Brent Looking 4 His Keys": {
-      "consecutive_weeks": 2,
-      "last_week_counted": 8,
+      "consecutive_weeks": 3,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Malik Willis",
-        "benched_points": 19.64,
+        "benched_player": "Justin Herbert",
+        "benched_points": 13.42,
         "started_instead": "Lamar Jackson",
         "started_points": 0,
-        "margin": 19.64
+        "margin": 13.42
       }
     },
     "Theme From The Bottom": {
-      "consecutive_weeks": 1,
-      "last_week_counted": 8,
+      "consecutive_weeks": 2,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Jaylen Waddle",
-        "benched_points": 13.4,
-        "started_instead": "Jahdae Walker",
+        "benched_player": "Corey Kiner",
+        "benched_points": 11.5,
+        "started_instead": "Kyle Williams",
         "started_points": 0,
-        "margin": 13.4
+        "margin": 11.5
       }
     },
     "The Josh Allens \ud83d\udc10": {
       "consecutive_weeks": 0,
-      "last_week_counted": 8,
+      "last_week_counted": 9,
       "last_mistake": null
     },
     "Playing for 2027": {
       "consecutive_weeks": 0,
-      "last_week_counted": 8,
+      "last_week_counted": 9,
       "last_mistake": null
     },
     "Kirkumcised Penix": {
       "consecutive_weeks": 0,
-      "last_week_counted": 8,
+      "last_week_counted": 9,
       "last_mistake": null
     },
     "Silverbacks (100 vs 1)": {
-      "consecutive_weeks": 0,
-      "last_week_counted": 8,
-      "last_mistake": null
+      "consecutive_weeks": 1,
+      "last_week_counted": 9,
+      "last_mistake": {
+        "benched_player": "Justice Hill",
+        "benched_points": 16.7,
+        "started_instead": "J.K. Dobbins",
+        "started_points": 2.7,
+        "margin": 14.0
+      }
     },
     "NateDawg726": {
-      "consecutive_weeks": 2,
-      "last_week_counted": 8,
+      "consecutive_weeks": 3,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Kirk Cousins",
-        "benched_points": 34.18,
-        "started_instead": "Dak Prescott",
-        "started_points": 21.8,
-        "margin": 12.38
+        "benched_player": "Blake Corum",
+        "benched_points": 11.8,
+        "started_instead": "Ladd McConkey",
+        "started_points": 0,
+        "margin": 11.8
       }
     },
     "demon44": {
-      "consecutive_weeks": 1,
-      "last_week_counted": 8,
-      "last_mistake": {
-        "benched_player": "Drake Maye",
-        "benched_points": 26.46,
-        "started_instead": "Dylan Sampson",
-        "started_points": 9.9,
-        "margin": 16.56
-      }
+      "consecutive_weeks": 0,
+      "last_week_counted": 9,
+      "last_mistake": null
     },
     "LaHorrible": {
       "consecutive_weeks": 0,
-      "last_week_counted": 8,
+      "last_week_counted": 9,
       "last_mistake": null
     },
     "mikelanta": {
       "consecutive_weeks": 0,
-      "last_week_counted": 8,
+      "last_week_counted": 9,
       "last_mistake": null
     },
     "Full Chuba": {
-      "consecutive_weeks": 1,
-      "last_week_counted": 8,
+      "consecutive_weeks": 2,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Bo Nix",
-        "benched_points": 23.28,
-        "started_instead": "Matthew Stafford",
-        "started_points": 11.28,
-        "margin": 12.0
+        "benched_player": "Tank Dell",
+        "benched_points": 18.5,
+        "started_instead": "Mike Gesicki",
+        "started_points": 3.1,
+        "margin": 15.4
       }
     },
     "Ja'Marr Ja'Merrier": {
-      "consecutive_weeks": 1,
-      "last_week_counted": 8,
+      "consecutive_weeks": 2,
+      "last_week_counted": 9,
       "last_mistake": {
-        "benched_player": "Chris Rodriguez Jr.",
-        "benched_points": 12.3,
-        "started_instead": "Michael Penix Jr.",
-        "started_points": 2.1,
-        "margin": 10.2
+        "benched_player": "Michael Penix Jr.",
+        "benched_points": 16.48,
+        "started_instead": "Jared Goff",
+        "started_points": 6.3,
+        "margin": 10.18
       }
     }
   }
