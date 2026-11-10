@@ -1,5 +1,5 @@
 {
-  "_comment": "Persistent narrative state for the dynasty newsletter. Written by the pipeline each week \u2014 Python owns the counters, the model only writes narrative fields. Starts empty.",
+  "_comment": "Persistent narrative state for the dynasty newsletter. Written by the pipeline each week — Python owns the counters, the model only writes narrative fields. Starts empty.",
   "last_week_updated": 9,
   "running_jokes": [
     "Theme From The Bottom added four free agents again this week while sitting at 1-7, continuing the volume-over-quality approach.",
@@ -32,7 +32,7 @@
       "player_added_id": "8135",
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 9.6,
       "weeks_tracked": 3,
       "weeks_counted": [
@@ -49,7 +49,7 @@
       "player_added_id": "10235",
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 4.6,
       "weeks_tracked": 3,
       "weeks_counted": [
@@ -66,7 +66,7 @@
       "player_added_id": "12491",
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 16.6,
       "weeks_tracked": 3,
       "weeks_counted": [
@@ -83,7 +83,7 @@
       "player_added_id": "11623",
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 0.0,
       "weeks_tracked": 3,
       "weeks_counted": [
@@ -100,7 +100,7 @@
       "player_added_id": "7562",
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 8.8,
       "weeks_tracked": 3,
       "weeks_counted": [
@@ -117,7 +117,7 @@
       "player_added_id": "12863",
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 0.8,
       "weeks_tracked": 3,
       "weeks_counted": [
@@ -134,7 +134,7 @@
       "player_added_id": "9506",
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 11.2,
       "weeks_tracked": 3,
       "weeks_counted": [
@@ -151,7 +151,7 @@
       "player_added_id": "8147",
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 10.9,
       "weeks_tracked": 3,
       "weeks_counted": [
@@ -168,7 +168,7 @@
       "player_added_id": "7083",
       "used_waiver_priority": false,
       "waiver_priority_at_add": null,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 16.12,
       "weeks_tracked": 3,
       "weeks_counted": [
@@ -202,7 +202,7 @@
       "player_added_id": "7561",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 9.8,
       "weeks_tracked": 2,
       "weeks_counted": [
@@ -218,7 +218,7 @@
       "player_added_id": "4663",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 10.0,
       "weeks_tracked": 2,
       "weeks_counted": [
@@ -234,7 +234,7 @@
       "player_added_id": "8207",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 12.0,
       "weeks_tracked": 2,
       "weeks_counted": [
@@ -250,7 +250,7 @@
       "player_added_id": "4039",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 11.9,
       "weeks_tracked": 2,
       "weeks_counted": [
@@ -266,7 +266,7 @@
       "player_added_id": "11581",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 9,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 2.1,
       "weeks_tracked": 2,
       "weeks_counted": [
@@ -282,7 +282,7 @@
       "player_added_id": "13350",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 8,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 1.7,
       "weeks_tracked": 1,
       "weeks_counted": [
@@ -297,7 +297,7 @@
       "player_added_id": "5854",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 2,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 14.6,
       "weeks_tracked": 1,
       "weeks_counted": [
@@ -327,7 +327,7 @@
       "player_added_id": "10857",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 3,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 0.0,
       "weeks_tracked": 1,
       "weeks_counted": [
@@ -342,7 +342,7 @@
       "player_added_id": "13297",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 2,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 3.0,
       "weeks_tracked": 1,
       "weeks_counted": [
@@ -357,7 +357,7 @@
       "player_added_id": "11579",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 2,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 14.2,
       "weeks_tracked": 1,
       "weeks_counted": [
@@ -372,7 +372,7 @@
       "player_added_id": "13603",
       "used_waiver_priority": false,
       "waiver_priority_at_add": 11,
-      "priority_cost_description": "no priority spent \u2014 an uncontested free-agent pickup, nobody else wanted him",
+      "priority_cost_description": "no priority spent — an uncontested free-agent pickup, nobody else wanted him",
       "cumulative_points_since_add": 2.0,
       "weeks_tracked": 1,
       "weeks_counted": [
@@ -396,15 +396,9 @@
   },
   "bench_mistake_streaks": {
     "Brent Looking 4 His Keys": {
-      "consecutive_weeks": 3,
+      "consecutive_weeks": 0,
       "last_week_counted": 9,
-      "last_mistake": {
-        "benched_player": "Justin Herbert",
-        "benched_points": 13.42,
-        "started_instead": "Lamar Jackson",
-        "started_points": 0,
-        "margin": 13.42
-      }
+      "last_mistake": null
     },
     "Theme From The Bottom": {
       "consecutive_weeks": 2,
@@ -417,7 +411,7 @@
         "margin": 11.5
       }
     },
-    "The Josh Allens \ud83d\udc10": {
+    "The Josh Allens 🐐": {
       "consecutive_weeks": 0,
       "last_week_counted": 9,
       "last_mistake": null
@@ -444,15 +438,9 @@
       }
     },
     "NateDawg726": {
-      "consecutive_weeks": 3,
+      "consecutive_weeks": 0,
       "last_week_counted": 9,
-      "last_mistake": {
-        "benched_player": "Blake Corum",
-        "benched_points": 11.8,
-        "started_instead": "Ladd McConkey",
-        "started_points": 0,
-        "margin": 11.8
-      }
+      "last_mistake": null
     },
     "demon44": {
       "consecutive_weeks": 0,
