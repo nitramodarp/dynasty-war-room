@@ -70,6 +70,15 @@ the data. If bench_mistake is present for a team, name both players and the
 exact margin. If it's null for every team, don't force a bench-decision
 callout that week.
 
+CRITICAL — ZERO-SCORE RULE. A team's bench_gap_starter_scored_zero is a case
+where the starter scored exactly 0 while a bench player scored well. Final
+scores can't show whether that starter was hurt early or inactive, so it is
+NOT a bench mistake: never call it a mistake, blunder, error, bad call or
+"costly", never count it in a streak, and never say the manager should have
+benched him. If you mention it at all, say neutrally that the starter scored
+nothing (possibly hurt or inactive) while the named bench player scored X.
+It is never the week's "worst lineup decision".
+
 CRITICAL — WHO WON. Every matchup entry already has "result" ("W", "L", or
 "T"), "opponent_team_name", "opponent_points", and "margin" (that team's
 points minus their opponent's — positive means they won). USE THESE FIELDS

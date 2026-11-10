@@ -315,6 +315,7 @@ def enrich_matchup_players(matchups, players_db, roster_positions, rosters_by_id
         top_scorer = max(resolved, key=lambda p: p["points"], default=None)
 
         bench_mistake = None
+        zero_starter_gap = None
         if len(starters_list) == len(slots):
             bench_entries = [p for p in resolved
                              if not p["started"] and str(p["player_id"]) not in unavailable]
@@ -326,12 +327,19 @@ def enrich_matchup_players(matchups, players_db, roster_positions, rosters_by_id
                 for b in bench_entries:
                     if b["position"] in eligible and b["points"] - starter["points"] >= BENCH_MISTAKE_MIN_MARGIN:
                         gap = b["points"] - starter["points"]
-                        if not bench_mistake or gap > bench_mistake["margin"]:
-                            bench_mistake = {
-                                "benched_player": b["name"], "benched_points": b["points"],
-                                "started_instead": starter["name"], "started_points": starter["points"],
-                                "margin": round(gap, 2),
-                            }
+                        entry = {
+                            "benched_player": b["name"], "benched_points": b["points"],
+                            "started_instead": starter["name"], "started_points": starter["points"],
+                            "margin": round(gap, 2),
+                        }
+                        if starter["points"] == 0:
+                            # Zero-score rule: a starter with exactly 0 points was most likely
+                            # hurt early or inactive — final scores can't tell that apart from a
+                            # bad decision, so this is NOT counted as a bench mistake.
+                            if not zero_starter_gap or gap > zero_starter_gap["margin"]:
+                                zero_starter_gap = entry
+                        elif not bench_mistake or gap > bench_mistake["margin"]:
+                            bench_mistake = entry
         else:
             mismatches += 1
 
@@ -339,6 +347,7 @@ def enrich_matchup_players(matchups, players_db, roster_positions, rosters_by_id
         m["players_resolved"] = [p for p in resolved if p["started"] or p["points"]]
         m["top_scorer_on_roster"] = top_scorer
         m["bench_mistake"] = bench_mistake  # null if no valid swap found
+        m["bench_gap_starter_scored_zero"] = zero_starter_gap  # NOT a mistake — see zero-score rule
     if mismatches:
         print(f"WARNING: {mismatches} matchup(s) had a starters list that doesn't match the "
               f"league's {len(slots)} starting slots — no bench mistake claimed for those.")
