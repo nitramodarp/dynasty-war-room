@@ -1,0 +1,23 @@
+name: Tmp Names
+on:
+  workflow_dispatch: {}
+jobs:
+  names:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 - <<'PY'
+          import json, urllib.request
+          L="1312159330107146240"
+          g=lambda p: json.load(urllib.request.urlopen("https://api.sleeper.app/v1"+p))
+          pl=g("/players/nfl")
+          users={u["user_id"]:u for u in g(f"/league/{L}/users")}
+          rn={r["roster_id"]:users.get(r["owner_id"],{}).get("display_name") for r in g(f"/league/{L}/rosters")}
+          nm=lambda pid:(pl.get(pid,{}).get("full_name") or pid)
+          START=1794324000000
+          for leg in (9,10):
+              for t in g(f"/league/{L}/transactions/{leg}"):
+                  ts=t.get("status_updated") or t.get("created") or 0
+                  if ts>=START:
+                      print("TX",leg,t["type"],t["status"],ts,[rn.get(r) for r in t["roster_ids"]],"ADD",[nm(p) for p in (t.get("adds") or {})],"DROP",[nm(p) for p in (t.get("drops") or {})],"PICKS",len(t.get("draft_picks") or []))
+          PY
