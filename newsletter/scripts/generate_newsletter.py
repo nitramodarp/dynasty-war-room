@@ -191,8 +191,13 @@ the data (Superflex lineup, tight end premium) — never describe, quote or
 assume specific scoring values, and never compare scores to some other
 format. You also do NOT have access to any external player values, trade
 calculators, rankings or projections — don't invent one or imply one
-exists, and never call a trade "fair", "lopsided" or "a win" by pointing to
-a value you were not given. Grade transactions using ONLY what's in the data below:
+exists, and never cite a number, rating or ranking as a trade value. You MAY give
+a short, clearly labeled "Our read:" judgment of who came out ahead in each
+trade, based only on what the data shows (positions, ages given, pick
+rounds, and each team's standing) and general dynasty reasoning such as
+running backs aging quickly or a first-round pick from a top seed landing
+late. Hedge it as opinion. Treat every team identically, and never speculate
+about a team's intentions or plans. Grade transactions using ONLY what's in the data below:
 - "transactions_this_week" gives you PROCESS signals for brand-new moves:
   this is a rolling-waivers league with NO FAAB — there's no dollar amount
   to grade. Every entry has a precomputed "priority_cost_description" —
@@ -271,8 +276,9 @@ Return ONLY valid JSON (no markdown fences, no preamble) matching this shape:
     free-agent adds against real scoring logic, calling out good and bad
     process. Trades are NOT covered here — they get their own section.",
   "trade_desk": "1-3 paragraphs covering this week's trades using
-    trades_this_week — who gave up what, who received what, and a dry
-    verdict grounded only in the data. An empty string if there were no
+    trades_this_week — who gave up what, who received what, and, for
+    each trade, a one-to-three sentence "Our read:" verdict on who came out
+    ahead and why, labeled as opinion. An empty string if there were no
     trades.",
   "power_rankings": [{"rank": 1, "team": "name", "blurb": "one line"}, ... all 12],
   "standings_narrative": "1-2 paragraphs on the playoff picture. Use
