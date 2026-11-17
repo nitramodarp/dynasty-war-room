@@ -1,0 +1,23 @@
+name: Tmp SG
+on:
+  workflow_dispatch: {}
+jobs:
+  sg:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 - <<'PY'
+          import json, urllib.request
+          B="https://api.statsguyfantasy.com/api/v1"
+          def g(p):
+              r=urllib.request.Request(B+p,headers={"User-Agent":"Mozilla/5.0"}); return json.load(urllib.request.urlopen(r,timeout=30))
+          pj=g("/players?tep=tep"); kj=g("/picks")
+          print("SG top keys",list(pj.keys()),"asof",pj.get("valuesAsOf"))
+          ps=pj["players"]; print("SG n",len(ps)); print("SG sample",json.dumps(ps[0])[:700])
+          for n in ("Travis Hunter","D'Andre Swift","Haynes King","Kaelon Black"):
+              for p in ps:
+                  if p.get("name")==n: print("SG",n,p.get("id"),p.get("position"),p.get("age"),p.get("yearsExperience"),json.dumps(p.get("value")))
+          print("SG picks n",len(kj["picks"])); 
+          for pk in kj["picks"]:
+              if pk["id"].startswith(("pick:2027:1:","pick:2028:2:","pick:2028:3:","pick:2027:1:")): print("SG pick",pk["id"],json.dumps(pk.get("value")))
+          PY
