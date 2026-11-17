@@ -1272,7 +1272,7 @@
   <div class="tab-content" id="tab-power-rankings">
     <div class="card">
       <div class="card-title">📦 League Asset Rankings</div>
-      <div style="font-size:10px;color:var(--text-dim);margin:-4px 0 10px;line-height:1.45">Total dynasty asset depth (roster value + pick capital) — a portfolio-size stat, not a title-odds stat. For actual championship probability and $EV, see <b style="color:var(--text)">💵 Equity</b>.</div>
+      <div style="font-size:10px;color:var(--text-dim);margin:-4px 0 10px;line-height:1.45">Teams are ranked by <b style="color:var(--text)">Power Score</b> (0–100): 70% total value (roster + picks) and 30% starter VORP, each measured against the league. Total Value alone does not set the order — a team with similar value but far better starters ranks higher. Not a title-odds stat; for championship probability and $EV, see <b style="color:var(--text)">💵 Equity</b>.</div>
       <div id="projPtsBlendStatus" style="font-size:9px;color:var(--text-muted);margin:-6px 0 10px;font-family:'DM Mono',monospace"></div>
       <div id="powerRankingsContainer">Loading...</div>
     </div>
@@ -1285,6 +1285,7 @@
           <thead>
             <tr>
               <th>Team</th>
+              <th class="text-right">Power</th>
               <th class="text-right">Total Value</th>
               <th class="text-right">Proj Pts</th>
               <th class="text-right">QB</th>
@@ -3183,6 +3184,10 @@ function calcPowerRankings() {
     s.archetype = getTeamArchetype(s);
   }
   stats.sort((a,b) => b.powerScore - a.powerScore);
+  // Display score, 0-100 across the league (top team = 100, bottom = 0). Same order as powerScore,
+  // so the rank is exactly this number sorted high to low; the formula itself is unchanged.
+  const psMax = stats[0].powerScore, psMin = stats[stats.length - 1].powerScore;
+  for (const s of stats) s.powerPct = psMax > psMin ? (s.powerScore - psMin) / (psMax - psMin) * 100 : 50;
   STATE.powerRankings = stats;
   return stats;
 }
@@ -3676,6 +3681,10 @@ function renderPowerRankings() {
           </div>
           <div class="team-stats">
             <div class="team-stat">
+              <div class="team-stat-val" style="color:var(--text);font-weight:700">${team.powerPct.toFixed(1)}</div>
+              <div class="team-stat-lbl">Power Score</div>
+            </div>
+            <div class="team-stat">
               <div class="team-stat-val" style="color:var(--accent)">${fmtK(team.totalValue)}</div>
               <div class="team-stat-lbl">Total Value</div>
             </div>
@@ -3712,6 +3721,7 @@ function renderPowerRankings() {
     const prodRank = prodRankMap[team.name];
     return `<tr style="${isMe ? 'background:rgba(0,212,255,0.04)' : ''}">
       <td style="font-weight:${isMe?'600':'400'}">${isMe ? '⚔ ' : ''}${team.name}</td>
+      <td class="text-right mono" style="font-weight:700">${team.powerPct.toFixed(1)}</td>
       <td class="text-right mono" style="color:var(--accent)">${fmt(team.totalValue)}</td>
       <td class="text-right mono" style="font-size:11px;color:var(--purple);font-weight:600">${projStarters != null ? fmt(projStarters) + '<span style="color:var(--text-muted);font-weight:400;font-size:9px;margin-left:4px">#' + prodRank + '</span>' : '—'}</td>
       ${posCell(team.posStartable.QB, team.posValues.QB, 'var(--accent2)')}
