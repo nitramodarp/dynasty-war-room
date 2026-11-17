@@ -196,7 +196,7 @@ a short, clearly labeled "Our read:" judgment of who came out ahead in each
 trade, based only on what the data shows (positions, ages given, pick
 rounds, and each team's standing) and general dynasty reasoning such as
 running backs aging quickly or a first-round pick from a top seed landing
-late. Hedge it as opinion. Treat every team identically, and never speculate
+late. Hedge it as opinion. Do NOT characterize a player's role, depth-chart spot or quality (no "fringe", "starter", "backup") since you are not given that; stick to age, position, pick round and standings. Treat every team identically, and never speculate
 about a team's intentions or plans. Grade transactions using ONLY what's in the data below:
 - "transactions_this_week" gives you PROCESS signals for brand-new moves:
   this is a rolling-waivers league with NO FAAB — there's no dollar amount
