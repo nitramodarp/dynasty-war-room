@@ -56,6 +56,33 @@ def get_transactions(week):
     return get(f"{BASE}/league/{LEAGUE_ID}/transactions/{week}")
 
 
+def get_transactions_window(week, story_state):
+    """Transactions for this recap, by TIME rather than just by Sleeper leg.
+
+    Sleeper files a transaction under the leg it was created in, and the leg
+    can roll over AFTER the previous newsletter ran (e.g. a trade made Tuesday
+    evening, waivers clearing Wednesday). Fetching only this week's leg dropped
+    those. So also pull the previous leg and keep anything that happened after
+    the previous week's last run. Run times are kept in story_state['last_run_ms']
+    (rerun-safe: a rerun of the same week keeps the same window start)."""
+    runs = story_state.setdefault("last_run_ms", {})
+    start = runs.get(str(week - 1))
+    now_ms = int(time.time() * 1000)
+    runs[str(week)] = now_ms
+    txs = get_transactions(week)
+    if start is None or week <= 1:
+        return txs
+    seen = {t.get("transaction_id") for t in txs}
+    extra = [
+        t for t in get_transactions(week - 1)
+        if t.get("transaction_id") not in seen
+        and (t.get("status_updated") or t.get("created") or 0) >= start
+    ]
+    if extra:
+        print(f"Included {len(extra)} transaction(s) from week {week - 1}'s leg made after last week's run.")
+    return txs + extra
+
+
 def get_players_cached():
     """The full Sleeper player DB is ~5MB — cache it locally instead of
     pulling it every single run. Only used for position/name lookups when
@@ -758,14 +785,14 @@ def main():
 
     matchups_recap = get_matchups(week_to_recap)
     matchups_preview = get_matchups(week_to_preview)
-    raw_transactions = get_transactions(week_to_recap)
-    standings = build_standings(rosters, roster_names)
-
     try:
         with open(PATHS["story_state"]) as f:
             story_state = json.load(f)
     except FileNotFoundError:
         story_state = {}
+    raw_transactions = get_transactions_window(week_to_recap, story_state)
+    standings = build_standings(rosters, roster_names)
+
 
     enriched_tx, skipped_incomplete = enrich_transactions(raw_transactions, players_db, roster_names, rosters_by_id, story_state)
     trades_this_week = enrich_trades(raw_transactions, players_db, roster_names)
