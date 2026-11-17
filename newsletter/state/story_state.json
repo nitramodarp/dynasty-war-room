@@ -639,15 +639,9 @@
       "last_mistake": null
     },
     "demon44": {
-      "consecutive_weeks": 1,
+      "consecutive_weeks": 0,
       "last_week_counted": 10,
-      "last_mistake": {
-        "benched_player": "Brock Purdy",
-        "benched_points": 37.66,
-        "started_instead": "Drake Maye",
-        "started_points": 3.02,
-        "margin": 34.64
-      }
+      "last_mistake": null
     },
     "LaHorrible": {
       "consecutive_weeks": 1,
