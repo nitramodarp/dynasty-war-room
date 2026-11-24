@@ -146,6 +146,18 @@ def build_standings(rosters, roster_names):
     return standings
 
 
+def sixth_race_summary(sixth, bubble, outside):
+    """Precomputed plain-English line on the points race for the final seed,
+    so the model quotes finished gaps instead of doing arithmetic."""
+    if not sixth:
+        return ""
+    parts = [f"{sixth['team_name']} holds the sixth seed with {sixth['fpts']} season points"]
+    chasers = ([bubble] if bubble else []) + list(outside[:2])
+    for t in chasers:
+        parts.append(f"{t['team_name']} trails by {round(sixth['fpts'] - t['fpts'], 2)} points")
+    return "; ".join(parts) + "."
+
+
 def compute_playoff_picture(standings):
     """Confirmed format for this league: no divisions. The top 5 teams by
     win-loss-tie record take seeds 1-5; the 6th and final spot goes to
@@ -171,6 +183,9 @@ def compute_playoff_picture(standings):
     outside = [annotate(t) for t in remaining[2:]]
     if sixth and bubble:
         sixth["points_lead_over_next_team_in_line"] = round(sixth["fpts"] - bubble["fpts"], 2)
+    if sixth:
+        for t in outside + ([bubble] if bubble else []):
+            t["points_behind_sixth_seed"] = round(sixth["fpts"] - t["fpts"], 2)
     return {
         "note": "Playoffs: no divisions. Seeds 1-5 are the five best records; "
                 "seed 6 goes to the team with the most total season points "
@@ -179,6 +194,7 @@ def compute_playoff_picture(standings):
         "sixth_seed_by_points": sixth,
         "on_the_bubble_by_points": bubble,
         "teams_outside_playoff_picture": outside,
+        "sixth_seed_race_summary": sixth_race_summary(sixth, bubble, outside),
     }
 
 

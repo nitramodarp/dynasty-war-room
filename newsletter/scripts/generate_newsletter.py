@@ -287,7 +287,12 @@ Return ONLY valid JSON (no markdown fences, no preamble) matching this shape:
     spot (seed 6) goes to whichever remaining team has the most total
     season points — not the next-best record. Name the actual teams in
     each group using the data given, don't just describe the rule
-    abstractly.",
+    abstractly. LEAD this section with the race for the sixth and final
+    seed: quote the exact point gaps from playoff_picture's
+    sixth_seed_race_summary (and points_behind_sixth_seed where given)
+    unchanged, never recompute them, and say how close the race is. If the
+    sixth-seed lead is under 25 points, call the race tight; otherwise do not
+    call it close.",
   "look_ahead": "1-2 paragraphs previewing next week's matchups",
   "story_state_updates": {
     "running_jokes": ["any new or continued bits to track"],
